@@ -9,8 +9,6 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
-import io.jstach.kiwi.kvs.KeyValuesMedia.BuiltinMediaType;
-
 class KeyValuesSystemTest {
 
 	@Test
@@ -36,7 +34,7 @@ class KeyValuesSystemTest {
 			.add(system)
 			.add("classpath:/example/testLoader.properties")
 			.load();
-		String actual = BuiltinMediaType.PROPERTIES.format(kvs);
+		String actual = KeyValuesMedia.ofProperties().formatter().format(kvs);
 		String expected = """
 				stuff=/home/kenny
 				message=/home/kenny hello

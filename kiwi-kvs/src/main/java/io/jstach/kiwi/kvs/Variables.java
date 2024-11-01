@@ -16,6 +16,9 @@ import io.jstach.kiwi.kvs.interpolate.Interpolator;
 
 public interface Variables {
 
+	
+	public @Nullable String getValue(String key);
+
 	public sealed interface StaticVariables extends Variables {
 
 	}
@@ -23,16 +26,6 @@ public interface Variables {
 	public static StaticVariables empty() {
 		return EmptyVariables.EMPTY_VARIABLES;
 	}
-
-	public static Variables nullToEmtpy(@Nullable Variables propertiesGetter) {
-		if (propertiesGetter == null) {
-			return empty();
-		}
-		return propertiesGetter;
-	}
-
-	@Nullable
-	public String getValue(String key);
 
 	default String requireElse(String key, String fallback) {
 		String r = getValue(key);
@@ -97,11 +90,17 @@ public interface Variables {
 
 		public Variables build() {
 			List<Variables> list = new ArrayList<>(suppliers.size() + 1);
-			Map<String, String> p;
-			if ((p = properties) != null && !p.isEmpty()) {
+			Map<String, String> p = properties;
+			if (p  != null && !p.isEmpty()) {
 				list.add(p::get);
 			}
 			list.addAll(suppliers);
+			if (list.isEmpty()) {
+				return empty();
+			}
+			if (list.size() == 1) {
+				return list.get(0);
+			}
 			return Variables.create(list);
 		}
 

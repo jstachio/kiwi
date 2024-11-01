@@ -35,7 +35,7 @@ public interface KeyValuesSystem {
 
 		private List<LoaderFinder> loadFinders = new ArrayList<>(List.of(DefaultLoaderFinder.values()));
 
-		private List<MediaFinder> mediaFinders = new ArrayList<>(List.of(KeyValuesMedia.BuiltinMediaType.values()));
+		private List<MediaFinder> mediaFinders = new ArrayList<>(List.of(DefaultKeyValuesMedia.values()));
 
 		private @Nullable ServiceLoader<KeyValuesServiceProvider> serviceLoader;
 

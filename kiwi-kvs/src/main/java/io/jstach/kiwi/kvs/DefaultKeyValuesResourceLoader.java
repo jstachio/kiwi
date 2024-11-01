@@ -194,7 +194,7 @@ enum LoadFlag {
 	}
 
 	public static Set<KeyValue.Flag> keyValueFlags(Iterable<LoadFlag> loadFlags) {
-		var flags = EnumSet.noneOf(KeyValue.Flag.class);
+		EnumSet<KeyValue.Flag> flags = EnumSet.noneOf(KeyValue.Flag.class);
 		for (var lf : loadFlags) {
 			switch (lf) {
 				case NO_INTERPOLATION -> flags.add(Flag.NO_INTERPOLATION);

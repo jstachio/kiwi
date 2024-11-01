@@ -1,0 +1,7 @@
+class java/util/ServiceLoader$Provider
+get
+ ()TS;
+ ()T1S;
+type
+ ()Ljava/lang/Class<+TS;>;
+ ()L1java/lang/Class<+TS;>;

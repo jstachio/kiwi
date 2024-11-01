@@ -24,7 +24,10 @@ enum DefaultLoaderFinder implements LoaderFinder {
 			var builder = KeyValues.builder(resource.uri());
 			var properties = context.environment().getSystemProperties();
 			for (var sp : properties.stringPropertyNames()) {
-				builder.add(sp, properties.getProperty(sp));
+				String value = properties.getProperty(sp);
+				if (value != null) {
+					builder.add(sp, value);
+				}
 			}
 			return builder.build();
 		}
