@@ -1,7 +1,9 @@
 package io.jstach.kiwi.kvs;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ServiceLoader;
 
 import org.jspecify.annotations.Nullable;
@@ -82,13 +84,34 @@ public interface KeyValuesSystem {
 			LoaderFinder loadFinder = (context, resource) -> {
 				return loadFinders.stream().flatMap(rl -> rl.findLoader(context, resource).stream()).findFirst();
 			};
-			MediaFinder mediaFinder = (String mediaType) -> {
-				return mediaFinders.stream().flatMap(rl -> rl.findMedia(mediaType).stream()).findFirst();
-			};
+			MediaFinder mediaFinder = new CompositeMediaFinder(mediaFinders);
 
 			return new DefaultKeyValuesSystem(environment, loadFinder, mediaFinder);
 		}
 
+	}
+
+}
+
+record CompositeMediaFinder(List<MediaFinder> finders) implements MediaFinder {
+	CompositeMediaFinder {
+		finders = List.copyOf(finders);
+	}
+
+	@Override
+	public Optional<KeyValuesMedia> findByExt(String ext) {
+		return finders.stream().flatMap(mf -> mf.findByExt(ext).stream()).findFirst();
+	}
+
+	@Override
+	public Optional<KeyValuesMedia> findByMediaType(String mediaType) {
+		return finders.stream().flatMap(mf -> mf.findByMediaType(mediaType).stream()).findFirst();
+
+	}
+
+	@Override
+	public Optional<KeyValuesMedia> findByUri(URI uri) {
+		return finders.stream().flatMap(mf -> mf.findByUri(uri).stream()).findFirst();
 	}
 
 }

@@ -140,15 +140,19 @@ public interface KeyValues extends Iterable<KeyValue> {
 		return of(stream().toList());
 	}
 
+	default KeyValues redact() {
+		return this.map(KeyValue::redact);
+	}
+
 	default Map<String, String> toMap() {
 		Map<String, String> m = new LinkedHashMap<>();
 		stream().forEach(kv -> m.put(kv.key(), kv.expanded()));
 		return m;
 	}
 
-	default String toString(KeyValuesMedia.Formatter formatter) {
-		return formatter.format(this);
-	}
+	// default String toString(KeyValuesMedia.Formatter formatter) {
+	// return formatter.format(this.map(kv -> kv.redact("REDACTED")));
+	// }
 
 }
 
@@ -160,6 +164,15 @@ interface ToStringableKeyValues extends KeyValues {
 		}
 		return new PrintableKeyValues(kvs);
 
+	}
+
+	static String toString(KeyValues keyValues) {
+		StringBuilder sb = new StringBuilder();
+		var kvs = keyValues.redact();
+		sb.append("KeyValues[").append("\n");
+		KeyValuesMedia.ofProperties().formatter().format(sb, kvs);
+		sb.append("]").append("\n");
+		return sb.toString();
 	}
 
 }
@@ -176,7 +189,7 @@ record PrintableKeyValues(KeyValues values) implements ToStringableKeyValues {
 
 	@Override
 	public String toString() {
-		return stream().toList().toString();
+		return ToStringableKeyValues.toString(this);
 	}
 }
 
@@ -191,6 +204,10 @@ record ListKeyValues(List<KeyValue> keyValues) implements ToStringableKeyValues,
 		return this;
 	}
 
+	@Override
+	public final String toString() {
+		return ToStringableKeyValues.toString(this);
+	}
 }
 
 class KeyValuesInterpolator {

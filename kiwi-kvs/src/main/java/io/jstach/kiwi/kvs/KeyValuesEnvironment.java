@@ -3,14 +3,20 @@ package io.jstach.kiwi.kvs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger.Level;
 import java.util.Map;
 import java.util.Properties;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import io.jstach.kiwi.kvs.KeyValuesEnvironment.Logger;
+
 public interface KeyValuesEnvironment {
 
+	/*
+	 * TODO remove the getter prefix on these methods.
+	 */
 	default @NonNull String[] getMainArgs() {
 		return new @NonNull String[] {};
 	}
@@ -28,8 +34,8 @@ public interface KeyValuesEnvironment {
 		return i == null ? InputStream.nullInputStream() : i;
 	}
 
-	default System.Logger getLogger(String name) {
-		return System.getLogger(name);
+	default Logger getLogger() {
+		return new DefaultLogger(System.getLogger("io.jstach.kiwi,kvs"));
 	}
 
 	default ResourceStreamLoader getResourceStreamLoader() {
@@ -58,6 +64,42 @@ public interface KeyValuesEnvironment {
 			return s;
 		}
 
+	}
+
+	public interface Logger {
+
+		public void debug(String message);
+
+		public void info(String message);
+
+		public void load(String message);
+
+	}
+
+}
+
+class DefaultLogger implements Logger {
+
+	private final System.Logger logger;
+
+	DefaultLogger(java.lang.System.Logger logger) {
+		super();
+		this.logger = logger;
+	}
+
+	@Override
+	public void debug(String message) {
+		logger.log(Level.DEBUG, message);
+	}
+
+	@Override
+	public void info(String message) {
+		logger.log(Level.INFO, message);
+	}
+
+	@Override
+	public void load(String message) {
+		logger.log(Level.INFO, message);
 	}
 
 }

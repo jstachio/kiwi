@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
 
@@ -16,10 +17,22 @@ import io.jstach.kiwi.kvs.interpolate.Interpolator;
 
 public interface Variables {
 
-	
 	public @Nullable String getValue(String key);
 
 	public sealed interface StaticVariables extends Variables {
+
+		public Iterable<String> keys();
+
+		// TODO maybe use KeyValues
+		default void forKeyValues(BiConsumer<String, String> consumer) {
+			for (var k : keys()) {
+				String value = getValue(k);
+				if (value == null) {
+					continue;
+				}
+				consumer.accept(k, value);
+			}
+		}
 
 	}
 
@@ -91,7 +104,7 @@ public interface Variables {
 		public Variables build() {
 			List<Variables> list = new ArrayList<>(suppliers.size() + 1);
 			Map<String, String> p = properties;
-			if (p  != null && !p.isEmpty()) {
+			if (p != null && !p.isEmpty()) {
 				list.add(p::get);
 			}
 			list.addAll(suppliers);
@@ -155,6 +168,11 @@ enum EmptyVariables implements StaticVariables {
 		return null;
 	}
 
+	@Override
+	public Iterable<String> keys() {
+		return List.of();
+	}
+
 }
 
 record MapStaticVariables(Map<String, String> map) implements StaticVariables {
@@ -165,5 +183,10 @@ record MapStaticVariables(Map<String, String> map) implements StaticVariables {
 	@Override
 	public @Nullable String getValue(String key) {
 		return map.get(key);
+	}
+
+	@Override
+	public Iterable<String> keys() {
+		return map.keySet();
 	}
 }

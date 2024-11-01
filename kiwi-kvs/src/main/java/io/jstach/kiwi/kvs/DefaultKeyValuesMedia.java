@@ -9,14 +9,13 @@ import java.io.LineNumberReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -40,6 +39,14 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter, MediaFi
 		public void format(Appendable appendable, KeyValues kvs) throws IOException {
 			var map = kvs.toMap();
 			PropertiesParser.writeProperties(map, appendable);
+		}
+
+		@Override
+		public Optional<KeyValuesMedia> findByMediaType(String mediaType) {
+			if (mediaType.equals("properties")) {
+				return Optional.of(this);
+			}
+			return super.findByMediaType(mediaType);
 		}
 	},
 
@@ -132,47 +139,36 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter, MediaFi
 		Stream.of(csv.split(",")).map(s -> s.trim()).filter(s -> !s.isBlank()).forEach(consumer);
 	}
 
+	static @Nullable String mediaTypeFromParameters(String resourceName, Map<String, String> parameters) {
+		String key = "_mediaType_" + resourceName;
+		return parameters.get(key);
+	}
+
+	// static String fileFromPath(@Nullable String p) {
+	// if (p == null || p.endsWith("/")) {
+	// return "";
+	// }
+	// return p.substring(p.lastIndexOf("/") + 1).trim();
+	// }
+	//
+	// static String removeFileExt(String path, @Nullable String fileExtension) {
+	// if (fileExtension == null || fileExtension.isBlank())
+	// return path;
+	// String rawExt = "." + fileExtension;
+	// if (path.endsWith(rawExt)) {
+	// return path.substring(0, rawExt.length());
+	// }
+	// return path;
+	// }
+
 }
+
 /**
  * Writes and parses properties.
  */
 final class PropertiesParser {
 
 	private PropertiesParser() {
-	}
-
-	/**
-	 * Writes properties.
-	 * @param map properties map.
-	 * @return properties as a string.
-	 */
-	public static String writeProperties(Map<String, String> map) {
-		StringBuilder sb = new StringBuilder();
-		try {
-			writeProperties(map, sb);
-		}
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		return sb.toString();
-
-	}
-
-	/**
-	 * Read properties.
-	 * @param input from.
-	 * @return properties as a map.
-	 */
-	public static Map<String, String> readProperties(String input) {
-		Map<String, String> m = new LinkedHashMap<>();
-		StringReader sr = new StringReader(input);
-		try {
-			readProperties(sr, m::put);
-		}
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		return m;
 	}
 
 	/**
@@ -215,7 +211,7 @@ final class PropertiesParser {
 		String line;
 		while ((line = lr.readLine()) != null) {
 			if (!line.startsWith("#")) {
-				sb.append(line).append(System.lineSeparator());
+				sb.append(line).append("\n");
 			}
 		}
 	}

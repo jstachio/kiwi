@@ -25,22 +25,46 @@ public interface KeyValuesMedia extends MediaFinder {
 	default Formatter formatter() throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	public static KeyValuesMedia ofProperties() {
 		return DefaultKeyValuesMedia.PROPERTIES;
 	}
-	
+
 	public static KeyValuesMedia ofUrlEncoded() {
 		return DefaultKeyValuesMedia.URLENCODED;
 	}
 
+	// @Override
+	// default Optional<KeyValuesMedia> findMedia(String mediaType) {
+	// var mt = getMediaType();
+	// if (mt.equals(mediaType)) {
+	// return Optional.of(this);
+	// }
+	// if (hasFileExt(mediaType)) {
+	// return Optional.of(this);
+	// }
+	// return Optional.empty();
+	// }
+
 	@Override
-	default Optional<KeyValuesMedia> findMedia(String mediaType) {
-		var mt = getMediaType();
-		if (mt.equals(mediaType)) {
+	default Optional<KeyValuesMedia> findByExt(String ext) {
+		if (getFileExt().equalsIgnoreCase(ext)) {
 			return Optional.of(this);
 		}
-		if (hasFileExt(mediaType)) {
+		return Optional.empty();
+	}
+
+	@Override
+	default Optional<KeyValuesMedia> findByMediaType(String mediaType) {
+		if (getMediaType().equalsIgnoreCase(mediaType)) {
+			return Optional.of(this);
+		}
+		return Optional.empty();
+	}
+
+	@Override
+	default Optional<KeyValuesMedia> findByUri(URI uri) {
+		if (hasFileExt(uri)) {
 			return Optional.of(this);
 		}
 		return Optional.empty();
@@ -139,43 +163,13 @@ public interface KeyValuesMedia extends MediaFinder {
 		return hasFileExt(p);
 	}
 
-	default boolean matchesURI(URI resource) {
-		return hasFileExt(resource);
-	}
-
-	default boolean matches(String mediaTypeLikeString) {
-		return mediaTypeLikeString.equals(getMediaType()) || mediaTypeLikeString.equals(getFileExt());
-	}
-
-	default boolean matches(KeyValuesMedia keyValuesMedia) {
-		return this == keyValuesMedia || this.equals(keyValuesMedia)
-				|| this.getMediaType().equals(keyValuesMedia.getMediaType());
-	}
-
-	default void prettyPrint(StringBuilder sb) {
-		sb.append(toString()).append("(").append(getMediaType()).append(", ");
-		var fe = getFileExt();
-		if (fe != null) {
-			sb.append(fe);
-		}
-		sb.append(")");
-	}
-
-	public static String fileFromPath(@Nullable String p) {
-		if (p == null || p.endsWith("/")) {
-			return "";
-		}
-		return p.substring(p.lastIndexOf("/") + 1).trim();
-	}
-
-	public static String removeFileExt(String path, @Nullable String fileExtension) {
-		if (fileExtension == null || fileExtension.isBlank())
-			return path;
-		String rawExt = "." + fileExtension;
-		if (path.endsWith(rawExt)) {
-			return path.substring(0, rawExt.length());
-		}
-		return path;
-	}
+	// default void prettyPrint(StringBuilder sb) {
+	// sb.append(toString()).append("(").append(getMediaType()).append(", ");
+	// var fe = getFileExt();
+	// if (fe != null) {
+	// sb.append(fe);
+	// }
+	// sb.append(")");
+	// }
 
 }

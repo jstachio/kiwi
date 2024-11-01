@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
@@ -101,7 +101,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 	}
 
 	private boolean filter(KeyValue kv) {
-		return !(kv.key().startsWith("_load_") || kv.key().startsWith("_flags_"));
+		return ResourceKeys.find(kv) == null;
 	}
 
 	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags, Variables variables)
@@ -114,7 +114,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 				.load();
 		}
 		catch (FileNotFoundException e) {
-			if (LoadFlag.NOT_REQUIRED.isSet(flags)) {
+			if (LoadFlag.NO_REQUIRED.isSet(flags)) {
 				return KeyValues.empty();
 			}
 			throw new IOException("Resource could not be loaded. resource: " + resource, e);
@@ -124,16 +124,77 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 }
 
+enum ResourceKeys {
+
+	LOAD("load"), FLAGS("flags"), MEDIA_TYPE("mediaType");
+
+	// private final String key;
+	private final String prefix;
+
+	private ResourceKeys(String key) {
+		// this.key = key;
+		this.prefix = "_" + key + "_";
+	}
+
+	static @Nullable ResourceKeys find(KeyValue kv) {
+		for (var key : ResourceKeys.values()) {
+			if (kv.key().startsWith(key.prefix)) {
+				return key;
+			}
+		}
+		return null;
+	}
+
+	@Nullable
+	String getValue(Variables variables, String resourceName) {
+		return variables.getValue(key(resourceName));
+	}
+
+	@Nullable
+	String getValue(KeyValuesResource resource) {
+		return getValue(resource.parameters(), resource.name());
+	}
+
+	String key(String resourceName) {
+		DefaultKeyValuesResource.validateResourceName(resourceName);
+		return this.prefix + resourceName;
+	}
+
+	static void copyKeys(KeyValuesResource resource, String newResourceName, BiConsumer<String, String> consumer) {
+		for (var rk : ResourceKeys.values()) {
+			String value = rk.getValue(resource);
+			if (value != null) {
+				String key = rk.key(newResourceName);
+				consumer.accept(key, newResourceName);
+				;
+			}
+		}
+	}
+
+	static void copyKeys(Variables variables, String oldResourceName, String newResourceName,
+			BiConsumer<String, String> consumer) {
+		for (var rk : ResourceKeys.values()) {
+			String value = rk.getValue(variables, oldResourceName);
+			if (value != null) {
+				String key = rk.key(newResourceName);
+				consumer.accept(key, value);
+				;
+			}
+		}
+	}
+
+}
+
 enum LoadFlag {
 
 	/**
 	 * Makes it maybe.
 	 */
-	NOT_REQUIRED, 
+	NO_REQUIRED,
 	/**
 	 * TODO
 	 */
-	NOT_EMPTY,
+	NO_EMPTY,
 	/**
 	 * Confusing but this means the resource should not have its properties overriden. Not
 	 * to be confused with {@link #NO_REPLACE_EXISTING_KEY_VALUE} which sounds like what
@@ -147,7 +208,7 @@ enum LoadFlag {
 	/**
 	 * Will add the kvs to variables but not to the final resolved key values.
 	 */
-	NO_ADD_KEY_VALUES, 
+	NO_ADD_KEY_VALUES,
 	/**
 	 * Will only add key values to variable store
 	 */
@@ -167,11 +228,11 @@ enum LoadFlag {
 	/**
 	 * Will not toString or print out sensitive
 	 */
-	NO_PRINT_VALUE, // sensitive
+	SENSITIVE, // sensitive
 	/**
 	 * TODO
 	 */
-	NO_RELOAD, 
+	NO_RELOAD,
 	/**
 	 * TODO
 	 */
@@ -193,12 +254,21 @@ enum LoadFlag {
 		return flags.contains(this);
 	}
 
+	void set(EnumSet<LoadFlag> set, boolean add) {
+		if (add) {
+			set.add(this);
+		}
+		else {
+			set.remove(this);
+		}
+	}
+
 	public static Set<KeyValue.Flag> keyValueFlags(Iterable<LoadFlag> loadFlags) {
 		EnumSet<KeyValue.Flag> flags = EnumSet.noneOf(KeyValue.Flag.class);
 		for (var lf : loadFlags) {
 			switch (lf) {
 				case NO_INTERPOLATION -> flags.add(Flag.NO_INTERPOLATION);
-				case NO_PRINT_VALUE -> flags.add(Flag.SENSITIVE);
+				case SENSITIVE -> flags.add(Flag.SENSITIVE);
 				default -> {
 				}
 			}
@@ -211,11 +281,11 @@ enum LoadFlag {
 		key = key.toUpperCase(Locale.ROOT);
 		for (var flag : flags) {
 			if (flag.name().equalsIgnoreCase(key)) {
-				set.add(flag);
+				flag.set(set, true);
 				return;
 			}
 			else if (flag.reverseKey.equalsIgnoreCase(key)) {
-				set.remove(flag);
+				flag.set(set, false);
 				return;
 			}
 		}
@@ -223,7 +293,7 @@ enum LoadFlag {
 	}
 
 	private static String reverseKey(String key) {
-		for (String negate : List.of("NOT_", "NO_")) {
+		for (String negate : List.of("NO_")) {
 			String k = remove(key, negate);
 			if (k != null) {
 				return k;
@@ -240,7 +310,7 @@ enum LoadFlag {
 	}
 
 	static void addToParameters(String resourceName, Map<String, String> parameters, Set<LoadFlag> flags) {
-		String key = "_flags_" + resourceName;
+		String key = ResourceKeys.FLAGS.key(resourceName);
 		if (parameters.containsKey(key) || flags.isEmpty()) {
 			return;
 		}
@@ -250,11 +320,11 @@ enum LoadFlag {
 
 	static Set<LoadFlag> of(KeyValuesResource resource) {
 		EnumSet<LoadFlag> flags = EnumSet.noneOf(LoadFlag.class);
-		String v = resource.parameters().getValue("_flags_" + resource.name());
+		String v = ResourceKeys.FLAGS.getValue(resource);
 		if (v == null) {
 			return flags;
 		}
-		Stream.of(v.split(",")).forEach(k -> LoadFlag.parse(flags, k));
+		DefaultKeyValuesMedia.parseCSV(v, k -> LoadFlag.parse(flags, k));
 		return flags;
 	}
 

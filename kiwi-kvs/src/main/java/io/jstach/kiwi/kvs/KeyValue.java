@@ -34,6 +34,8 @@ public record KeyValue(String key, //
 		Objects.requireNonNull(source);
 	}
 
+	public final static String REDACTED_MESSAGE = "REDACTED";
+
 	public KeyValue withExpanded(String expanded) {
 		return new KeyValue(key, raw, expanded, source, flags);
 	}
@@ -82,8 +84,33 @@ public record KeyValue(String key, //
 		return isFlag(Flag.NO_INTERPOLATION);
 	}
 
+	public boolean isSensitive() {
+		return isFlag(Flag.SENSITIVE);
+	}
+
 	public boolean isFlag(Flag flag) {
 		return flags().contains(flag);
+	}
+
+	public KeyValue redact() {
+		return redact(REDACTED_MESSAGE);
+	}
+
+	public KeyValue redact(String redactMessage) {
+		if (isSensitive()) {
+			String raw = redactMessage;
+			String expanded = redactMessage;
+			var flags = this.flags;
+			flags = EnumSet.copyOf(flags);
+			flags.remove(Flag.SENSITIVE);
+			return new KeyValue(key, raw, expanded, source, flags);
+		}
+		return this;
+	}
+
+	@Override
+	public final String toString() {
+		return redact().toString();
 	}
 
 }

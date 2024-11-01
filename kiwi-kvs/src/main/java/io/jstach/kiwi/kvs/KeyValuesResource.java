@@ -6,6 +6,7 @@ import java.util.Base64;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -16,11 +17,17 @@ public sealed interface KeyValuesResource {
 
 	public URI uri();
 
-	public Variables parameters();
+	public StaticVariables parameters();
 
 	public String name();
 
 	public @Nullable KeyValue reference();
+
+	public @Nullable String mediaType();
+
+	default void copyResourceKeys(String newResourceName, BiConsumer<String, String> consumer) {
+		ResourceKeys.copyKeys(this, newResourceName, consumer);
+	}
 
 	public static Builder builder(URI uri) {
 		return new Builder(uri, uriToName(uri));
@@ -38,9 +45,9 @@ public sealed interface KeyValuesResource {
 
 	public class Builder {
 
-		private final URI uri;
+		private URI uri;
 
-		private final String name;
+		private String name;
 
 		private Map<String, String> parameters = new LinkedHashMap<>();
 
@@ -48,13 +55,49 @@ public sealed interface KeyValuesResource {
 
 		private @Nullable KeyValue reference;
 
+		private @Nullable String mediaType;
+
 		Builder(URI uri, String name) {
 			this.uri = uri;
-			this.name = validateResourceName(name);
+			this.name = DefaultKeyValuesResource.validateResourceName(name);
+		}
+
+		public Builder copyParameters(KeyValuesResource resource) {
+			resource.copyResourceKeys(name, parameters::put);
+			return this;
+		}
+
+		public Builder uri(URI uri) {
+			this.uri = uri;
+			return this;
+		}
+
+		public Builder name(String name) {
+			String original = this.name;
+			this.name = name;
+			if (!name.equals(original) && !parameters.isEmpty()) {
+				ResourceKeys.copyKeys(new MapStaticVariables(parameters), original, name, parameters::put);
+			}
+			return this;
 		}
 
 		public Builder parameter(String key, String value) {
 			parameters.put(key, value);
+			return this;
+		}
+
+		public Builder mediaType(String mediaType) {
+			this.mediaType = mediaType;
+			return this;
+		}
+
+		public Builder noInterpolation(boolean flag) {
+			LoadFlag.NO_INTERPOLATION.set(flags, flag);
+			return this;
+		}
+
+		public Builder noAddKeyValues(boolean flag) {
+			LoadFlag.NO_ADD_KEY_VALUES.set(flags, flag);
 			return this;
 		}
 
@@ -66,8 +109,12 @@ public sealed interface KeyValuesResource {
 		public KeyValuesResource build() {
 			Map<String, String> parameters = new LinkedHashMap<>(this.parameters);
 			LoadFlag.addToParameters(name, parameters, flags);
+			String mediaType = this.mediaType;
+			if (mediaType == null) {
+				mediaType = DefaultKeyValuesMedia.mediaTypeFromParameters(name, parameters);
+			}
 			StaticVariables variables = new MapStaticVariables(parameters);
-			return new DefaultKeyValuesResource(uri, variables, reference, name);
+			return new DefaultKeyValuesResource(uri, name, reference, mediaType, variables);
 		}
 
 		static @Nullable Builder maybe(KeyValue reference) {
@@ -88,15 +135,6 @@ public sealed interface KeyValuesResource {
 				}
 			}
 			return builder.build();
-		}
-
-		static String validateResourceName(String identifier) {
-			if (identifier == null || !identifier.matches("[a-zA-Z0-9]+")) {
-				throw new IllegalArgumentException(
-						"Invalid identifier: must contain only alphanumeric characters (no underscores) and not be null. input: "
-								+ identifier);
-			}
-			return identifier;
 		}
 
 	}
@@ -129,6 +167,18 @@ enum ResourceCommand {
 
 }
 
-record DefaultKeyValuesResource(URI uri, Variables parameters, @Nullable KeyValue reference,
-		String name) implements KeyValuesResource {
+record DefaultKeyValuesResource(URI uri, String name, @Nullable KeyValue reference, @Nullable String mediaType,
+		StaticVariables parameters) implements KeyValuesResource {
+	DefaultKeyValuesResource {
+		validateResourceName(name);
+	}
+
+	static String validateResourceName(String identifier) {
+		if (identifier == null || !identifier.matches("[a-zA-Z0-9]+")) {
+			throw new IllegalArgumentException(
+					"Invalid identifier: must contain only alphanumeric characters (no underscores) and not be null. input: "
+							+ identifier);
+		}
+		return identifier;
+	}
 }

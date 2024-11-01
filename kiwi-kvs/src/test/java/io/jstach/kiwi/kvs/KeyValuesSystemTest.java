@@ -34,11 +34,45 @@ class KeyValuesSystemTest {
 			.add(system)
 			.add("classpath:/example/testLoader.properties")
 			.load();
-		String actual = KeyValuesMedia.ofProperties().formatter().format(kvs);
+
+		System.out.println(kvs);
+		{
+			String actual = kvs.toString();
+			String expected = """
+					KeyValues[
+					stuff=/home/kenny
+					blah=/home/kenny
+					message=/home/kenny hello
+					mypassword=REDACTED
+					]
+					""";
+			assertEquals(expected, actual);
+		}
+
+		{
+			String actual = KeyValuesMedia.ofProperties().formatter().format(kvs);
+			String expected = """
+					stuff=/home/kenny
+					blah=/home/kenny
+					message=/home/kenny hello
+					mypassword=1.2.3.4.5
+									""";
+			assertEquals(expected, actual);
+		}
+	}
+
+	@Test
+	void testKeyValuesResourceToString() {
+		var system = KeyValuesResource.builder(URI.create("system:///"))
+			.name("system")
+			.noInterpolation(true)
+			.noAddKeyValues(true)
+			.build();
+		String actual = system.toString();
 		String expected = """
-				stuff=/home/kenny
-				message=/home/kenny hello
-				""";
+				DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={_flags_system=NO_ADD_KEY_VALUES,NO_INTERPOLATION}]]
+				"""
+			.trim();
 		assertEquals(expected, actual);
 	}
 

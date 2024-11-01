@@ -1,5 +1,6 @@
 package io.jstach.kiwi.kvs;
 
+import java.net.URI;
 import java.util.Optional;
 
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.LoaderFinder.LoaderContext;
@@ -15,9 +16,11 @@ public interface KeyValuesServiceProvider {
 
 			MediaFinder mediaFinder();
 
+			Variables variables();
+
 			default KeyValuesMedia.Parser requireParser(KeyValuesResource resource) {
 				return mediaFinder() //
-					.findMedia(resource.uri().getPath()) //
+					.findByResource(resource) //
 					.orElseThrow(() -> new KeyValuesMediaException("Media Type not found. resource: " + resource))
 					.parser();
 			}
@@ -30,7 +33,19 @@ public interface KeyValuesServiceProvider {
 
 	public interface MediaFinder extends KeyValuesServiceProvider {
 
-		public Optional<KeyValuesMedia> findMedia(String mediaType);
+		default Optional<KeyValuesMedia> findByResource(KeyValuesResource resource) {
+			String mediaType = resource.mediaType();
+			if (mediaType == null) {
+				return findByUri(resource.uri());
+			}
+			return findByMediaType(mediaType);
+		}
+
+		public Optional<KeyValuesMedia> findByExt(String ext);
+
+		public Optional<KeyValuesMedia> findByMediaType(String mediaType);
+
+		public Optional<KeyValuesMedia> findByUri(URI uri);
 
 	}
 
