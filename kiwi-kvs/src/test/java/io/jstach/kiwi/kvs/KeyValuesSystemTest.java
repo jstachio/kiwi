@@ -23,6 +23,7 @@ class KeyValuesSystemTest {
 			}
 		};
 		var system = KeyValuesResource.builder(URI.create("system:///"))
+			.name("system")
 			._addFlag(LoadFlag.NO_INTERPOLATION)
 			._addFlag(LoadFlag.NO_ADD_KEY_VALUES)
 			.build();
@@ -33,8 +34,8 @@ class KeyValuesSystemTest {
 			String actual = b.build().toString();
 			String expected = """
 					KeyValues[
-					_flags_c3lzdGVtOi8vLw=NO_ADD_KEY_VALUES,NO_INTERPOLATION
-					_load_c3lzdGVtOi8vLw=system\\:///
+					_flags_system=NO_ADD_KEY_VALUES,NO_INTERPOLATION
+					_load_system=system\\:///
 					]
 					""";
 			assertEquals(expected, actual);
