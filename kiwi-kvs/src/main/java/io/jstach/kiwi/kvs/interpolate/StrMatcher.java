@@ -21,25 +21,16 @@ import java.util.Arrays;
 
 interface StrMatcher {
 
-	static StrMatcher stringMatcher(
-			final String str) {
+	static StrMatcher stringMatcher(final String str) {
 		if (str.isEmpty()) {
 			return NoMatcher.NO_MATCHER;
 		}
 		return new StringMatcher(str);
 	}
 
+	public abstract int isMatch(CharSequence buffer, int pos, int bufferStart, int bufferEnd);
 
-	public abstract int isMatch(
-			CharSequence buffer,
-			int pos,
-			int bufferStart,
-			int bufferEnd);
-
-
-	default int isMatch(
-			CharSequence buffer,
-			final int pos) {
+	default int isMatch(CharSequence buffer, final int pos) {
 		return isMatch(buffer, pos, 0, buffer.length());
 	}
 
@@ -48,21 +39,17 @@ interface StrMatcher {
 	 * Class used to define a set of characters for matching purposes.
 	 */
 	static final class StringMatcher implements StrMatcher {
+
 		/** The string to match, as a character array. */
 		private final char[] chars;
 
-		StringMatcher(
-				final String str) {
+		StringMatcher(final String str) {
 			super();
 			chars = str.toCharArray();
 		}
 
 		@Override
-		public int isMatch(
-				CharSequence buffer,
-				int pos,
-				int bufferStart,
-				int bufferEnd) {
+		public int isMatch(CharSequence buffer, int pos, int bufferStart, int bufferEnd) {
 			final int len = chars.length;
 			if (pos + len > bufferEnd) {
 				return 0;
@@ -91,13 +78,10 @@ interface StrMatcher {
 		NO_MATCHER;
 
 		@Override
-		public int isMatch(
-				CharSequence buffer,
-				int pos,
-				int bufferStart,
-				int bufferEnd) {
+		public int isMatch(CharSequence buffer, int pos, int bufferStart, int bufferEnd) {
 			return 0;
 		}
+
 	}
 
 }

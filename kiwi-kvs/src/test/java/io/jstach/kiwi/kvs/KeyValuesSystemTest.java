@@ -15,9 +15,9 @@ class KeyValuesSystemTest {
 
 	@Test
 	void testLoader() throws FileNotFoundException, IOException {
-		Properties properties= new Properties();
+		Properties properties = new Properties();
 		properties.setProperty("user.home", "/home/kenny");
-		
+
 		var environment = new KeyValuesEnvironment() {
 			@Override
 			public Properties getSystemProperties() {
@@ -25,19 +25,22 @@ class KeyValuesSystemTest {
 			}
 		};
 		var system = KeyValuesResource.builder(URI.create("system:///"))
-				._addFlag(LoadFlag.NO_INTERPOLATION)
-				._addFlag(LoadFlag.NO_ADD_KEY_VALUES)
-				.build();
-		
-		var kvs = KeyValuesSystem.builder().environment(environment).build() //
-				.loader() //
-				.add(system)
-				.add("classpath:/example/testLoader.properties")
-				.load();
+			._addFlag(LoadFlag.NO_INTERPOLATION)
+			._addFlag(LoadFlag.NO_ADD_KEY_VALUES)
+			.build();
+
+		var kvs = KeyValuesSystem.builder()
+			.environment(environment)
+			.build() //
+			.loader() //
+			.add(system)
+			.add("classpath:/example/testLoader.properties")
+			.load();
 		String actual = BuiltinMediaType.PROPERTIES.format(kvs);
 		String expected = """
 				stuff=/home/kenny
-								""";
+				message=/home/kenny hello
+				""";
 		assertEquals(expected, actual);
 	}
 

@@ -22,21 +22,23 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
-
 class StrSubstitutor {
 
 	/**
 	 * Constant for the default escape character.
 	 */
 	private static final char DEFAULT_ESCAPE = '$';
+
 	/**
 	 * Constant for the default variable prefix.
 	 */
 	private static final StrMatcher DEFAULT_PREFIX = StrMatcher.stringMatcher("${");
+
 	/**
 	 * Constant for the default variable suffix.
 	 */
 	private static final StrMatcher DEFAULT_SUFFIX = StrMatcher.stringMatcher("}");
+
 	/**
 	 * Constant for the default value delimiter of a variable.
 	 *
@@ -48,60 +50,48 @@ class StrSubstitutor {
 	 * Stores the escape character.
 	 */
 	private final char escapeChar;
+
 	/**
 	 * Stores the variable prefix.
 	 */
 	private final StrMatcher prefixMatcher;
+
 	/**
 	 * Stores the variable suffix.
 	 */
 	private final StrMatcher suffixMatcher;
+
 	/**
 	 * Stores the default variable value delimiter
 	 */
 	private final StrMatcher valueDelimiterMatcher;
+
 	/**
 	 * Variable resolution is delegated to an implementor of VariableResolver.
 	 */
 	private final StrLookup variableResolver;
+
 	/**
 	 * The flag whether substitution in variable names is enabled.
 	 */
 	private final boolean enableSubstitutionInVariables;
-	
-	
+
 	interface StrLookup {
 
-		public abstract @Nullable String lookup(
-				String key,
-				boolean defaultValue);
+		public abstract @Nullable String lookup(String key, boolean defaultValue);
 
 	}
 
 	/**
 	 * Creates a new instance and initializes it.
-	 *
-	 * @param variableResolver
-	 *            the variable resolver, may be null
+	 * @param variableResolver the variable resolver, may be null
 	 */
-	StrSubstitutor(
-			final StrLookup variableResolver) {
-		this(
-				variableResolver,
-				DEFAULT_PREFIX,
-				DEFAULT_SUFFIX,
-				DEFAULT_ESCAPE,
-				DEFAULT_VALUE_DELIMITER,
-				true);
+	StrSubstitutor(final StrLookup variableResolver) {
+		this(variableResolver, DEFAULT_PREFIX, DEFAULT_SUFFIX, DEFAULT_ESCAPE, DEFAULT_VALUE_DELIMITER, true);
 	}
 
-	private StrSubstitutor(
-			StrLookup variableResolver,
-			StrMatcher prefixMatcher,
-			StrMatcher suffixMatcher,
-			char escapeChar,
-			StrMatcher valueDelimiterMatcher,
-			boolean enableSubstitutionInVariables) {
+	private StrSubstitutor(StrLookup variableResolver, StrMatcher prefixMatcher, StrMatcher suffixMatcher,
+			char escapeChar, StrMatcher valueDelimiterMatcher, boolean enableSubstitutionInVariables) {
 		super();
 		this.variableResolver = variableResolver;
 		this.prefixMatcher = prefixMatcher;
@@ -113,15 +103,12 @@ class StrSubstitutor {
 
 	// -----------------------------------------------------------------------
 	/**
-	 * Replaces all the occurrences of variables with their matching values from
-	 * the resolver using the given source string as a template.
-	 *
-	 * @param source
-	 *            the string to replace in, null returns null
+	 * Replaces all the occurrences of variables with their matching values from the
+	 * resolver using the given source string as a template.
+	 * @param source the string to replace in, null returns null
 	 * @return the result of the replace operation
 	 */
-	String replace(
-			final String source) {
+	String replace(final String source) {
 		final StringBuilder buf = new StringBuilder(source);
 		if (!substitute(buf, 0, source.length())) {
 			return source;
@@ -129,17 +116,11 @@ class StrSubstitutor {
 		return buf.toString();
 	}
 
-	private boolean substitute(
-			final StringBuilder buf,
-			final int offset,
-			final int length) {
+	private boolean substitute(final StringBuilder buf, final int offset, final int length) {
 		return substitute(buf, offset, length, null) > 0;
 	}
 
-	private int substitute(
-			final StringBuilder buf,
-			final int offset,
-			final int length,
+	private int substitute(final StringBuilder buf, final int offset, final int length,
 			@Nullable List<String> priorVariables) {
 		final StrMatcher pfxMatcher = this.prefixMatcher;
 		final StrMatcher suffMatcher = this.suffixMatcher;
@@ -188,8 +169,7 @@ class StrSubstitutor {
 				}
 				// found variable end marker
 				if (nestedVarCount == 0) {
-					String varNameExpr = buf.subSequence(startPos + startMatchLen, pos)
-						.toString();
+					String varNameExpr = buf.subSequence(startPos + startMatchLen, pos).toString();
 					// String varNameExpr = new String(chars, startPos +
 					// startMatchLen, pos - startPos - startMatchLen);
 					if (substitutionInVariablesEnabled) {
@@ -223,9 +203,7 @@ class StrSubstitutor {
 					// on the first call initialize priorVariables
 					if (priorVariables == null) {
 						priorVariables = new ArrayList<>();
-						priorVariables.add(
-								buf.subSequence(offset, bufEnd)
-									.toString());
+						priorVariables.add(buf.subSequence(offset, bufEnd).toString());
 					}
 
 					// handle cyclic substitution
@@ -266,17 +244,11 @@ class StrSubstitutor {
 	}
 
 	/**
-	 * Checks if the specified variable is already in the stack (list) of
-	 * variables.
-	 *
-	 * @param varName
-	 *            the variable name to check
-	 * @param priorVariables
-	 *            the list of prior variables
+	 * Checks if the specified variable is already in the stack (list) of variables.
+	 * @param varName the variable name to check
+	 * @param priorVariables the list of prior variables
 	 */
-	private void checkCyclicSubstitution(
-			final String varName,
-			final List<String> priorVariables) {
+	private void checkCyclicSubstitution(final String varName, final List<String> priorVariables) {
 		if (!priorVariables.contains(varName)) {
 			return;
 		}
@@ -297,12 +269,8 @@ class StrSubstitutor {
 		throw new IllegalStateException(buf.toString());
 	}
 
-	private @Nullable String resolveVariable(
-			final String variableName,
-			final StringBuilder buf,
-			final int startPos,
-			final int endPos,
-			boolean defaultValue) {
+	private @Nullable String resolveVariable(final String variableName, final StringBuilder buf, final int startPos,
+			final int endPos, boolean defaultValue) {
 		final StrLookup resolver = variableResolver;
 		return resolver.lookup(variableName, defaultValue);
 	}

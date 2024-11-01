@@ -17,14 +17,14 @@ import io.jstach.kiwi.kvs.interpolate.Interpolator;
 public interface Variables {
 
 	public sealed interface StaticVariables extends Variables {
+
 	}
 
 	public static StaticVariables empty() {
 		return EmptyVariables.EMPTY_VARIABLES;
 	}
 
-	public static Variables nullToEmtpy(
-			@Nullable Variables propertiesGetter) {
+	public static Variables nullToEmtpy(@Nullable Variables propertiesGetter) {
 		if (propertiesGetter == null) {
 			return empty();
 		}
@@ -32,12 +32,9 @@ public interface Variables {
 	}
 
 	@Nullable
-	public String getValue(
-			String key);
+	public String getValue(String key);
 
-	default String requireElse(
-			String key,
-			String fallback) {
+	default String requireElse(String key, String fallback) {
 		String r = getValue(key);
 		if (r == null) {
 			return Objects.requireNonNull(fallback);
@@ -45,8 +42,7 @@ public interface Variables {
 		return r;
 	}
 
-	default Optional<Entry<String, String>> findEntry(
-			String... name) {
+	default Optional<Entry<String, String>> findEntry(String... name) {
 		for (String k : name) {
 			if (k == null)
 				continue;
@@ -57,8 +53,7 @@ public interface Variables {
 		return Optional.empty();
 	}
 
-	default boolean matches(
-			Entry<String, String> entry) {
+	default boolean matches(Entry<String, String> entry) {
 		String v = entry.getValue();
 		return v.equals(getValue(entry.getKey()));
 	}
@@ -68,13 +63,13 @@ public interface Variables {
 	}
 
 	public static class Builder {
+
 		@Nullable
 		private Map<String, String> properties = null;
+
 		private List<Variables> suppliers = new ArrayList<>();
 
-		public Builder add(
-				String key,
-				String value) {
+		public Builder add(String key, String value) {
 			Map<String, String> _properties = properties;
 			if (_properties == null) {
 				_properties = properties = new LinkedHashMap<>();
@@ -83,22 +78,19 @@ public interface Variables {
 			return this;
 		}
 
-		public Builder add(
-				@Nullable Variables supplier) {
+		public Builder add(@Nullable Variables supplier) {
 			if (supplier != null) {
 				suppliers.add(supplier);
 			}
 			return this;
 		}
 
-		public Builder add(
-				Map<String, String> m) {
+		public Builder add(Map<String, String> m) {
 			suppliers.add(m::get);
 			return this;
 		}
 
-		public Builder add(
-				Properties properties) {
+		public Builder add(Properties properties) {
 			suppliers.add(Variables.create(properties));
 			return this;
 		}
@@ -117,15 +109,13 @@ public interface Variables {
 
 			private Iterable<? extends Variables> variables;
 
-			public ChainedVariables(
-					Iterable<? extends Variables> variables) {
+			public ChainedVariables(Iterable<? extends Variables> variables) {
 				super();
 				this.variables = variables;
 			}
 
 			@Override
-			public @Nullable String getValue(
-					String name) {
+			public @Nullable String getValue(String name) {
 				for (Variables p : variables) {
 					String v = p.getValue(name);
 					if (v != null)
@@ -140,40 +130,41 @@ public interface Variables {
 			}
 
 		}
+
 	}
 
 	default Interpolator toInterpolator() {
 		return Interpolator.create(this::getValue);
 	}
 
-	public static Variables create(
-			Properties properties) {
+	public static Variables create(Properties properties) {
 		return properties::getProperty;
 	}
 
-	public static Variables create(
-			final Iterable<? extends Variables> variables) {
+	public static Variables create(final Iterable<? extends Variables> variables) {
 		return new Builder.ChainedVariables(variables);
 	}
 
 }
+
 enum EmptyVariables implements StaticVariables {
+
 	EMPTY_VARIABLES;
 
 	@Override
-	public @Nullable String getValue(
-			String key) {
+	public @Nullable String getValue(String key) {
 		return null;
 	}
+
 }
-record MapStaticVariables(Map<String,String> map) implements StaticVariables {
+
+record MapStaticVariables(Map<String, String> map) implements StaticVariables {
 	MapStaticVariables {
 		map = new LinkedHashMap<>(map);
 	}
 
 	@Override
-	public @Nullable String getValue(
-			String key) {
+	public @Nullable String getValue(String key) {
 		return map.get(key);
 	}
 }

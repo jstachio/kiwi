@@ -1,6 +1,5 @@
 package io.jstach.kiwi.kvs;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,17 +30,18 @@ import io.jstach.kiwi.kvs.KeyValuesServiceProvider.MediaFinder;
 
 public interface KeyValuesMedia extends MediaFinder {
 
-
 	public String getMediaType();
+
 	public @Nullable String getFileExt();
+
 	public Parser parser();
+
 	default Formatter formatter() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
-	default Optional<KeyValuesMedia> findMedia(
-			String mediaType) {
+	default Optional<KeyValuesMedia> findMedia(String mediaType) {
 		var mt = getMediaType();
 		if (mt.equals(mediaType)) {
 			return Optional.of(this);
@@ -51,10 +51,8 @@ public interface KeyValuesMedia extends MediaFinder {
 		}
 		return Optional.empty();
 	}
-	
-	public static String inputStreamToString(
-			InputStream inputStream)
-			throws IOException {
+
+	public static String inputStreamToString(InputStream inputStream) throws IOException {
 		try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
 			byte[] buffer = new byte[1024];
 			int length;
@@ -65,25 +63,22 @@ public interface KeyValuesMedia extends MediaFinder {
 		}
 
 	}
-	public static InputStream stringToInputStream(
-			String s) {
+
+	public static InputStream stringToInputStream(String s) {
 		return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
 	}
-	
+
 	public interface Parser {
 
-		void parse(InputStream input, BiConsumer<String,String> consumer) throws IOException;
+		void parse(InputStream input, BiConsumer<String, String> consumer) throws IOException;
 
-		default KeyValues parse(
-				KeyValuesResource source,
-				InputStream is)
-				throws IOException {
+		default KeyValues parse(KeyValuesResource source, InputStream is) throws IOException {
 			var b = KeyValues.Builder.of(source.uri());
 			parse(is, b::add);
 			return b.build();
 		}
-		
-		default void parse(String input, BiConsumer<String,String> consumer)  {
+
+		default void parse(String input, BiConsumer<String, String> consumer) {
 			try {
 				parse(stringToInputStream(input), consumer);
 			}
@@ -91,7 +86,7 @@ public interface KeyValuesMedia extends MediaFinder {
 				throw new UncheckedIOException(e);
 			}
 		}
-		
+
 		default KeyValues parse(String input) {
 			var b = KeyValues.Builder.of(URI.create("null://"));
 			parse(input, b::add);
@@ -99,17 +94,12 @@ public interface KeyValuesMedia extends MediaFinder {
 		}
 
 	}
-	
+
 	public interface Formatter {
 
-		public void format(
-				Appendable appendable,
-				KeyValues kvs)
-				throws IOException;
+		public void format(Appendable appendable, KeyValues kvs) throws IOException;
 
-		default void format(
-				StringBuilder stringBuilder,
-				KeyValues kvs) {
+		default void format(StringBuilder stringBuilder, KeyValues kvs) {
 			try {
 				format((Appendable) stringBuilder, kvs);
 			}
@@ -118,37 +108,29 @@ public interface KeyValuesMedia extends MediaFinder {
 			}
 		}
 
-		default String format(
-				KeyValues kvs) {
+		default String format(KeyValues kvs) {
 			StringBuilder sb = new StringBuilder();
 			format(sb, kvs);
 			return sb.toString();
 		}
 
 	}
-	
+
 	public class MediaTypeException extends RuntimeException {
 
 		private static final long serialVersionUID = 1L;
 
-		public MediaTypeException(
-				@Nullable String message,
-				@Nullable Throwable cause) {
-			super(
-					message,
-					cause);
+		public MediaTypeException(@Nullable String message, @Nullable Throwable cause) {
+			super(message, cause);
 		}
 
-		public MediaTypeException(
-				@Nullable String message) {
-			super(
-					message);
+		public MediaTypeException(@Nullable String message) {
+			super(message);
 		}
 
 	}
 
-	default boolean hasFileExt(
-			String filename) {
+	default boolean hasFileExt(String filename) {
 		String ext = getFileExt();
 		if (ext == null) {
 			return false;
@@ -156,61 +138,45 @@ public interface KeyValuesMedia extends MediaFinder {
 		return filename.endsWith("." + ext);
 	}
 
-	default boolean hasFileExt(
-			URI uri) {
+	default boolean hasFileExt(URI uri) {
 		String p = uri.getPath();
 		if (p == null)
 			return false;
 		return hasFileExt(p);
 	}
 
-	default boolean matchesURI(
-			URI resource) {
+	default boolean matchesURI(URI resource) {
 		return hasFileExt(resource);
 	}
 
-	default boolean matches(
-			String mediaTypeLikeString) {
+	default boolean matches(String mediaTypeLikeString) {
 		return mediaTypeLikeString.equals(getMediaType()) || mediaTypeLikeString.equals(getFileExt());
 	}
 
-	default boolean matches(
-			KeyValuesMedia keyValuesMedia) {
-		return this == keyValuesMedia
-				|| this.equals(keyValuesMedia)
-				|| this.getMediaType()
-					.equals(keyValuesMedia.getMediaType());
+	default boolean matches(KeyValuesMedia keyValuesMedia) {
+		return this == keyValuesMedia || this.equals(keyValuesMedia)
+				|| this.getMediaType().equals(keyValuesMedia.getMediaType());
 	}
 
-	default void prettyPrint(
-			StringBuilder sb) {
-		sb.append(toString())
-			.append("(")
-			.append(getMediaType())
-			.append(", ");
+	default void prettyPrint(StringBuilder sb) {
+		sb.append(toString()).append("(").append(getMediaType()).append(", ");
 		var fe = getFileExt();
 		if (fe != null) {
 			sb.append(fe);
 		}
 		sb.append(")");
 	}
-	
 
 	public enum BuiltinMediaType implements KeyValuesMedia, Parser, Formatter, MediaFinder {
-		PROPERTIES("text/x-java-properties", "properties"){			
+
+		PROPERTIES("text/x-java-properties", "properties") {
 			@Override
-			public void parse(
-					InputStream is,
-					BiConsumer<String, String> consumer)
-					throws IOException {
+			public void parse(InputStream is, BiConsumer<String, String> consumer) throws IOException {
 				PropertiesParser.readProperties(new InputStreamReader(is), consumer);
 			}
-			
+
 			@Override
-			public void format(
-					Appendable appendable,
-					KeyValues kvs)
-					throws IOException {
+			public void format(Appendable appendable, KeyValues kvs) throws IOException {
 				var map = kvs.toMap();
 				PropertiesParser.writeProperties(map, appendable);
 			}
@@ -218,19 +184,13 @@ public interface KeyValuesMedia extends MediaFinder {
 
 		URLENCODED("application/x-www-form-urlencoded", null) {
 			@Override
-			public void parse(
-					InputStream input,
-					BiConsumer<String, String> consumer)
-					throws IOException {
+			public void parse(InputStream input, BiConsumer<String, String> consumer) throws IOException {
 				String i = inputStreamToString(input);
 				parseUriQuery(i, true, consumer);
 			}
 
 			@Override
-			public void format(
-					Appendable appendable,
-					KeyValues kvs)
-					throws IOException {
+			public void format(Appendable appendable, KeyValues kvs) throws IOException {
 				boolean first = true;
 				for (var kv : kvs) {
 					if (first) {
@@ -243,18 +203,17 @@ public interface KeyValuesMedia extends MediaFinder {
 					String value = URLEncoder.encode(kv.expanded(), StandardCharsets.UTF_8);
 					appendable.append(key).append('=').append(value);
 				}
-				
+
 			}
 		}
-		
+
 		;
 
 		private final String mediaType;
+
 		private final @Nullable String fileExt;
 
-		private BuiltinMediaType(
-				String mediaType,
-				@Nullable String fileExt) {
+		private BuiltinMediaType(String mediaType, @Nullable String fileExt) {
 			this.mediaType = mediaType;
 			this.fileExt = fileExt;
 		}
@@ -263,20 +222,22 @@ public interface KeyValuesMedia extends MediaFinder {
 		public String getMediaType() {
 			return mediaType;
 		}
+
 		@Override
 		public @Nullable String getFileExt() {
 			return fileExt;
 		}
-		
+
 		@Override
 		public Parser parser() {
 			return this;
 		}
+
 		@Override
 		public @Nullable Formatter formatter() {
 			return this;
 		}
-		
+
 		static void parseUriQuery(String query, boolean decode, BiConsumer<String, String> consumer) {
 			if (query == null) {
 				return;
@@ -309,28 +270,21 @@ public interface KeyValuesMedia extends MediaFinder {
 				consumer.accept(key, value);
 			}
 		}
-		
+
 		static void parseCSV(String csv, Consumer<String> consumer) {
-			Stream.of(csv.split(","))
-				.map(s -> s.trim())
-				.filter(s -> ! s.isBlank())
-				.forEach(consumer);
+			Stream.of(csv.split(",")).map(s -> s.trim()).filter(s -> !s.isBlank()).forEach(consumer);
 		}
 
 	}
 
-	public static String fileFromPath(
-			@Nullable String p) {
+	public static String fileFromPath(@Nullable String p) {
 		if (p == null || p.endsWith("/")) {
 			return "";
 		}
-		return p.substring(p.lastIndexOf("/") + 1)
-			.trim();
+		return p.substring(p.lastIndexOf("/") + 1).trim();
 	}
 
-	public static String removeFileExt(
-			String path,
-			@Nullable String fileExtension) {
+	public static String removeFileExt(String path, @Nullable String fileExtension) {
 		if (fileExtension == null || fileExtension.isBlank())
 			return path;
 		String rawExt = "." + fileExtension;
@@ -339,10 +293,9 @@ public interface KeyValuesMedia extends MediaFinder {
 		}
 		return path;
 	}
-	
-
 
 }
+
 /**
  * Writes and parses properties.
  */
@@ -450,107 +403,109 @@ final class PropertiesParser {
 
 }
 
-//final class PercentCodec {
+// final class PercentCodec {
 //
-//	static final BitSet GEN_DELIMS = new BitSet(256);
-//	static final BitSet SUB_DELIMS = new BitSet(256);
-//	static final BitSet UNRESERVED = new BitSet(256);
-//	static final BitSet URIC = new BitSet(256);
+// static final BitSet GEN_DELIMS = new BitSet(256);
+// static final BitSet SUB_DELIMS = new BitSet(256);
+// static final BitSet UNRESERVED = new BitSet(256);
+// static final BitSet URIC = new BitSet(256);
 //
-//	static {
-//		GEN_DELIMS.set(':');
-//		GEN_DELIMS.set('/');
-//		GEN_DELIMS.set('?');
-//		GEN_DELIMS.set('#');
-//		GEN_DELIMS.set('[');
-//		GEN_DELIMS.set(']');
-//		GEN_DELIMS.set('@');
+// static {
+// GEN_DELIMS.set(':');
+// GEN_DELIMS.set('/');
+// GEN_DELIMS.set('?');
+// GEN_DELIMS.set('#');
+// GEN_DELIMS.set('[');
+// GEN_DELIMS.set(']');
+// GEN_DELIMS.set('@');
 //
-//		SUB_DELIMS.set('!');
-//		SUB_DELIMS.set('$');
-//		SUB_DELIMS.set('&');
-//		SUB_DELIMS.set('\'');
-//		SUB_DELIMS.set('(');
-//		SUB_DELIMS.set(')');
-//		SUB_DELIMS.set('*');
-//		SUB_DELIMS.set('+');
-//		SUB_DELIMS.set(',');
-//		SUB_DELIMS.set(';');
-//		SUB_DELIMS.set('=');
+// SUB_DELIMS.set('!');
+// SUB_DELIMS.set('$');
+// SUB_DELIMS.set('&');
+// SUB_DELIMS.set('\'');
+// SUB_DELIMS.set('(');
+// SUB_DELIMS.set(')');
+// SUB_DELIMS.set('*');
+// SUB_DELIMS.set('+');
+// SUB_DELIMS.set(',');
+// SUB_DELIMS.set(';');
+// SUB_DELIMS.set('=');
 //
-//		for (int i = 'a'; i <= 'z'; i++) {
-//			UNRESERVED.set(i);
-//		}
-//		for (int i = 'A'; i <= 'Z'; i++) {
-//			UNRESERVED.set(i);
-//		}
-//		// numeric characters
-//		for (int i = '0'; i <= '9'; i++) {
-//			UNRESERVED.set(i);
-//		}
-//		UNRESERVED.set('-');
-//		UNRESERVED.set('.');
-//		UNRESERVED.set('_');
-//		UNRESERVED.set('~');
-//		URIC.or(SUB_DELIMS);
-//		URIC.or(UNRESERVED);
-//	}
+// for (int i = 'a'; i <= 'z'; i++) {
+// UNRESERVED.set(i);
+// }
+// for (int i = 'A'; i <= 'Z'; i++) {
+// UNRESERVED.set(i);
+// }
+// // numeric characters
+// for (int i = '0'; i <= '9'; i++) {
+// UNRESERVED.set(i);
+// }
+// UNRESERVED.set('-');
+// UNRESERVED.set('.');
+// UNRESERVED.set('_');
+// UNRESERVED.set('~');
+// URIC.or(SUB_DELIMS);
+// URIC.or(UNRESERVED);
+// }
 //
-//	private static final int RADIX = 16;
+// private static final int RADIX = 16;
 //
-//	static void encode(final StringBuilder buf, final CharSequence content, Charset charset, final BitSet safechars) {
-//		final CharBuffer cb = CharBuffer.wrap(content);
-//		final ByteBuffer bb = charset.encode(cb);
-//		while (bb.hasRemaining()) {
-//			final int b = bb.get() & 0xff;
-//			if (safechars.get(b)) {
-//				buf.append((char) b);
-//			}
-//			else {
-//				buf.append("%");
-//				final char hex1 = Character.toUpperCase(Character.forDigit((b >> 4) & 0xF, RADIX));
-//				final char hex2 = Character.toUpperCase(Character.forDigit(b & 0xF, RADIX));
-//				buf.append(hex1);
-//				buf.append(hex2);
-//			}
-//		}
-//	}
+// static void encode(final StringBuilder buf, final CharSequence content, Charset
+// charset, final BitSet safechars) {
+// final CharBuffer cb = CharBuffer.wrap(content);
+// final ByteBuffer bb = charset.encode(cb);
+// while (bb.hasRemaining()) {
+// final int b = bb.get() & 0xff;
+// if (safechars.get(b)) {
+// buf.append((char) b);
+// }
+// else {
+// buf.append("%");
+// final char hex1 = Character.toUpperCase(Character.forDigit((b >> 4) & 0xF, RADIX));
+// final char hex2 = Character.toUpperCase(Character.forDigit(b & 0xF, RADIX));
+// buf.append(hex1);
+// buf.append(hex2);
+// }
+// }
+// }
 //
-//	public static void encode(final StringBuilder buf, final CharSequence content, final Charset charset) {
-//		encode(buf, content, charset, UNRESERVED);
-//	}
+// public static void encode(final StringBuilder buf, final CharSequence content, final
+// Charset charset) {
+// encode(buf, content, charset, UNRESERVED);
+// }
 //
-//	public static String encode(final CharSequence content, final Charset charset) {
-//		final StringBuilder buf = new StringBuilder();
-//		encode(buf, content, charset);
-//		return buf.toString();
-//	}
+// public static String encode(final CharSequence content, final Charset charset) {
+// final StringBuilder buf = new StringBuilder();
+// encode(buf, content, charset);
+// return buf.toString();
+// }
 //
-//	public static String decode(final CharSequence content, Charset charset) {
-//		final ByteBuffer bb = ByteBuffer.allocate(content.length());
-//		final CharBuffer cb = CharBuffer.wrap(content);
-//		while (cb.hasRemaining()) {
-//			final char c = cb.get();
-//			if (c == '%' && cb.remaining() >= 2) {
-//				final char uc = cb.get();
-//				final char lc = cb.get();
-//				final int u = Character.digit(uc, RADIX);
-//				final int l = Character.digit(lc, RADIX);
-//				if (u != -1 && l != -1) {
-//					bb.put((byte) ((u << 4) + l));
-//				}
-//				else {
-//					bb.put((byte) '%');
-//					bb.put((byte) uc);
-//					bb.put((byte) lc);
-//				}
-//			}
-//			else {
-//				bb.put((byte) c);
-//			}
-//		}
-//		bb.flip();
-//		return charset.decode(bb).toString();
-//	}
+// public static String decode(final CharSequence content, Charset charset) {
+// final ByteBuffer bb = ByteBuffer.allocate(content.length());
+// final CharBuffer cb = CharBuffer.wrap(content);
+// while (cb.hasRemaining()) {
+// final char c = cb.get();
+// if (c == '%' && cb.remaining() >= 2) {
+// final char uc = cb.get();
+// final char lc = cb.get();
+// final int u = Character.digit(uc, RADIX);
+// final int l = Character.digit(lc, RADIX);
+// if (u != -1 && l != -1) {
+// bb.put((byte) ((u << 4) + l));
+// }
+// else {
+// bb.put((byte) '%');
+// bb.put((byte) uc);
+// bb.put((byte) lc);
+// }
+// }
+// else {
+// bb.put((byte) c);
+// }
+// }
+// bb.flip();
+// return charset.decode(bb).toString();
+// }
 //
-//}
+// }

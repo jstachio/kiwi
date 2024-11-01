@@ -27,37 +27,30 @@ public interface KeyValuesEnvironment {
 		InputStream i = System.in;
 		return i == null ? InputStream.nullInputStream() : i;
 	}
-	
+
 	default System.Logger getLogger(String name) {
 		return System.getLogger(name);
 	}
 
 	default ResourceStreamLoader getResourceStreamLoader() {
 		return new ResourceStreamLoader() {
-			
+
 			@Override
-			public @Nullable InputStream getResourceAsStream(
-					String path)
-					throws IOException {
+			public @Nullable InputStream getResourceAsStream(String path) throws IOException {
 				return getClassLoader().getResourceAsStream(path);
 			}
 		};
 	}
-	
+
 	default ClassLoader getClassLoader() {
 		return ClassLoader.getSystemClassLoader();
 	}
 
 	public interface ResourceStreamLoader {
 
-		public @Nullable InputStream getResourceAsStream(
-				String path)
-				throws IOException;
+		public @Nullable InputStream getResourceAsStream(String path) throws IOException;
 
-		default InputStream openStream(
-				String path)
-				throws IOException,
-				FileNotFoundException {
+		default InputStream openStream(String path) throws IOException, FileNotFoundException {
 			InputStream s = getResourceAsStream(path);
 			if (s == null) {
 				throw new FileNotFoundException(path);
@@ -66,9 +59,9 @@ public interface KeyValuesEnvironment {
 		}
 
 	}
-	
 
 }
+
 class DefaultKeyValuesEnvironment implements KeyValuesEnvironment {
 
 }
