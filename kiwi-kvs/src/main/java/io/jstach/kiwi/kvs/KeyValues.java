@@ -31,6 +31,10 @@ public interface KeyValues extends Iterable<KeyValue> {
 	public static Builder builder(URI uri) {
 		return Builder.of(uri);
 	}
+	
+	public static Builder builder() {
+		return Builder.of(URI.create("null:///"));
+	}
 
 	public static KeyValues empty() {
 		return KeyValuesEmpty.KeyValuesEmpty;

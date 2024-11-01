@@ -154,6 +154,11 @@ enum ResourceKeys {
 	String getValue(KeyValuesResource resource) {
 		return getValue(resource.parameters(), resource.name());
 	}
+	
+	void setValue(String resourceName, String value, BiConsumer<String,String> consumer) {
+		String key = this.key(resourceName);
+		consumer.accept(key, value);
+	}
 
 	String key(String resourceName) {
 		DefaultKeyValuesResource.validateResourceName(resourceName);

@@ -26,6 +26,19 @@ class KeyValuesSystemTest {
 			._addFlag(LoadFlag.NO_INTERPOLATION)
 			._addFlag(LoadFlag.NO_ADD_KEY_VALUES)
 			.build();
+		
+		{
+			var b = KeyValues.builder();
+			system.resourceKeyValues(b::add);
+			String actual = b.build().toString();
+			String expected = """
+					KeyValues[
+					_flags_c3lzdGVtOi8vLw=NO_ADD_KEY_VALUES,NO_INTERPOLATION
+					_load_c3lzdGVtOi8vLw=system\\:///
+					]
+					""";
+			assertEquals(expected, actual);
+		}
 
 		var kvs = KeyValuesSystem.builder()
 			.environment(environment)

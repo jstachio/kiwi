@@ -25,9 +25,10 @@ public sealed interface KeyValuesResource {
 
 	public @Nullable String mediaType();
 
-	default void copyResourceKeys(String newResourceName, BiConsumer<String, String> consumer) {
-		ResourceKeys.copyKeys(this, newResourceName, consumer);
+	default void resourceKeyValues(BiConsumer<String, String> consumer) {
+		parameters().forKeyValues(consumer);
 	}
+	
 
 	public static Builder builder(URI uri) {
 		return new Builder(uri, uriToName(uri));
@@ -63,7 +64,7 @@ public sealed interface KeyValuesResource {
 		}
 
 		public Builder copyParameters(KeyValuesResource resource) {
-			resource.copyResourceKeys(name, parameters::put);
+			ResourceKeys.copyKeys(resource, name, parameters::put);
 			return this;
 		}
 
@@ -113,6 +114,7 @@ public sealed interface KeyValuesResource {
 			if (mediaType == null) {
 				mediaType = DefaultKeyValuesMedia.mediaTypeFromParameters(name, parameters);
 			}
+			ResourceKeys.LOAD.setValue(name, uri.toString(), parameters::put);
 			StaticVariables variables = new MapStaticVariables(parameters);
 			return new DefaultKeyValuesResource(uri, name, reference, mediaType, variables);
 		}
