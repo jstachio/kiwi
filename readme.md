@@ -48,21 +48,25 @@ message=Merchandising
 user.name=kenny
 ```
 
-## Kiwi is not and does not want to be `System.getProperty` replacement
-
-
-In fact Kiwi rather just fill `System.getProperties` from loaded resources so that
-you do not have to use another library
-
 Most configuration frameworks are focused on *"binding"*, dependency injection, or ergonomics on a
 `Map<String,String>`.
 
 Kiwi is much lower level than those libraries and because of its zero dependency and no logging architecture
 it can be used very early to provide those other early init libraries with a `Map<String,String>`.
 
+## Kiwi is not and does not want to be `System.getProperty` replacement
+
+
+In fact Kiwi rather just fill `System.getProperties` from loaded resources so that
+you do not have to use another library for configuration lookup. That is for retrieval 
+`System.getProperties` is often good enough (what it is lacking is loading as
+the only way to add values is with `-D` JVM parameters.)
+
+
 
 ## Kiwi is/has:
 
+* Close to zero opinions - it does not assume you want to load `app.properties` first.
 * Zero dependencies
 * Zero reflection
 * Zero auto loading - you pick that
@@ -100,15 +104,65 @@ Each key value is/has:
 Kiwi provides ergonomics working with streams of key values to filter, and collect key values
 as well as parse and format.
 
-A KeyValue can be a special key that can reference another resource to load.
+**Notice that Kiwi is like a list of key values and thus:**
+
+* Order can be important
+* There can be duplicate "keys" (that may or may not override in the final result)
+
+Finally a KeyValue can be a special key that can reference another resource to load.
 
 ### KeyValuesResource 
 
+A `KeyValuesResource` has a `URI` and symbolic name (used to find configuration). 
+It is backed by a key/value with additional meta data on how to load that resource. A
+URIs are designed to point at resources and the additional meta data 
+in a `KeyValuesResource` surprise surprise is more `KeyValues`. 
 
+The additional meta data is used to know how to load the key values 
+and what meta data should be associated with each key value.
+
+Some examples are:
+
+* The key values from the resource are sensitive and should not be easily printed out
+* The key values should not be interpolated because the data is raw
+* The loaded key values should or should not load other key values
+
+This is all configurable again through key values (and URIs).
+
+### KeyValuesResourceLoader
+
+A resource loader will take a `KeyValuesResource` and turn it into `KeyValues`.
+
+Essentially it is an extension point to take a URI and load `KeyValues` usually
+based on the schema of the URI. For example `classpath` will use the JDK 
+classloader mechanism and `file` will use `java.io`/`java.nio` file loading.
+
+This is part of the library is extendable.
 
 ### KeyValueMedia
 
-Kiwi provides a framework to parse key values from byte streams, 
-or strings based on media type or file extension.
+Some `KeyValuesResourceLoader`s will know how to parse the `URI` directly to key values
+BUT many will will want to use a parser. 
 
+Kiwi provides a framework to parse and format key values from/to byte streams, 
+or strings based on ["media type" aka "Content Type" aka MIME](https://en.wikipedia.org/wiki/Media_type) 
+or file extension.
 
+This part of the library is extendable.
+
+## History
+
+This library is a rewrite of an organic part of my companies code base that
+has been evolving for over 14 years.
+
+Many libraries and frameworks have come and gone with differing opinions on configuration. 
+While our backing frameworks have changed over the years our configuration style, format
+and behavior because of the library has largely not thanks to the flexibility.
+
+Opinionated maybe vogue but **not** opinionated goes the distance.
+
+## Other work
+
+* [avaje-config](https://avaje.io/config/) 
+
+Kiwi hopes to bring many of its concepts and design to `avaje-config`
