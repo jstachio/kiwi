@@ -1,7 +1,7 @@
 # Kiwi
 
 A non-opinionated Java *bootstrapping configuration* library
-that allows recursive chain loading of configuration from key values
+that allows recursive chain loading of configuration from key values.
 
 **Key values are everywhere!** 
 (also known as an associative array, or name value pairs)
