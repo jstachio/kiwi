@@ -24,8 +24,8 @@ class KeyValuesSystemTest {
 		};
 		var system = KeyValuesResource.builder(URI.create("system:///"))
 			.name("system")
-			._addFlag(LoadFlag.NO_INTERPOLATION)
-			._addFlag(LoadFlag.NO_ADD_KEY_VALUES)
+			.noInterpolation(true)
+			._addFlag(LoadFlag.NO_ADD_KEY_VALUES) // For SentryMan :)
 			.build();
 		
 		{
