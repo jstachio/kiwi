@@ -7,12 +7,12 @@ that allows recursive chain loading of configuration from key values
 (also known as an associative array, or name value pairs)
 
 Environment variables, System properties, cloud meta data, vault,
-HTTP FORM post, URI queryies, command line arguments
+HTTP FORM post, URI queries, command line arguments
 even most forms of JSON, HOCON, TOML YAML and XML
 can all be represented as simple *"key value"* pairs.
 
 Thus it is the perfect denominator for providing applications with initial configuration.
-We call this "bootstrapping" configuration and gathered even before logging.
+We call this *"bootstrapping configuration"* and gathered even before logging.
 
 Kiwi loads streams of key values (KeyValue) from resources. 
 What is unique about it is that certain key values will load more key values to the current
@@ -25,14 +25,14 @@ stream which is what we call chaining.
 A simple example using  `java.util.properties` that could be parsed to `KeyValues` would be:
 
 
-**system.properties** (first laoded:)
+**system.properties** (first loaded):
 
 ```properties
 message=Hello ${user.name}
 _load_foo=classpath:/bar.properties
 ```
 
-**bar.properties loaded**:
+**bar.properties loaded** (second loaded):
 
 `classpath:/bar.properties`
 
@@ -48,8 +48,11 @@ message=Merchandising
 user.name=kenny
 ```
 
-## Kiwi is not a `System.getProperty` replacement
+## Kiwi is not and does not want to be `System.getProperty` replacement
 
+
+In fact Kiwi rather just fill `System.getProperties` from loaded resources so that
+you do not have to use another library
 
 Most configuration frameworks are focused on *"binding"*, dependency injection, or ergonomics on a
 `Map<String,String>`.
