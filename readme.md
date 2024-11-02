@@ -25,7 +25,7 @@ which matters because keys and values from various sources often need transforma
 For example environment variable names often need to be converted to lower case
 and some prefix removed.
 
-**In short it is a configuration framework that can be configured with key values.**
+**In short it is a micro configuration framework that itself can be configured with key values.**
 
 A simple example using  `java.util.Properties` files that could be parsed to `KeyValues` would be:
 
@@ -86,15 +86,16 @@ secret=REDACTED
 ## Kiwi is not `System.getProperty` or other config framework replacements
 
 Most configuration frameworks are focused on *"binding"*, dependency injection, or ergonomics on a
-`Map<String,String>`. They are focused on transforming the flat key values to objects. Kiwi does not do that.
+`Map<String,String>`. They are focused on transforming the flat key values to objects. Kiwi does not do that. 
+**These libraries often have a very opinionated loading scheme**
+and often the only way to configure that is through code. 
 
-Kiwi is much lower level than those libraries and because of its zero dependency and no logging architecture
-it can be used very early to provide those other early init libraries with a `Map<String,String>`
+Kiwi is lower level than most config libraries but yet allows the configuration to happen in configuration. It is mostly concerned with loading and because of its zero dependency and no logging architecture it can be used very early to provide other early init libraries with a `Map<String,String>`
 (or the complete stream of key values found).
 
 In fact Kiwi rather just fill `System.getProperties` from loaded resources so that
 you do not have to use another library for configuration lookup. That is for retrieval 
-a singleton like `System.getProperties` is often good enough. 
+a singleton like `System.getProperties` is often good enough for simple applications. 
 
 
 ## Kiwi's advantages:
@@ -108,6 +109,7 @@ a singleton like `System.getProperties` is often good enough.
 * **Framework agnostic!**
 * Fast initialization
 * Chaining of overriding key values
+* Can simulate other configuration frameworks loading easily with k/v configuration.
 
 
 ## Architecture
