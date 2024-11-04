@@ -62,7 +62,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			}
 			if (!LoadFlag.NO_INTERPOLATION.isSet(flags)) {
 				// technically this would be a noop
-				// anyway because the kv have the 
+				// anyway because the kv have the
 				// no interpolate flag.
 				kvs = kvs.expand(variables);
 			}
@@ -106,13 +106,12 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 		return ResourceKeys.find(kv) == null;
 	}
 
-
 	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags, Variables variables, Logger logger)
 			throws IOException, FileNotFoundException {
 		var context = DefaultLoaderContext.of(system, variables);
 		try {
 			logger.load(resource);
-			var kvs =  system.loaderFinder()
+			var kvs = system.loaderFinder()
 				.findLoader(context, resource)
 				.orElseThrow(() -> new IOException("Resource Loader could not be found. resource: " + resource))
 				.load();
@@ -161,8 +160,8 @@ enum ResourceKeys {
 	String getValue(KeyValuesResource resource) {
 		return getValue(resource.parameters(), resource.name());
 	}
-	
-	void setValue(String resourceName, String value, BiConsumer<String,String> consumer) {
+
+	void setValue(String resourceName, String value, BiConsumer<String, String> consumer) {
 		String key = this.key(resourceName);
 		consumer.accept(key, value);
 	}
@@ -250,16 +249,15 @@ enum LoadFlag {
 	 */
 	INHERIT;
 
-
-
 	private final Set<String> names;
+
 	private final Set<String> reverseNames;
 
 	private LoadFlag() {
 		List<String> names = new ArrayList<>();
 		List<String> reverseNames = new ArrayList<>();
 		String originalName = this.name();
-		
+
 		String name = originalName;
 		boolean no = false;
 		for (String negate : List.of("NO_", "NOT_")) {
@@ -272,18 +270,17 @@ enum LoadFlag {
 		}
 		var nos = no ? names : reverseNames;
 		var yeses = no ? reverseNames : names;
-		
+
 		for (String negate : List.of("NO_", "NOT_")) {
 			nos.add(negate + name);
 		}
 		yeses.add(name);
-		
+
 		this.names = Set.copyOf(names);
 		this.reverseNames = Set.copyOf(reverseNames);
 
 	}
 
-	
 	private static @Nullable String remove(String key, String prefix) {
 		if (!key.startsWith(prefix)) {
 			return null;
@@ -332,7 +329,7 @@ enum LoadFlag {
 		}
 		throw new IllegalArgumentException("bad load flag: " + key);
 	}
-	
+
 	private static boolean nameMatches(Set<String> aliases, String name) {
 		return aliases.contains(name.toUpperCase(Locale.ROOT));
 	}

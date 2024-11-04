@@ -22,24 +22,25 @@ class KeyValuesSystemTest {
 		properties.setProperty("user.home", "/home/kenny");
 
 		var logger = new TestLogger();
-		
+
 		var environment = new KeyValuesEnvironment() {
 			@Override
 			public Properties getSystemProperties() {
 				return properties;
 			}
+
 			@Override
 			public Logger getLogger() {
 				return logger;
 			}
-			
+
 		};
 		var system = KeyValuesResource.builder(URI.create("system:///"))
 			.name("system")
 			.noInterpolation(true)
 			._addFlag(LoadFlag.NO_ADD_KEY_VALUES) // For SentryMan :)
 			.build();
-		
+
 		{
 			var b = KeyValues.builder();
 			system.resourceKeyValues(b::add);
@@ -85,23 +86,22 @@ class KeyValuesSystemTest {
 									""";
 			assertEquals(expected, actual);
 		}
-		
+
 		{
 
 			String actual = logger.toString();
-			String expected =
-					"""
-							[DEBUG] Loading uri='system:///' flags=[NO_ADD_KEY_VALUES, NO_INTERPOLATION]
-							[INFO ] Loaded  uri='system:///' flags=[NO_ADD_KEY_VALUES, NO_INTERPOLATION]
-							[DEBUG] Loading uri='classpath:/test-props/testLoader.properties'
-							[INFO ] Loaded  uri='classpath:/test-props/testLoader.properties'
-							[DEBUG] Loading uri='classpath:/test-props/testLoader-child.properties' specified with key: '_load_child' in uri='classpath:/test-props/testLoader.properties'
-							[INFO ] Loaded  uri='classpath:/test-props/testLoader-child.properties'
-							[DEBUG] Loading uri='classpath:/test-props/testLoader-doesnotexist.properties' flags=[NO_REQUIRE] specified with key: '_load_noexist' in uri='classpath:/test-props/testLoader.properties'
-							[DEBUG] Missing uri='classpath:/test-props/testLoader-doesnotexist.properties' flags=[NO_REQUIRE]
-							[DEBUG] Loading uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE] specified with key: '_load_luggage' in uri='classpath:/test-props/testLoader.properties'
-							[INFO ] Loaded  uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE]
-							""";
+			String expected = """
+					[DEBUG] Loading uri='system:///' flags=[NO_ADD_KEY_VALUES, NO_INTERPOLATION]
+					[INFO ] Loaded  uri='system:///' flags=[NO_ADD_KEY_VALUES, NO_INTERPOLATION]
+					[DEBUG] Loading uri='classpath:/test-props/testLoader.properties'
+					[INFO ] Loaded  uri='classpath:/test-props/testLoader.properties'
+					[DEBUG] Loading uri='classpath:/test-props/testLoader-child.properties' specified with key: '_load_child' in uri='classpath:/test-props/testLoader.properties'
+					[INFO ] Loaded  uri='classpath:/test-props/testLoader-child.properties'
+					[DEBUG] Loading uri='classpath:/test-props/testLoader-doesnotexist.properties' flags=[NO_REQUIRE] specified with key: '_load_noexist' in uri='classpath:/test-props/testLoader.properties'
+					[DEBUG] Missing uri='classpath:/test-props/testLoader-doesnotexist.properties' flags=[NO_REQUIRE]
+					[DEBUG] Loading uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE] specified with key: '_load_luggage' in uri='classpath:/test-props/testLoader.properties'
+					[INFO ] Loaded  uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE]
+					""";
 			assertEquals(expected, actual);
 		}
 	}
@@ -115,12 +115,13 @@ class KeyValuesSystemTest {
 			.build();
 		String actual = system.toString();
 		String expected = """
-DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={_flags_system=NO_ADD_KEY_VALUES,NO_INTERPOLATION, _load_system=system:///}]]"""
+				DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={_flags_system=NO_ADD_KEY_VALUES,NO_INTERPOLATION, _load_system=system:///}]]"""
 			.trim();
 		assertEquals(expected, actual);
 	}
-	
+
 	class TestLogger implements Logger {
+
 		private final List<String> events = new ArrayList<>();
 
 		public TestLogger() {
@@ -130,26 +131,26 @@ DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=
 		public void clear() {
 			events.clear();
 		}
+
 		public List<String> getEvents() {
 			return events;
 		}
+
 		@Override
-		public void debug(
-				String message) {
+		public void debug(String message) {
 			events.add("[DEBUG] " + message);
 		}
 
 		@Override
-		public void info(
-				String message) {
+		public void info(String message) {
 			events.add("[INFO ] " + message);
 		}
+
 		@Override
 		public String toString() {
-			return events.stream()
-					.map(line -> line + "\n")
-					.collect(Collectors.joining());
+			return events.stream().map(line -> line + "\n").collect(Collectors.joining());
 		}
+
 	}
 
 }

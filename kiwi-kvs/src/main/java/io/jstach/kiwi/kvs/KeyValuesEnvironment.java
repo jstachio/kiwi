@@ -75,9 +75,11 @@ public interface KeyValuesEnvironment {
 		default void load(KeyValuesResource resource) {
 			debug(describe(new StringBuilder("Loading "), resource, true).toString());
 		}
+
 		default void loaded(KeyValuesResource resource) {
 			info(describe(new StringBuilder("Loaded  "), resource, false).toString());
 		}
+
 		default void missing(KeyValuesResource resource, FileNotFoundException exception) {
 			debug(describe(new StringBuilder("Missing "), resource, false).toString());
 		}
@@ -85,7 +87,7 @@ public interface KeyValuesEnvironment {
 		private static StringBuilder describe(StringBuilder sb, KeyValuesResource resource, boolean includeRef) {
 			sb.append("uri='").append(resource.uri()).append("'");
 			var flags = LoadFlag.of(resource);
-			if (! flags.isEmpty()) {
+			if (!flags.isEmpty()) {
 				sb.append(" flags=").append(flags);
 			}
 			if (includeRef) {
@@ -97,6 +99,7 @@ public interface KeyValuesEnvironment {
 			}
 			return sb;
 		}
+
 	}
 
 }

@@ -63,7 +63,7 @@ enum DefaultLoaderFinder implements LoaderFinder {
 					.name(resource.name())
 					.copyParameters(resource)
 					.build();
-				//newResource.copyResourceKeys(uriString, null);
+				// newResource.copyResourceKeys(uriString, null);
 				// resource.copyResourceKeys(uriString, null);
 
 				// builder.add(prefix.prefix(p), value);
