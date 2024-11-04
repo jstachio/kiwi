@@ -3,37 +3,33 @@ package io.jstach.kiwi.kvs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.KeyValue.Flag;
+import io.jstach.kiwi.kvs.KeyValuesEnvironment.Logger;
 
 class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	private final KeyValuesSystem system;
 
-	final Variables variables;
+	private final Variables variables;
 
-	final Map<String, String> variableStore;
+	private final Map<String, String> variableStore;
 
-	final Set<String> overrides = new LinkedHashSet<>();
+	private final Map<String, KeyValue> noOverrides = new LinkedHashMap<>();
 
-	final Set<String> keys = new LinkedHashSet<>();
+	private final List<KeyValuesResource> resourcesStack = new ArrayList<>();
 
-	final List<KeyValuesResource> resourcesQueue = new ArrayList<>();
-
-	final List<KeyValue> keyValuesStore = new ArrayList<>();
+	private final List<KeyValue> keyValuesStore = new ArrayList<>();
 
 	public DefaultKeyValuesResourceLoader(KeyValuesSystem system, Variables rootVariables) {
 		super();
@@ -48,7 +44,8 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			return KeyValues.empty();
 		}
 
-		var fs = this.resourcesQueue;
+		var fs = this.resourcesStack;
+		var logger = system.environment().getLogger();
 
 		KeyValues keyValues = () -> keyValuesStore.stream();
 
@@ -57,13 +54,16 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			// pop
 			var resource = fs.remove(0);
 			var flags = LoadFlag.of(resource);
-			var kvs = load(resource, flags, variables);
+			var kvs = load(resource, flags, variables, logger);
 
 			var kvFlags = LoadFlag.keyValueFlags(flags);
 			if (!kvFlags.isEmpty()) {
 				kvs = kvs.map(kv -> kv.addFlags(kvFlags));
 			}
 			if (!LoadFlag.NO_INTERPOLATION.isSet(flags)) {
+				// technically this would be a noop
+				// anyway because the kv have the 
+				// no interpolate flag.
 				kvs = kvs.expand(variables);
 			}
 			var foundResources = findResources(kvs);
@@ -77,7 +77,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 				variableStore.putAll(kvs.interpolate(variables));
 			}
 			/*
-			 * We interpolate the entire list again. Every tine a resource is loaded so
+			 * We interpolate the entire list again. Every time a resource is loaded so
 			 * that the next resource has the previous resources keys as variables for
 			 * interpolation.
 			 */
@@ -106,16 +106,21 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 		return ResourceKeys.find(kv) == null;
 	}
 
-	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags, Variables variables)
+
+	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags, Variables variables, Logger logger)
 			throws IOException, FileNotFoundException {
 		var context = DefaultLoaderContext.of(system, variables);
 		try {
-			return system.loaderFinder()
+			logger.load(resource);
+			var kvs =  system.loaderFinder()
 				.findLoader(context, resource)
 				.orElseThrow(() -> new IOException("Resource Loader could not be found. resource: " + resource))
 				.load();
+			logger.loaded(resource);
+			return kvs;
 		}
 		catch (FileNotFoundException e) {
+			logger.missing(resource, e);
 			if (LoadFlag.NO_REQUIRE.isSet(flags)) {
 				return KeyValues.empty();
 			}
@@ -207,7 +212,7 @@ enum LoadFlag {
 	 * to be confused with {@link #NO_REPLACE_EXISTING_KEY_VALUE} which sounds like what
 	 * this does.
 	 */
-	NO_OVERRIDE,
+	PRIORITY,
 	/**
 	 * This basically says the resource can only add new key values.
 	 */
@@ -217,7 +222,7 @@ enum LoadFlag {
 	 */
 	NO_ADD_KEY_VALUES,
 	/**
-	 * Will only add key values to variable store
+	 * Will add key values but are not allowed for interpolation.
 	 */
 	NO_ADD_VARIABLES,
 	/**

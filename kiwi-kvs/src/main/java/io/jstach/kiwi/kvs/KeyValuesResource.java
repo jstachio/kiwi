@@ -28,7 +28,6 @@ public sealed interface KeyValuesResource {
 	default void resourceKeyValues(BiConsumer<String, String> consumer) {
 		parameters().forKeyValues(consumer);
 	}
-	
 
 	public static Builder builder(URI uri) {
 		return new Builder(uri, uriToName(uri));
@@ -136,6 +135,7 @@ public sealed interface KeyValuesResource {
 					builder.parameter(p.key(), p.expanded());
 				}
 			}
+			builder.reference = keyValue;
 			return builder.build();
 		}
 

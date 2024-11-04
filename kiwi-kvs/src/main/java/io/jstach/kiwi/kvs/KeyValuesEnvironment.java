@@ -72,8 +72,31 @@ public interface KeyValuesEnvironment {
 
 		public void info(String message);
 
-		public void load(String message);
+		default void load(KeyValuesResource resource) {
+			debug(describe(new StringBuilder("Loading "), resource, true).toString());
+		}
+		default void loaded(KeyValuesResource resource) {
+			info(describe(new StringBuilder("Loaded  "), resource, false).toString());
+		}
+		default void missing(KeyValuesResource resource, FileNotFoundException exception) {
+			debug(describe(new StringBuilder("Missing "), resource, false).toString());
+		}
 
+		private static StringBuilder describe(StringBuilder sb, KeyValuesResource resource, boolean includeRef) {
+			sb.append("uri='").append(resource.uri()).append("'");
+			var flags = LoadFlag.of(resource);
+			if (! flags.isEmpty()) {
+				sb.append(" flags=").append(flags);
+			}
+			if (includeRef) {
+				var ref = resource.reference();
+				if (ref != null) {
+					sb.append(" specified with key: ");
+					sb.append("'").append(ref.key()).append("' in uri='").append(ref.source().uri()).append("'");
+				}
+			}
+			return sb;
+		}
 	}
 
 }
@@ -94,11 +117,6 @@ class DefaultLogger implements Logger {
 
 	@Override
 	public void info(String message) {
-		logger.log(Level.INFO, message);
-	}
-
-	@Override
-	public void load(String message) {
 		logger.log(Level.INFO, message);
 	}
 
