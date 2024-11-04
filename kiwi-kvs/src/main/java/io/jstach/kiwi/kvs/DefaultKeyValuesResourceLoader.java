@@ -25,7 +25,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	private final Map<String, String> variableStore;
 
-	private final Map<String, KeyValue> noOverrides = new LinkedHashMap<>();
+	private final Map<String, KeyValue> keys = new LinkedHashMap<>();
 
 	private final List<KeyValuesResource> resourcesStack = new ArrayList<>();
 
@@ -60,7 +60,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			if (!kvFlags.isEmpty()) {
 				kvs = kvs.map(kv -> kv.addFlags(kvFlags));
 			}
-			if (!LoadFlag.NO_INTERPOLATION.isSet(flags)) {
+			if (!LoadFlag.NO_INTERPOLATE.isSet(flags)) {
 				// technically this would be a noop
 				// anyway because the kv have the
 				// no interpolate flag.
@@ -70,8 +70,20 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			// push
 			fs.addAll(0, foundResources);
 			kvs = filter(kvs, flags);
-			if (!LoadFlag.NO_ADD_KEY_VALUES.isSet(flags)) {
-				kvs.forEach(keyValuesStore::add);
+			boolean added = false;
+			if (!LoadFlag.NO_ADD.isSet(flags)) {
+				for (var kv : kvs) {
+					if (LoadFlag.NO_REPLACE.isSet(flags) && keys.containsKey(kv.key())) {
+						continue;
+					}
+					keys.put(kv.key(), kv);
+					keyValuesStore.add(kv);
+					added = true;
+				}
+				if (!added && LoadFlag.NO_EMPTY.isSet(flags)) {
+					throw new IOException("Resource did not have any key values and was flagged not empty. resource: "
+							+ describe(resource));
+				}
 			}
 			else {
 				variableStore.putAll(kvs.interpolate(variables));
@@ -85,6 +97,10 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 		}
 		return KeyValues.of(keyValuesStore).expand(variables).memoize();
 
+	}
+
+	static String describe(KeyValuesResource resource) {
+		return DefaultKeyValuesResource.describe(resource, true);
 	}
 
 	static List<KeyValuesResource> findResources(KeyValues keyValues) {
@@ -113,7 +129,8 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			logger.load(resource);
 			var kvs = system.loaderFinder()
 				.findLoader(context, resource)
-				.orElseThrow(() -> new IOException("Resource Loader could not be found. resource: " + resource))
+				.orElseThrow(
+						() -> new IOException("Resource Loader could not be found. resource: " + describe(resource)))
 				.load();
 			logger.loaded(resource);
 			return kvs;
@@ -123,7 +140,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			if (LoadFlag.NO_REQUIRE.isSet(flags)) {
 				return KeyValues.empty();
 			}
-			throw new IOException("Resource could not be loaded. resource: " + resource, e);
+			throw new IOException("Resource could not be loaded. resource: " + describe(resource), e);
 		}
 
 	}
@@ -211,23 +228,19 @@ enum LoadFlag {
 	 * to be confused with {@link #NO_REPLACE_EXISTING_KEY_VALUE} which sounds like what
 	 * this does.
 	 */
-	PRIORITY,
+	LOCK,
 	/**
 	 * This basically says the resource can only add new key values.
 	 */
-	NO_REPLACE_EXISTING_KEY_VALUE,
+	NO_REPLACE,
 	/**
 	 * Will add the kvs to variables but not to the final resolved key values.
 	 */
-	NO_ADD_KEY_VALUES,
+	NO_ADD,
 	/**
 	 * Will add key values but are not allowed for interpolation.
 	 */
 	NO_ADD_VARIABLES,
-	/**
-	 * If multiple _load resources are found only the first one is used.
-	 */
-	STOP_ON_FIRST_FOUND,
 	/**
 	 * Disables _load calls on child.
 	 */
@@ -235,7 +248,7 @@ enum LoadFlag {
 	/**
 	 * Will not interpolate key values loaded ever.
 	 */
-	NO_INTERPOLATION,
+	NO_INTERPOLATE,
 	/**
 	 * Will not toString or print out sensitive
 	 */
@@ -305,7 +318,7 @@ enum LoadFlag {
 		EnumSet<KeyValue.Flag> flags = EnumSet.noneOf(KeyValue.Flag.class);
 		for (var lf : loadFlags) {
 			switch (lf) {
-				case NO_INTERPOLATION -> flags.add(Flag.NO_INTERPOLATION);
+				case NO_INTERPOLATE -> flags.add(Flag.NO_INTERPOLATION);
 				case SENSITIVE -> flags.add(Flag.SENSITIVE);
 				default -> {
 				}

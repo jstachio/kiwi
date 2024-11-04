@@ -38,7 +38,7 @@ class KeyValuesSystemTest {
 		var system = KeyValuesResource.builder(URI.create("system:///"))
 			.name("system")
 			.noInterpolation(true)
-			._addFlag(LoadFlag.NO_ADD_KEY_VALUES) // For SentryMan :)
+			._addFlag(LoadFlag.NO_ADD) // For SentryMan :)
 			.build();
 
 		{
@@ -47,7 +47,7 @@ class KeyValuesSystemTest {
 			String actual = b.build().toString();
 			String expected = """
 					KeyValues[
-					_flags_system=NO_ADD_KEY_VALUES,NO_INTERPOLATION
+					_flags_system=NO_ADD,NO_INTERPOLATE
 					_load_system=system\\:///
 					]
 					""";
@@ -91,8 +91,8 @@ class KeyValuesSystemTest {
 
 			String actual = logger.toString();
 			String expected = """
-					[DEBUG] Loading uri='system:///' flags=[NO_ADD_KEY_VALUES, NO_INTERPOLATION]
-					[INFO ] Loaded  uri='system:///' flags=[NO_ADD_KEY_VALUES, NO_INTERPOLATION]
+					[DEBUG] Loading uri='system:///' flags=[NO_ADD, NO_INTERPOLATE]
+					[INFO ] Loaded  uri='system:///' flags=[NO_ADD, NO_INTERPOLATE]
 					[DEBUG] Loading uri='classpath:/test-props/testLoader.properties'
 					[INFO ] Loaded  uri='classpath:/test-props/testLoader.properties'
 					[DEBUG] Loading uri='classpath:/test-props/testLoader-child.properties' specified with key: '_load_child' in uri='classpath:/test-props/testLoader.properties'
@@ -115,7 +115,7 @@ class KeyValuesSystemTest {
 			.build();
 		String actual = system.toString();
 		String expected = """
-				DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={_flags_system=NO_ADD_KEY_VALUES,NO_INTERPOLATION, _load_system=system:///}]]"""
+				DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={_flags_system=NO_ADD,NO_INTERPOLATE, _load_system=system:///}]]"""
 			.trim();
 		assertEquals(expected, actual);
 	}

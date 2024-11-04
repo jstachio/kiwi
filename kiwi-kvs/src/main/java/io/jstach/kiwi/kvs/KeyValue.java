@@ -100,7 +100,7 @@ public record KeyValue(String key, //
 		if (isSensitive()) {
 			String raw = redactMessage;
 			String expanded = redactMessage;
-			var flags = this.flags;
+			var flags = EnumSet.copyOf(this.flags);
 			flags = EnumSet.copyOf(flags);
 			flags.remove(Flag.SENSITIVE);
 			return new KeyValue(key, raw, expanded, source, flags);
@@ -109,8 +109,19 @@ public record KeyValue(String key, //
 	}
 
 	@Override
-	public final String toString() {
-		return redact().toString();
+	public String toString() {
+		return toString(redact());
 	}
+
+	private static String toString(KeyValue kv) {
+		return "KeyValue [key=" + kv.key + ", raw=" + kv.raw + ", expanded=" + kv.expanded + ", source=" + kv.source
+				+ ", flags=" + kv.flags + "]";
+	}
+
+	// @Override
+	// public final String toString() {
+	// var self = redact();
+	//
+	// }
 
 }

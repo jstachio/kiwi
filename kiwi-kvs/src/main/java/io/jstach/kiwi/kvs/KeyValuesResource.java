@@ -92,12 +92,12 @@ public sealed interface KeyValuesResource {
 		}
 
 		public Builder noInterpolation(boolean flag) {
-			LoadFlag.NO_INTERPOLATION.set(flags, flag);
+			LoadFlag.NO_INTERPOLATE.set(flags, flag);
 			return this;
 		}
 
 		public Builder noAddKeyValues(boolean flag) {
-			LoadFlag.NO_ADD_KEY_VALUES.set(flags, flag);
+			LoadFlag.NO_ADD.set(flags, flag);
 			return this;
 		}
 
@@ -182,5 +182,25 @@ record DefaultKeyValuesResource(URI uri, String name, @Nullable KeyValue referen
 							+ identifier);
 		}
 		return identifier;
+	}
+
+	static StringBuilder describe(StringBuilder sb, KeyValuesResource resource, boolean includeRef) {
+		sb.append("uri='").append(resource.uri()).append("'");
+		var flags = LoadFlag.of(resource);
+		if (!flags.isEmpty()) {
+			sb.append(" flags=").append(flags);
+		}
+		if (includeRef) {
+			var ref = resource.reference();
+			if (ref != null) {
+				sb.append(" specified with key: ");
+				sb.append("'").append(ref.key()).append("' in uri='").append(ref.source().uri()).append("'");
+			}
+		}
+		return sb;
+	}
+
+	static String describe(KeyValuesResource resource, boolean includeRef) {
+		return describe(new StringBuilder(), resource, includeRef).toString();
 	}
 }
