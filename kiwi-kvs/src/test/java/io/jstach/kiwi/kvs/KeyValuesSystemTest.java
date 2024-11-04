@@ -46,7 +46,7 @@ class KeyValuesSystemTest {
 			.build() //
 			.loader() //
 			.add(system)
-			.add("classpath:/example/testLoader.properties")
+			.add("classpath:/test-props/testLoader.properties")
 			.load();
 
 		System.out.println(kvs);
@@ -84,8 +84,7 @@ class KeyValuesSystemTest {
 			.build();
 		String actual = system.toString();
 		String expected = """
-				DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={_flags_system=NO_ADD_KEY_VALUES,NO_INTERPOLATION}]]
-				"""
+DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={_flags_system=NO_ADD_KEY_VALUES,NO_INTERPOLATION, _load_system=system:///}]]				"""
 			.trim();
 		assertEquals(expected, actual);
 	}

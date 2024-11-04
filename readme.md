@@ -83,7 +83,7 @@ secret=REDACTED
 ```
 
 
-## Kiwi is not `System.getProperty` or other config framework replacements
+## Kiwi is not a `System.getProperty` or other config framework replacements
 
 Most configuration frameworks are focused on *"binding"*, dependency injection, or ergonomics on a
 `Map<String,String>`. They are focused on transforming the flat key values to objects. Kiwi does not do that. 
@@ -100,7 +100,7 @@ a singleton like `System.getProperties` is often good enough for simple applicat
 
 ## Kiwi's advantages:
 
-* **Zero opinions** - it does not assume you want to load `app.properties` first. You define whats resources and order.
+* **Zero opinions** - it does not assume you want to load `app.properties` first. You define what resources and order.
 * Zero dependencies
 * Zero reflection
 * Zero auto loading - you pick that
@@ -195,10 +195,10 @@ Many libraries and frameworks have come and gone with differing opinions on conf
 While our backing frameworks have changed over the years our configuration style, format
 and behavior because of the library has largely not thanks to the flexibility.
 
-Opinionated maybe vogue but **not** opinionated goes the distance.
+*Opinionated maybe vogue but **not** opinionated goes the distance.*
 
 ## Other work
 
 * [avaje-config](https://avaje.io/config/) 
 
-Kiwi hopes to bring many of its concepts and design to `avaje-config`
+Kiwi hopes to bring many of its concepts and design to `avaje-config`.

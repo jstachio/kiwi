@@ -3,6 +3,7 @@ package io.jstach.kiwi.kvs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
@@ -114,7 +116,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 				.load();
 		}
 		catch (FileNotFoundException e) {
-			if (LoadFlag.NO_REQUIRED.isSet(flags)) {
+			if (LoadFlag.NO_REQUIRE.isSet(flags)) {
 				return KeyValues.empty();
 			}
 			throw new IOException("Resource could not be loaded. resource: " + resource, e);
@@ -195,7 +197,7 @@ enum LoadFlag {
 	/**
 	 * Makes it maybe.
 	 */
-	NO_REQUIRED,
+	NO_REQUIRE,
 	/**
 	 * TODO
 	 */
@@ -243,16 +245,45 @@ enum LoadFlag {
 	 */
 	INHERIT;
 
-	interface LoadFlagSupplier {
 
-		Set<LoadFlag> loadFlags();
+
+	private final Set<String> names;
+	private final Set<String> reverseNames;
+
+	private LoadFlag() {
+		List<String> names = new ArrayList<>();
+		List<String> reverseNames = new ArrayList<>();
+		String originalName = this.name();
+		
+		String name = originalName;
+		boolean no = false;
+		for (String negate : List.of("NO_", "NOT_")) {
+			String n = remove(originalName, negate);
+			if (n != null) {
+				no = true;
+				name = n;
+				break;
+			}
+		}
+		var nos = no ? names : reverseNames;
+		var yeses = no ? reverseNames : names;
+		
+		for (String negate : List.of("NO_", "NOT_")) {
+			nos.add(negate + name);
+		}
+		yeses.add(name);
+		
+		this.names = Set.copyOf(names);
+		this.reverseNames = Set.copyOf(reverseNames);
 
 	}
 
-	private final String reverseKey;
-
-	private LoadFlag() {
-		this.reverseKey = reverseKey(name());
+	
+	private static @Nullable String remove(String key, String prefix) {
+		if (!key.startsWith(prefix)) {
+			return null;
+		}
+		return key.substring(prefix.length());
 	}
 
 	boolean isSet(Set<LoadFlag> flags) {
@@ -285,33 +316,20 @@ enum LoadFlag {
 		var flags = LoadFlag.values();
 		key = key.toUpperCase(Locale.ROOT);
 		for (var flag : flags) {
-			if (flag.name().equalsIgnoreCase(key)) {
+			if (nameMatches(flag.names, key)) {
 				flag.set(set, true);
 				return;
 			}
-			else if (flag.reverseKey.equalsIgnoreCase(key)) {
+			else if (nameMatches(flag.reverseNames, key)) {
 				flag.set(set, false);
 				return;
 			}
 		}
 		throw new IllegalArgumentException("bad load flag: " + key);
 	}
-
-	private static String reverseKey(String key) {
-		for (String negate : List.of("NO_")) {
-			String k = remove(key, negate);
-			if (k != null) {
-				return k;
-			}
-		}
-		return "NO_" + key;
-	}
-
-	static @Nullable String remove(String key, String prefix) {
-		if (!key.startsWith(prefix)) {
-			return null;
-		}
-		return key.substring(prefix.length());
+	
+	private static boolean nameMatches(Set<String> aliases, String name) {
+		return aliases.contains(name.toUpperCase(Locale.ROOT));
 	}
 
 	static void addToParameters(String resourceName, Map<String, String> parameters, Set<LoadFlag> flags) {
