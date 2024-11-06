@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
@@ -106,7 +106,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 	static List<KeyValuesResource> findResources(KeyValues keyValues) {
 		List<KeyValuesResource> resources = new ArrayList<>();
 		for (var kv : keyValues) {
-			var r = KeyValuesResource.Builder.build(kv, keyValues);
+			var r = DefaultKeyValuesResource.maybeOf(kv, keyValues);
 			if (r != null) {
 				resources.add(r);
 			}
@@ -143,72 +143,6 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			throw new IOException("Resource could not be loaded. resource: " + describe(resource), e);
 		}
 
-	}
-
-}
-
-enum ResourceKeys {
-
-	LOAD("load"), FLAGS("flags"), MEDIA_TYPE("mediaType");
-
-	// private final String key;
-	private final String prefix;
-
-	private ResourceKeys(String key) {
-		// this.key = key;
-		this.prefix = "_" + key + "_";
-	}
-
-	static @Nullable ResourceKeys find(KeyValue kv) {
-		for (var key : ResourceKeys.values()) {
-			if (kv.key().startsWith(key.prefix)) {
-				return key;
-			}
-		}
-		return null;
-	}
-
-	@Nullable
-	String getValue(Variables variables, String resourceName) {
-		return variables.getValue(key(resourceName));
-	}
-
-	@Nullable
-	String getValue(KeyValuesResource resource) {
-		return getValue(resource.parameters(), resource.name());
-	}
-
-	void setValue(String resourceName, String value, BiConsumer<String, String> consumer) {
-		String key = this.key(resourceName);
-		consumer.accept(key, value);
-	}
-
-	String key(String resourceName) {
-		DefaultKeyValuesResource.validateResourceName(resourceName);
-		return this.prefix + resourceName;
-	}
-
-	static void copyKeys(KeyValuesResource resource, String newResourceName, BiConsumer<String, String> consumer) {
-		for (var rk : ResourceKeys.values()) {
-			String value = rk.getValue(resource);
-			if (value != null) {
-				String key = rk.key(newResourceName);
-				consumer.accept(key, newResourceName);
-				;
-			}
-		}
-	}
-
-	static void copyKeys(Variables variables, String oldResourceName, String newResourceName,
-			BiConsumer<String, String> consumer) {
-		for (var rk : ResourceKeys.values()) {
-			String value = rk.getValue(variables, oldResourceName);
-			if (value != null) {
-				String key = rk.key(newResourceName);
-				consumer.accept(key, value);
-				;
-			}
-		}
 	}
 
 }
@@ -343,17 +277,27 @@ enum LoadFlag {
 		throw new IllegalArgumentException("bad load flag: " + key);
 	}
 
+	public static EnumSet<LoadFlag> parseCSV(String csv) {
+		EnumSet<LoadFlag> flags = EnumSet.noneOf(LoadFlag.class);
+		DefaultKeyValuesMedia.parseCSV(csv, k -> LoadFlag.parse(flags, k));
+		return flags;
+	}
+
 	private static boolean nameMatches(Set<String> aliases, String name) {
 		return aliases.contains(name.toUpperCase(Locale.ROOT));
 	}
 
-	static void addToParameters(String resourceName, Map<String, String> parameters, Set<LoadFlag> flags) {
-		String key = ResourceKeys.FLAGS.key(resourceName);
-		if (parameters.containsKey(key) || flags.isEmpty()) {
-			return;
-		}
-		String value = flags.stream().map(f -> f.name()).collect(Collectors.joining(","));
-		parameters.put(key, value);
+	// static void addToParameters(Set<LoadFlag> flags, BiConsumer<String,String>) {
+	// String key = ResourceKeys.FLAGS.key(resourceName);
+	// if (parameters.containsKey(key) || flags.isEmpty()) {
+	// return;
+	// }
+	// String value = flags.stream().map(f -> f.name()).collect(Collectors.joining(","));
+	// parameters.put(key, value);
+	// }
+
+	static String toCSV(Stream<LoadFlag> loadFlags) {
+		return loadFlags.map(f -> f.name()).collect(Collectors.joining(","));
 	}
 
 	static Set<LoadFlag> of(KeyValuesResource resource) {

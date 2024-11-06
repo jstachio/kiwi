@@ -114,14 +114,12 @@ public record KeyValue(String key, //
 	}
 
 	private static String toString(KeyValue kv) {
-		return "KeyValue [key=" + kv.key + ", raw=" + kv.raw + ", expanded=" + kv.expanded + ", source=" + kv.source
-				+ ", flags=" + kv.flags + "]";
+		return "KeyValue [key=" + kv.key //
+				+ ", raw=" + kv.raw //
+				+ ", expanded=" + kv.expanded //
+				+ ", source=" + kv.source //
+				+ ", flags=" + kv.flags //
+				+ "]";
 	}
-
-	// @Override
-	// public final String toString() {
-	// var self = redact();
-	//
-	// }
 
 }

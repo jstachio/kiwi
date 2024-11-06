@@ -47,8 +47,8 @@ class KeyValuesSystemTest {
 			String actual = b.build().toString();
 			String expected = """
 					KeyValues[
-					_flags_system=NO_ADD,NO_INTERPOLATE
 					_load_system=system\\:///
+					_flags_system=NO_ADD,NO_INTERPOLATE
 					]
 					""";
 			assertEquals(expected, actual);
@@ -115,7 +115,7 @@ class KeyValuesSystemTest {
 			.build();
 		String actual = system.toString();
 		String expected = """
-				DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={_flags_system=NO_ADD,NO_INTERPOLATE, _load_system=system:///}]]"""
+				DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={load=system:///, flags=NO_ADD,NO_INTERPOLATE}]]"""
 			.trim();
 		assertEquals(expected, actual);
 	}

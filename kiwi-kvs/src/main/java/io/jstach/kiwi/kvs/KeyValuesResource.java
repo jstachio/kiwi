@@ -6,14 +6,14 @@ import java.util.Base64;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.Variables.StaticVariables;
 
-public sealed interface KeyValuesResource {
+public sealed interface KeyValuesResource permits DefaultKeyValuesResource {
 
 	public URI uri();
 
@@ -26,7 +26,12 @@ public sealed interface KeyValuesResource {
 	public @Nullable String mediaType();
 
 	default void resourceKeyValues(BiConsumer<String, String> consumer) {
-		parameters().forKeyValues(consumer);
+		parameters().forKeyValues((k, v) -> {
+			var rk = ResourceKeys.parse(k);
+			if (rk != null) {
+				consumer.accept(rk.key(name()), v);
+			}
+		});
 	}
 
 	public static Builder builder(URI uri) {
@@ -43,28 +48,25 @@ public sealed interface KeyValuesResource {
 			.encodeToString(uri.toASCIIString().getBytes(StandardCharsets.US_ASCII));
 	}
 
-	public class Builder {
+	public final class Builder {
 
-		private URI uri;
+		URI uri;
 
-		private String name;
+		String name;
 
-		private Map<String, String> parameters = new LinkedHashMap<>();
+		Map<String, String> parameters = new LinkedHashMap<>();
 
-		private EnumSet<LoadFlag> flags = EnumSet.noneOf(LoadFlag.class);
+		EnumSet<LoadFlag> flags = EnumSet.noneOf(LoadFlag.class);
 
-		private @Nullable KeyValue reference;
+		@Nullable
+		KeyValue reference;
 
-		private @Nullable String mediaType;
+		@Nullable
+		String mediaType;
 
 		Builder(URI uri, String name) {
 			this.uri = uri;
 			this.name = DefaultKeyValuesResource.validateResourceName(name);
-		}
-
-		public Builder copyParameters(KeyValuesResource resource) {
-			ResourceKeys.copyKeys(resource, name, parameters::put);
-			return this;
 		}
 
 		public Builder uri(URI uri) {
@@ -73,11 +75,7 @@ public sealed interface KeyValuesResource {
 		}
 
 		public Builder name(String name) {
-			String original = this.name;
-			this.name = name;
-			if (!name.equals(original) && !parameters.isEmpty()) {
-				ResourceKeys.copyKeys(new MapStaticVariables(parameters), original, name, parameters::put);
-			}
+			this.name = Objects.requireNonNull(name);
 			return this;
 		}
 
@@ -107,100 +105,9 @@ public sealed interface KeyValuesResource {
 		}
 
 		public KeyValuesResource build() {
-			Map<String, String> parameters = new LinkedHashMap<>(this.parameters);
-			LoadFlag.addToParameters(name, parameters, flags);
-			String mediaType = this.mediaType;
-			if (mediaType == null) {
-				mediaType = DefaultKeyValuesMedia.mediaTypeFromParameters(name, parameters);
-			}
-			ResourceKeys.LOAD.setValue(name, uri.toString(), parameters::put);
-			StaticVariables variables = new MapStaticVariables(parameters);
-			return new DefaultKeyValuesResource(uri, name, reference, mediaType, variables);
-		}
-
-		static @Nullable Builder maybe(KeyValue reference) {
-			var resource = ResourceCommand.LOAD.parse(reference);
-			if (resource == null) {
-				return null;
-			}
-			return new Builder(resource.uri(), resource.resourceName());
-		}
-
-		static @Nullable KeyValuesResource build(KeyValue keyValue, KeyValues parameters) {
-			var builder = maybe(keyValue);
-			if (builder == null)
-				return null;
-			for (var p : parameters) {
-				if (p.key().startsWith("_")) {
-					builder.parameter(p.key(), p.expanded());
-				}
-			}
-			builder.reference = keyValue;
-			return builder.build();
+			return DefaultKeyValuesResource.of(this);
 		}
 
 	}
 
-}
-
-enum ResourceCommand {
-
-	LOAD("load");
-
-	ResourceCommand(String command) {
-		pattern = Pattern.compile("_" + command + "_([a-zA-Z0-9]+)");
-	}
-
-	private final Pattern pattern;
-
-	public @Nullable Resource parse(KeyValue keyValue) {
-		String key = keyValue.key();
-		var matcher = this.pattern.matcher(key);
-		if (matcher.find()) {
-			String name = matcher.group(1);
-			var uri = URI.create(keyValue.expanded());
-			return new Resource(this, name, uri);
-		}
-		return null;
-	}
-
-	record Resource(ResourceCommand command, String resourceName, URI uri) {
-	}
-
-}
-
-record DefaultKeyValuesResource(URI uri, String name, @Nullable KeyValue reference, @Nullable String mediaType,
-		StaticVariables parameters) implements KeyValuesResource {
-	DefaultKeyValuesResource {
-		validateResourceName(name);
-	}
-
-	static String validateResourceName(String identifier) {
-		if (identifier == null || !identifier.matches("[a-zA-Z0-9]+")) {
-			throw new IllegalArgumentException(
-					"Invalid identifier: must contain only alphanumeric characters (no underscores) and not be null. input: "
-							+ identifier);
-		}
-		return identifier;
-	}
-
-	static StringBuilder describe(StringBuilder sb, KeyValuesResource resource, boolean includeRef) {
-		sb.append("uri='").append(resource.uri()).append("'");
-		var flags = LoadFlag.of(resource);
-		if (!flags.isEmpty()) {
-			sb.append(" flags=").append(flags);
-		}
-		if (includeRef) {
-			var ref = resource.reference();
-			if (ref != null) {
-				sb.append(" specified with key: ");
-				sb.append("'").append(ref.key()).append("' in uri='").append(ref.source().uri()).append("'");
-			}
-		}
-		return sb;
-	}
-
-	static String describe(KeyValuesResource resource, boolean includeRef) {
-		return describe(new StringBuilder(), resource, includeRef).toString();
-	}
 }

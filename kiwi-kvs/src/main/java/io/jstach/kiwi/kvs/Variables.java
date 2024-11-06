@@ -19,9 +19,13 @@ public interface Variables {
 
 	public @Nullable String getValue(String key);
 
-	public sealed interface StaticVariables extends Variables {
+	public interface ListableVariables extends Variables {
 
 		public Iterable<String> keys();
+
+	}
+
+	public sealed interface StaticVariables extends ListableVariables {
 
 		// TODO maybe use KeyValues
 		default void forKeyValues(BiConsumer<String, String> consumer) {

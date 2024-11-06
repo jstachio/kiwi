@@ -61,7 +61,7 @@ enum DefaultLoaderFinder implements LoaderFinder {
 				var value = uriString.replace("__PROFILE__", p);
 				var newResource = KeyValuesResource.builder(value)
 					.name(resource.name())
-					.copyParameters(resource)
+					// .copyParameters(resource)
 					.build();
 				// newResource.copyResourceKeys(uriString, null);
 				// resource.copyResourceKeys(uriString, null);

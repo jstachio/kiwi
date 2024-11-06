@@ -139,11 +139,6 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter, MediaFi
 		Stream.of(csv.split(",")).map(s -> s.trim()).filter(s -> !s.isBlank()).forEach(consumer);
 	}
 
-	static @Nullable String mediaTypeFromParameters(String resourceName, Map<String, String> parameters) {
-		String key = "_mediaType_" + resourceName;
-		return parameters.get(key);
-	}
-
 	// static String fileFromPath(@Nullable String p) {
 	// if (p == null || p.endsWith("/")) {
 	// return "";
