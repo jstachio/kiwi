@@ -17,6 +17,10 @@ import org.jspecify.annotations.Nullable;
 import io.jstach.kiwi.kvs.KeyValue.Flag;
 import io.jstach.kiwi.kvs.KeyValuesEnvironment.Logger;
 
+/*
+ * This class is not reusable or threadsafe unless
+ * the static of method is used.
+ */
 class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	private final KeyValuesSystem system;
@@ -33,7 +37,18 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	private final KeyValuesResourceParser resourceParser = DefaultKeyValuesResourceParser.of();
 
-	public DefaultKeyValuesResourceLoader(KeyValuesSystem system, Variables rootVariables) {
+	static KeyValuesResourceLoader of(KeyValuesSystem system, Variables rootVariables) {
+		record ReusableLoader(KeyValuesSystem system, Variables rootVariables) implements KeyValuesResourceLoader {
+
+			@Override
+			public KeyValues load(List<? extends KeyValuesResource> resources) throws IOException {
+				return new DefaultKeyValuesResourceLoader(system, rootVariables).load(resources);
+			}
+		}
+		return new ReusableLoader(system, rootVariables);
+	}
+
+	private DefaultKeyValuesResourceLoader(KeyValuesSystem system, Variables rootVariables) {
 		super();
 		this.system = system;
 		this.variableStore = new LinkedHashMap<>();

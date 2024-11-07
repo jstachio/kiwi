@@ -20,7 +20,7 @@ public interface KeyValuesSystem {
 	public MediaFinder mediaFinder();
 
 	default KeyValuesLoader.Builder loader() {
-		return new KeyValuesLoader.Builder(new DefaultKeyValuesResourceLoader(this, Variables.empty()));
+		return new KeyValuesLoader.Builder(DefaultKeyValuesResourceLoader.of(this, Variables.empty()));
 	}
 
 	public static KeyValuesSystem defaults() {
