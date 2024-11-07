@@ -52,11 +52,11 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 		fs.addAll(0, _resources);
 		for (; !fs.isEmpty();) {
 			// pop
-			var resource = fs.remove(0);
-			var flags = LoadFlag.of(resource);
+			var resource = (InternalKeyValuesResource) fs.remove(0);
+			var flags = resource.loadFlags();
 			var kvs = load(resource, flags, variables, logger);
 
-			var kvFlags = LoadFlag.keyValueFlags(flags);
+			var kvFlags = LoadFlag.toKeyValueFlags(flags);
 			if (!kvFlags.isEmpty()) {
 				kvs = kvs.map(kv -> kv.addFlags(kvFlags));
 			}
@@ -69,7 +69,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 			var foundResources = findResources(kvs);
 			// push
 			fs.addAll(0, foundResources);
-			kvs = filter(kvs, flags);
+			kvs = filter(kvs);
 			boolean added = false;
 			if (!LoadFlag.NO_ADD.isSet(flags)) {
 				for (var kv : kvs) {
@@ -99,6 +99,10 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	}
 
+	private static KeyValues filter(KeyValues kvs) {
+		return ParseStrategy.of().filter(kvs);
+	}
+
 	static String describe(KeyValuesResource resource) {
 		return DefaultKeyValuesResource.describe(resource, true);
 	}
@@ -106,20 +110,12 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 	static List<KeyValuesResource> findResources(KeyValues keyValues) {
 		List<KeyValuesResource> resources = new ArrayList<>();
 		for (var kv : keyValues) {
-			var r = DefaultKeyValuesResource.maybeOf(kv, keyValues);
+			var r = ParseStrategy.of().parseOrNull(kv, keyValues);
 			if (r != null) {
 				resources.add(r);
 			}
 		}
 		return List.copyOf(resources);
-	}
-
-	KeyValues filter(KeyValues keyValues, Set<LoadFlag> flags) {
-		return KeyValues.of(keyValues.stream().filter(this::filter).toList());
-	}
-
-	private boolean filter(KeyValue kv) {
-		return ResourceKeys.find(kv) == null;
 	}
 
 	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags, Variables variables, Logger logger)
@@ -248,7 +244,7 @@ enum LoadFlag {
 		}
 	}
 
-	public static Set<KeyValue.Flag> keyValueFlags(Iterable<LoadFlag> loadFlags) {
+	public static Set<KeyValue.Flag> toKeyValueFlags(Iterable<LoadFlag> loadFlags) {
 		EnumSet<KeyValue.Flag> flags = EnumSet.noneOf(KeyValue.Flag.class);
 		for (var lf : loadFlags) {
 			switch (lf) {
@@ -298,16 +294,6 @@ enum LoadFlag {
 
 	static String toCSV(Stream<LoadFlag> loadFlags) {
 		return loadFlags.map(f -> f.name()).collect(Collectors.joining(","));
-	}
-
-	static Set<LoadFlag> of(KeyValuesResource resource) {
-		EnumSet<LoadFlag> flags = EnumSet.noneOf(LoadFlag.class);
-		String v = ResourceKeys.FLAGS.getValue(resource);
-		if (v == null) {
-			return flags;
-		}
-		DefaultKeyValuesMedia.parseCSV(v, k -> LoadFlag.parse(flags, k));
-		return flags;
 	}
 
 }

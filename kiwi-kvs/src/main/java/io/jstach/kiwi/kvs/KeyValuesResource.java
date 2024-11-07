@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.Variables.StaticVariables;
 
-public sealed interface KeyValuesResource permits DefaultKeyValuesResource {
+public sealed interface KeyValuesResource permits InternalKeyValuesResource {
 
 	public URI uri();
 
@@ -25,14 +25,9 @@ public sealed interface KeyValuesResource permits DefaultKeyValuesResource {
 
 	public @Nullable String mediaType();
 
-	default void resourceKeyValues(BiConsumer<String, String> consumer) {
-		parameters().forKeyValues((k, v) -> {
-			var rk = ResourceKeys.parse(k);
-			if (rk != null) {
-				consumer.accept(rk.key(name()), v);
-			}
-		});
-	}
+	public Builder toBuilder();
+
+	public void resourceKeyValues(BiConsumer<String, String> consumer);
 
 	public static Builder builder(URI uri) {
 		return new Builder(uri, uriToName(uri));
@@ -54,9 +49,9 @@ public sealed interface KeyValuesResource permits DefaultKeyValuesResource {
 
 		String name;
 
-		Map<String, String> parameters = new LinkedHashMap<>();
+		final Map<String, String> parameters;
 
-		EnumSet<LoadFlag> flags = EnumSet.noneOf(LoadFlag.class);
+		final EnumSet<LoadFlag> flags;
 
 		@Nullable
 		KeyValue reference;
@@ -67,7 +62,27 @@ public sealed interface KeyValuesResource permits DefaultKeyValuesResource {
 		Builder(URI uri, String name) {
 			this.uri = uri;
 			this.name = DefaultKeyValuesResource.validateResourceName(name);
+			this.parameters = new LinkedHashMap<>();
+			this.flags = EnumSet.noneOf(LoadFlag.class);
 		}
+
+		Builder(URI uri, String name, Map<String, String> parameters, EnumSet<LoadFlag> flags,
+				@Nullable KeyValue reference, @Nullable String mediaType) {
+			super();
+			this.uri = uri;
+			this.name = name;
+			this.parameters = parameters;
+			this.flags = flags;
+			this.reference = reference;
+			this.mediaType = mediaType;
+		}
+
+		// Builder(Builder builder) {
+		// this.uri = builder.uri;
+		// this.name = builder.name;
+		// this.parameters = new LinkedHashMap<>(builder.parameters);
+		// this.flags = EnumSet.copyOf(builder.flags);
+		// }
 
 		public Builder uri(URI uri) {
 			this.uri = uri;

@@ -40,63 +40,7 @@ enum DefaultLoaderFinder implements LoaderFinder {
 
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
-			String uriString = resource.uri().toString();
-			uriString = uriString.substring(scheme.length() + 1);
-			var uri = URI.create(uriString);
-			var profile = context.variables().getValue("_profile");
-			if (profile == null) {
-				throw new IOException("_profile variable is required. Set it to CSV list of profiles.");
-			}
-			if (!uriString.contains("__PROFILE__")) {
-				throw new IOException(
-						"Resource needs '__PROFILE__' in URI to be replaced by extracted profiles. URI: " + uriString);
-			}
-			List<String> profiles = Stream.of(profile.split(",")).filter(p -> !p.isBlank()).distinct().toList();
-
-			var logger = context.environment().getLogger();
-			logger.info("Found profiles: " + profiles);
-			var builder = KeyValues.builder(resource.uri());
-
-			for (var p : profiles) {
-				var value = uriString.replace("__PROFILE__", p);
-				var newResource = KeyValuesResource.builder(value)
-					.name(resource.name())
-					// .copyParameters(resource)
-					.build();
-				// newResource.copyResourceKeys(uriString, null);
-				// resource.copyResourceKeys(uriString, null);
-
-				// builder.add(prefix.prefix(p), value);
-			}
-			var kvs = builder.build();
-			return kvs;
-			/*
-			 * var uri = info.getUri(); String actualResource = uri.toString()
-			 * .substring("profile:".length());
-			 *
-			 * var profile = info.getVariables() .getValue("_profile"); if (profile ==
-			 * null) { throw new
-			 * IOException("_profile variable is required. Set it to CSV list of profiles."
-			 * ); }
-			 *
-			 * if (!actualResource.contains("__PROFILE__")) { throw new IOException(
-			 * "Resource needs '__PROFILE__' in URI to be replaced by extracted profiles. URI: "
-			 * + actualResource); }
-			 *
-			 * List<String> profiles = Stream.of(profile.split(",")) .filter(p ->
-			 * !p.isBlank()) .distinct() .toList();
-			 *
-			 * bootEnvironment.getBootLogger() .log(info.getLoadStep(), LogLevel.LOAD,
-			 * "Found profiles: " + profiles);
-			 *
-			 * // List<String> uris = profiles.stream() // .map(p ->
-			 * actualResource.replace("_profile_", p)) // .toList(); var builder =
-			 * KeyValues.builder(uri); var prefix =
-			 * InternalKeyValuesReference.ReferencePrefix
-			 * .resolveReferencePrefix(info.getLoadFlags(), info.getReference()); for (var
-			 * p : profiles) { var value = actualResource.replace("__PROFILE__", p);
-			 * builder.add(prefix.prefix(p), value); } var kvs = builder.build();
-			 */
+			return profiles(scheme, context, resource);
 		}
 
 		@Override
@@ -137,6 +81,36 @@ enum DefaultLoaderFinder implements LoaderFinder {
 
 	boolean matches(KeyValuesResource resource) {
 		return name().toLowerCase().equals(resource.uri().getScheme());
+	}
+
+	static KeyValues profiles(String scheme, LoaderContext context, KeyValuesResource resource) throws IOException {
+		String uriString = resource.uri().toString();
+		uriString = uriString.substring(scheme.length() + 1);
+		// var uri = URI.create(uriString);
+		var profile = context.variables().getValue("_profile");
+		if (profile == null) {
+			throw new IOException("_profile variable is required. Set it to CSV list of profiles.");
+		}
+		if (!uriString.contains("__PROFILE__")) {
+			throw new IOException(
+					"Resource needs '__PROFILE__' in URI to be replaced by extracted profiles. URI: " + uriString);
+		}
+		List<String> profiles = Stream.of(profile.split(",")).filter(p -> !p.isBlank()).distinct().toList();
+
+		var logger = context.environment().getLogger();
+		logger.info("Found profiles: " + profiles);
+		var builder = KeyValues.builder(resource.uri());
+
+		int i = 0;
+		for (var p : profiles) {
+			var value = uriString.replace("__PROFILE__", p);
+			var b = resource.toBuilder();
+			b.uri(URI.create(value));
+			b.name(resource.name() + i);
+			b.build().resourceKeyValues(builder::add);
+		}
+		var kvs = builder.build();
+		return kvs;
 	}
 
 	static InputStream openURI(URI u, ResourceStreamLoader loader) throws IOException {

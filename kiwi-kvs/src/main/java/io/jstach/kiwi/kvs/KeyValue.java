@@ -27,7 +27,7 @@ public record KeyValue(String key, //
 		Set<Flag> flags) {
 
 	public KeyValue {
-		flags = Set.copyOf(flags);
+		flags = FlagSet.copyOf(flags, Flag.class);
 		Objects.requireNonNull(key);
 		Objects.requireNonNull(raw);
 		Objects.requireNonNull(expanded);
@@ -40,7 +40,7 @@ public record KeyValue(String key, //
 		return new KeyValue(key, raw, expanded, source, flags);
 	}
 
-	public KeyValue withExpanded(Function<String, @Nullable String> expanded) {
+	public KeyValue withExpanded(@SuppressWarnings("exports") Function<String, @Nullable String> expanded) {
 		String n = key();
 		String exp = expanded.apply(n);
 		if (exp != null) {
@@ -49,13 +49,9 @@ public record KeyValue(String key, //
 		return this;
 	}
 
-	public KeyValue addFlag(Flag... flag) {
+	public KeyValue withFlags(Collection<Flag> flagsCol) {
 		var flags = EnumSet.noneOf(Flag.class);
-		for (var f : flag) {
-			flags.add(f);
-		}
-		flags.addAll(flags());
-
+		flags.addAll(flagsCol);
 		return new KeyValue(key, raw, expanded, source, flags);
 	}
 
