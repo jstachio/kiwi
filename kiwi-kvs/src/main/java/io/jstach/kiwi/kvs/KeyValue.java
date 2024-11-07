@@ -9,17 +9,6 @@ import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
-/**
- *
- * _kvs_stuff=password,_load_classpath
- *
- * _stuff_no_interpolate=true _stuff_require=true
- *
- * _load_classpath=classpath://
- *
- * _bind_stuff=
- *
- */
 public record KeyValue(String key, //
 		String raw, //
 		String expanded, //
@@ -32,6 +21,10 @@ public record KeyValue(String key, //
 		Objects.requireNonNull(raw);
 		Objects.requireNonNull(expanded);
 		Objects.requireNonNull(source);
+	}
+	
+	public KeyValue(String key, String raw) {
+		this(key, raw, raw, Source.EMPTY, Set.of());
 	}
 
 	public final static String REDACTED_MESSAGE = "REDACTED";
@@ -62,7 +55,14 @@ public record KeyValue(String key, //
 		return new KeyValue(key, raw, expanded, source, flags);
 	}
 
-	public record Source(URI uri, KeyValue reference, int index) {
+	public record Source(URI uri, @Nullable KeyValue reference, int index) {
+		public static URI NULL_URI = URI.create("null:///");
+		
+		public static Source EMPTY = new Source();
+		
+		public Source() {
+			this(NULL_URI, null, 0);
+		}
 
 	}
 
