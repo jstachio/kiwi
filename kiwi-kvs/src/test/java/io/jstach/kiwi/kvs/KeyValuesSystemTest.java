@@ -43,7 +43,7 @@ class KeyValuesSystemTest {
 
 		{
 			var b = KeyValues.builder();
-			system.resourceKeyValues(b::add);
+			ParseStrategy.of().formatResource(system, b::add);
 			String actual = b.build().toString();
 			String expected = """
 					KeyValues[
@@ -112,11 +112,12 @@ class KeyValuesSystemTest {
 			.name("system")
 			.noInterpolation(true)
 			.noAddKeyValues(true)
+			.parameter("custom", "something")
 			.build();
 		String actual = system.toString();
-		String expected = """
-				DefaultKeyValuesResource[uri=system:///, name=system, reference=null, mediaType=null, parameters=MapStaticVariables[map={load=system:///, flags=NO_ADD,NO_INTERPOLATE}]]"""
-			.trim();
+		String expected ="""
+						DefaultKeyValuesResource[uri=system:///, name=system, loadFlags=[NO_ADD, NO_INTERPOLATE], reference=null, mediaType=null, parameters=MapParameters[map={custom=something}]]"""
+					.trim();
 		assertEquals(expected, actual);
 	}
 

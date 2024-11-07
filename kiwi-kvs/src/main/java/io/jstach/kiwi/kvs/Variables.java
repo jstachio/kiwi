@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.kiwi.kvs.Variables.StaticVariables;
+import io.jstach.kiwi.kvs.Variables.Parameters;
 import io.jstach.kiwi.kvs.interpolate.Interpolator;
 
 public interface Variables {
@@ -25,7 +25,7 @@ public interface Variables {
 
 	}
 
-	public sealed interface StaticVariables extends ListableVariables {
+	public sealed interface Parameters extends ListableVariables {
 
 		// TODO maybe use KeyValues
 		default void forKeyValues(BiConsumer<String, String> consumer) {
@@ -38,9 +38,13 @@ public interface Variables {
 			}
 		}
 
+		public static Parameters of(Map<String, String> map) {
+			return new MapParameters(map);
+		}
+
 	}
 
-	public static StaticVariables empty() {
+	public static Parameters empty() {
 		return EmptyVariables.EMPTY_VARIABLES;
 	}
 
@@ -163,7 +167,7 @@ public interface Variables {
 
 }
 
-enum EmptyVariables implements StaticVariables {
+enum EmptyVariables implements Parameters {
 
 	EMPTY_VARIABLES;
 
@@ -179,8 +183,8 @@ enum EmptyVariables implements StaticVariables {
 
 }
 
-record MapStaticVariables(Map<String, String> map) implements StaticVariables {
-	MapStaticVariables {
+record MapParameters(Map<String, String> map) implements Parameters {
+	MapParameters {
 		map = new LinkedHashMap<>(map);
 	}
 

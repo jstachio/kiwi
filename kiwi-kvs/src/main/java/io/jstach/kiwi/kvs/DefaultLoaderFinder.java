@@ -107,7 +107,8 @@ enum DefaultLoaderFinder implements LoaderFinder {
 			var b = resource.toBuilder();
 			b.uri(URI.create(value));
 			b.name(resource.name() + i);
-			b.build().resourceKeyValues(builder::add);
+			var profileResource = b.build();
+			context.formatResource(profileResource, builder::add);
 		}
 		var kvs = builder.build();
 		return kvs;

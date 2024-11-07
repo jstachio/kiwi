@@ -7,17 +7,17 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiConsumer;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.kiwi.kvs.Variables.StaticVariables;
+import io.jstach.kiwi.kvs.Variables.Parameters;
 
 public sealed interface KeyValuesResource permits InternalKeyValuesResource {
 
 	public URI uri();
 
-	public StaticVariables parameters();
+	public Parameters parameters();
 
 	public String name();
 
@@ -26,8 +26,6 @@ public sealed interface KeyValuesResource permits InternalKeyValuesResource {
 	public @Nullable String mediaType();
 
 	public Builder toBuilder();
-
-	public void resourceKeyValues(BiConsumer<String, String> consumer);
 
 	public static Builder builder(URI uri) {
 		return new Builder(uri, uriToName(uri));
@@ -114,6 +112,12 @@ public sealed interface KeyValuesResource permits InternalKeyValuesResource {
 			return this;
 		}
 
+		Builder _flags(Set<LoadFlag> flags) {
+			this.flags.clear();
+			this.flags.addAll(flags);
+			return this;
+		}
+
 		Builder _addFlag(LoadFlag flag) {
 			flags.add(flag);
 			return this;
@@ -121,6 +125,12 @@ public sealed interface KeyValuesResource permits InternalKeyValuesResource {
 
 		public KeyValuesResource build() {
 			return DefaultKeyValuesResource.of(this);
+		}
+
+		@Override
+		public String toString() {
+			return "KeyValuesResource.Builder[uri=" + uri + ", name=" + name + ", parameters=" + parameters + ", flags="
+					+ flags + ", reference=" + reference + ", mediaType=" + mediaType + "]";
 		}
 
 	}

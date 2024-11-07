@@ -1,8 +1,9 @@
 package io.jstach.kiwi.kvs;
 
 import java.net.URI;
-import java.util.EnumSet;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -11,36 +12,60 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.KeyValuesResource.Builder;
-import io.jstach.kiwi.kvs.Variables.StaticVariables;
+import io.jstach.kiwi.kvs.Variables.Parameters;
 
-record DefaultKeyValuesResource(URI uri, String name, @Nullable KeyValue reference, @Nullable String mediaType,
-		StaticVariables parameters) implements InternalKeyValuesResource {
+record DefaultKeyValuesResource(URI uri, //
+		String name, //
+		Set<LoadFlag> loadFlags, //
+		@Nullable KeyValue reference, //
+		@Nullable String mediaType, //
+		Parameters parameters) implements InternalKeyValuesResource {
+
 	DefaultKeyValuesResource {
 		validateResourceName(name);
 	}
 
 	public static String validateResourceName(String identifier) {
-		return ParseStrategy.of().validateResourceName(identifier);
-
-	}
-
-	@Override
-	public void resourceKeyValues(BiConsumer<String, String> consumer) {
-		ParseStrategy.of().resourceKeyValues(this, consumer);
+		return ParseStrategy.validateResourceName(identifier);
 	}
 
 	@Override
 	public Builder toBuilder() {
-		return ParseStrategy.of().parseResource(this);
+		var resource = this;
+		var uri = resource.uri();
+		var name = resource.name();
+		var parameters = new LinkedHashMap<String, String>();
+		resource.parameters().forKeyValues(parameters::put);
+		var flags = FlagSet.enumSetOf(LoadFlag.class, resource.loadFlags());
+		var ref = resource.reference();
+		var mediaType = resource.mediaType();
+		var b = new KeyValuesResource.Builder(uri, name, parameters, flags, ref, mediaType);
+		return b;
 	}
 
 	static KeyValuesResource of(KeyValuesResource.Builder builder) {
-		return ParseStrategy.of().parseBuilder(builder);
+		Map<String, String> parameters = new LinkedHashMap<>(builder.parameters);
+		URI uri = builder.uri;
+		String name = builder.name;
+		var reference = builder.reference;
+		var loadFlags = builder.flags;
+		var mediaType = builder.mediaType;
+		// ParseStrategy.putParameters(uri, loadFlags, mediaType, parameters::put);
+		Parameters variables = Parameters.of(parameters);
+		return new DefaultKeyValuesResource(uri, name, loadFlags, reference, mediaType, variables);
+	}
+
+	static Set<LoadFlag> loadFlags(KeyValuesResource resource) {
+		var defaultResource = switch (resource) {
+			case DefaultKeyValuesResource d -> d;
+		};
+		return defaultResource.loadFlags();
 	}
 
 	static StringBuilder describe(StringBuilder sb, KeyValuesResource resource, boolean includeRef) {
+
 		sb.append("uri='").append(resource.uri()).append("'");
-		var flags = ParseStrategy.of().parseLoadFlags(resource);
+		var flags = loadFlags(resource);
 		if (!flags.isEmpty()) {
 			sb.append(" flags=").append(flags);
 		}
@@ -52,11 +77,6 @@ record DefaultKeyValuesResource(URI uri, String name, @Nullable KeyValue referen
 			}
 		}
 		return sb;
-	}
-
-	@Override
-	public Set<LoadFlag> loadFlags() {
-		return ParseStrategy.of().parseLoadFlags(this);
 	}
 
 	static String describe(KeyValuesResource resource, boolean includeRef) {
@@ -74,7 +94,7 @@ sealed interface InternalKeyValuesResource extends KeyValuesResource {
  * The idea here is to keep all the parsing logic separated from the core domain so that
  * we can switch the key value scheme of loading.
  */
-enum ParseStrategy {
+enum ParseStrategy implements KeyValuesResourceParser {
 
 	DEFAULT;
 
@@ -84,7 +104,7 @@ enum ParseStrategy {
 		return DEFAULT;
 	}
 
-	public String validateResourceName(String identifier) {
+	public static String validateResourceName(String identifier) {
 		if (identifier == null || !identifier.matches("[a-zA-Z0-9]+")) {
 			throw new IllegalArgumentException(
 					"Invalid identifier: must contain only alphanumeric characters (no underscores) and not be null. input: "
@@ -93,79 +113,55 @@ enum ParseStrategy {
 		return identifier;
 	}
 
-	public void resourceKeyValues(KeyValuesResource resource, BiConsumer<String, String> consumer) {
-		resource.parameters().forKeyValues((k, v) -> {
-			var rk = ResourceKey.findOrNull(k);
-			if (rk != null) {
-				consumer.accept(externalResourceKey(rk, resource.name()), v);
-			}
-		});
-	}
-
-	public KeyValuesResource parseBuilder(KeyValuesResource.Builder builder) {
-		Map<String, String> parameters = new LinkedHashMap<>(builder.parameters);
-		URI uri = builder.uri;
-		String name = builder.name;
-		var reference = builder.reference;
-		var flags = builder.flags;
-		if (flags.isEmpty()) {
-			var flagCSV = ResourceKey.FLAGS.getValue(parameters);
-			if (flagCSV != null) {
-				flags = LoadFlag.parseCSV(flagCSV);
-			}
-		}
-		String mediaType = builder.mediaType;
-		if (mediaType == null) {
-			mediaType = ResourceKey.MEDIA_TYPE.getValue(parameters);
-		}
-
-		putParameters(parameters, uri, flags, mediaType);
-		StaticVariables variables = new MapStaticVariables(parameters);
-		return new DefaultKeyValuesResource(uri, name, reference, mediaType, variables);
-	}
-
-	protected void putParameters(Map<String, String> parameters, URI uri, Set<LoadFlag> flags, String mediaType) {
+	public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
+		String name = resource.name();
+		var uri = resource.uri();
+		var flags = DefaultKeyValuesResource.loadFlags(resource);
+		String mediaType = resource.mediaType();
 		for (var rk : ResourceKey.values()) {
+			String key = switch(rk) { 
+				case LOAD, FLAGS, MEDIA_TYPE -> externalResourceKey1(rk, name);
+				case PARAM -> externalResourceKey2Prefix(rk, name);
+			};
 			switch (rk) {
 				case LOAD -> {
-					parameters.put(rk.key, uri.toString());
+					consumer.accept(key, uri.toString());
 				}
 				case FLAGS -> {
 					if (!flags.isEmpty()) {
 						var flagsCsv = LoadFlag.toCSV(flags.stream());
-						parameters.put(rk.key, flagsCsv);
+						consumer.accept(key, flagsCsv);
 					}
 				}
 				case MEDIA_TYPE -> {
 					if (mediaType != null) {
-						parameters.put(rk.key, mediaType);
+						consumer.accept(key, mediaType);
 					}
+				}
+				case PARAM -> {
+					resource.parameters().forKeyValues((k,v) -> {
+						consumer.accept(key + k, v);
+					});
 				}
 			}
 		}
 	}
 
-	public KeyValuesResource.Builder parseResource(KeyValuesResource _resource) {
-		var resource = (InternalKeyValuesResource) _resource;
-		var uri = resource.uri();
-		var name = resource.name();
-		var parameters = new LinkedHashMap<String, String>();
-		resource.parameters().forKeyValues(parameters::put);
-		var flags = FlagSet.enumSetOf(LoadFlag.class, resource.loadFlags());
-		var ref = resource.reference();
-		var mediaType = _resource.mediaType();
-		var b = new KeyValuesResource.Builder(uri, name, parameters, flags, ref, mediaType);
-		return b;
+	@Override
+	public List<KeyValuesResource> parseResources(KeyValues keyValues) {
+		List<KeyValuesResource> resources = new ArrayList<>();
+		for (var kv : keyValues) {
+			var r = parseOrNull(kv, keyValues);
+			if (r != null) {
+				resources.add(r);
+			}
+		}
+		return List.copyOf(resources);
 	}
 
-	public Set<LoadFlag> parseLoadFlags(KeyValuesResource resource) {
-		EnumSet<LoadFlag> flags = EnumSet.noneOf(LoadFlag.class);
-		String v = ResourceKey.FLAGS.getValue(resource);
-		if (v == null) {
-			return flags;
-		}
-		DefaultKeyValuesMedia.parseCSV(v, k -> LoadFlag.parse(flags, k));
-		return flags;
+	@Override
+	public KeyValues filterResources(KeyValues keyValues) {
+		return KeyValues.of(keyValues.stream().filter(this::filter).toList());
 	}
 
 	public @Nullable KeyValuesResource parseOrNull(KeyValue keyValue, KeyValues keyValues) {
@@ -173,7 +169,20 @@ enum ParseStrategy {
 		if (builder == null)
 			return null;
 		parseKeyValues(keyValues, builder.name, (rk, kv) -> {
-			builder.parameters.put(rk.key, kv.expanded());
+			switch (rk) {
+				case LOAD -> {
+				}
+				case MEDIA_TYPE -> {
+					builder.mediaType(kv.expanded());
+				}
+				case FLAGS -> {
+					builder._flags(LoadFlag.parseCSV(kv.expanded()));
+				}
+				case PARAM -> {
+					String name = paramName(builder.name, kv.key());
+					builder.parameter(name, kv.expanded());
+				}
+			}
 		});
 		builder.reference = keyValue;
 		return builder.build();
@@ -185,10 +194,6 @@ enum ParseStrategy {
 			return null;
 		}
 		return new Builder(resource.uri(), resource.resourceName());
-	}
-
-	public KeyValues filter(KeyValues keyValues) {
-		return KeyValues.of(keyValues.stream().filter(this::filter).toList());
 	}
 
 	private boolean filter(KeyValue kv) {
@@ -216,13 +221,32 @@ enum ParseStrategy {
 		return null;
 	}
 
-	String externalResourceKey(ResourceKey key, String resourceName) {
+	String externalResourceKey1(ResourceKey key, String resourceName) {
 		return key.prefix + resourceName;
+	}
+
+	String externalResourceKey2Prefix(ResourceKey key, String resourceName) {
+		return key.prefix + resourceName + "_";
+	}
+	
+	String paramName(String resourceName, String key) {
+		String prefix = externalResourceKey2Prefix(ResourceKey.PARAM, resourceName);
+		if (! resourceName.startsWith(prefix)) {
+			throw new IllegalArgumentException("Parameter prefix is incorrect. " + key);
+		}
+		String name = resourceName.substring(prefix.length());
+		if (name.isBlank()) {
+			throw new IllegalArgumentException("Resource Parameter is bad. " + key);
+		}
+		return name;
 	}
 
 	boolean keyValueMatches(ResourceKey rk, KeyValue kv, String resourceName) {
 		String key = kv.key();
-		return externalResourceKey(rk, resourceName).equals(key);
+		return switch(rk) {
+			case PARAM -> key.startsWith(externalResourceKey2Prefix(rk, resourceName));
+			case LOAD, FLAGS, MEDIA_TYPE -> externalResourceKey1(rk, resourceName).equals(key);
+		};
 	}
 
 	void parseKeyValues(KeyValues kvs, String resourceName, BiConsumer<ResourceKey, KeyValue> consumer) {
@@ -239,11 +263,12 @@ enum ParseStrategy {
 	private record Resource(String resourceName, URI uri) {
 	}
 
-	enum ResourceKey {
+	private enum ResourceKey {
 
 		LOAD("load"), //
 		FLAGS("flags"), //
-		MEDIA_TYPE("mediaType");
+		MEDIA_TYPE("mediaType"), //
+		PARAM("param");
 
 		final String key;
 
@@ -252,31 +277,6 @@ enum ParseStrategy {
 		private ResourceKey(String key) {
 			this.key = key;
 			this.prefix = "_" + key + "_";
-		}
-
-		@Nullable
-		String getValue(Map<String, String> variables) {
-			return variables.get(key);
-		}
-
-		@Nullable
-		String getValue(Variables variables) {
-			return variables.getValue(key);
-		}
-
-		@Nullable
-		String getValue(KeyValuesResource resource) {
-			return getValue(resource.parameters());
-		}
-
-		@Nullable
-		static ResourceKey findOrNull(String key) {
-			for (var rk : values()) {
-				if (rk.key.equals(key)) {
-					return rk;
-				}
-			}
-			return null;
 		}
 
 	}

@@ -22,7 +22,7 @@ public record KeyValue(String key, //
 		Objects.requireNonNull(expanded);
 		Objects.requireNonNull(source);
 	}
-	
+
 	public KeyValue(String key, String raw) {
 		this(key, raw, raw, Source.EMPTY, Set.of());
 	}
@@ -56,10 +56,11 @@ public record KeyValue(String key, //
 	}
 
 	public record Source(URI uri, @Nullable KeyValue reference, int index) {
+
 		public static URI NULL_URI = URI.create("null:///");
-		
+
 		public static Source EMPTY = new Source();
-		
+
 		public Source() {
 			this(NULL_URI, null, 0);
 		}

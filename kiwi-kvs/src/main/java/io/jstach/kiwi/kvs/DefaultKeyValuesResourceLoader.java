@@ -31,6 +31,8 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	private final List<KeyValue> keyValuesStore = new ArrayList<>();
 
+	private final KeyValuesResourceParser resourceParser = ParseStrategy.of();
+
 	public DefaultKeyValuesResourceLoader(KeyValuesSystem system, Variables rootVariables) {
 		super();
 		this.system = system;
@@ -66,10 +68,10 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 				// no interpolate flag.
 				kvs = kvs.expand(variables);
 			}
-			var foundResources = findResources(kvs);
+			var foundResources = resourceParser.parseResources(kvs);
 			// push
 			fs.addAll(0, foundResources);
-			kvs = filter(kvs);
+			kvs = resourceParser.filterResources(kvs);
 			boolean added = false;
 			if (!LoadFlag.NO_ADD.isSet(flags)) {
 				for (var kv : kvs) {
@@ -99,28 +101,13 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	}
 
-	private static KeyValues filter(KeyValues kvs) {
-		return ParseStrategy.of().filter(kvs);
-	}
-
 	static String describe(KeyValuesResource resource) {
 		return DefaultKeyValuesResource.describe(resource, true);
 	}
 
-	static List<KeyValuesResource> findResources(KeyValues keyValues) {
-		List<KeyValuesResource> resources = new ArrayList<>();
-		for (var kv : keyValues) {
-			var r = ParseStrategy.of().parseOrNull(kv, keyValues);
-			if (r != null) {
-				resources.add(r);
-			}
-		}
-		return List.copyOf(resources);
-	}
-
 	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags, Variables variables, Logger logger)
 			throws IOException, FileNotFoundException {
-		var context = DefaultLoaderContext.of(system, variables);
+		var context = DefaultLoaderContext.of(system, variables, resourceParser);
 		try {
 			logger.load(resource);
 			var kvs = system.loaderFinder()

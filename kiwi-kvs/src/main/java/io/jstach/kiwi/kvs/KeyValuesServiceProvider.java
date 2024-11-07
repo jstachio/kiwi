@@ -2,6 +2,7 @@ package io.jstach.kiwi.kvs;
 
 import java.net.URI;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.LoaderFinder.LoaderContext;
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.MediaFinder;
@@ -24,6 +25,8 @@ public interface KeyValuesServiceProvider {
 					.orElseThrow(() -> new KeyValuesMediaException("Media Type not found. resource: " + resource))
 					.parser();
 			}
+
+			void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer);
 
 		}
 
@@ -51,10 +54,15 @@ public interface KeyValuesServiceProvider {
 
 }
 
-record DefaultLoaderContext(KeyValuesEnvironment environment, MediaFinder mediaFinder,
-		Variables variables) implements LoaderContext {
-	public static LoaderContext of(KeyValuesSystem system, Variables variables) {
-		return new DefaultLoaderContext(system.environment(), system.mediaFinder(), variables);
+record DefaultLoaderContext(KeyValuesEnvironment environment, MediaFinder mediaFinder, Variables variables,
+		KeyValuesResourceParser resourceParser) implements LoaderContext {
+	static LoaderContext of(KeyValuesSystem system, Variables variables, KeyValuesResourceParser resourceParser) {
+		return new DefaultLoaderContext(system.environment(), system.mediaFinder(), variables, resourceParser);
+	}
+
+	@Override
+	public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
+		resourceParser.formatResource(resource, consumer);
 	}
 
 }
