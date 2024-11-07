@@ -31,7 +31,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	private final List<KeyValue> keyValuesStore = new ArrayList<>();
 
-	private final KeyValuesResourceParser resourceParser = ParseStrategy.of();
+	private final KeyValuesResourceParser resourceParser = DefaultKeyValuesResourceParser.of();
 
 	public DefaultKeyValuesResourceLoader(KeyValuesSystem system, Variables rootVariables) {
 		super();
@@ -269,15 +269,6 @@ enum LoadFlag {
 	private static boolean nameMatches(Set<String> aliases, String name) {
 		return aliases.contains(name.toUpperCase(Locale.ROOT));
 	}
-
-	// static void addToParameters(Set<LoadFlag> flags, BiConsumer<String,String>) {
-	// String key = ResourceKeys.FLAGS.key(resourceName);
-	// if (parameters.containsKey(key) || flags.isEmpty()) {
-	// return;
-	// }
-	// String value = flags.stream().map(f -> f.name()).collect(Collectors.joining(","));
-	// parameters.put(key, value);
-	// }
 
 	static String toCSV(Stream<LoadFlag> loadFlags) {
 		return loadFlags.map(f -> f.name()).collect(Collectors.joining(","));
