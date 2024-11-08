@@ -9,16 +9,7 @@ import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
-public record KeyValue(String key, //
-		String expanded, Meta meta) {
-
-	// public KeyValue {
-	// flags = FlagSet.copyOf(flags, Flag.class);
-	// Objects.requireNonNull(key);
-	// Objects.requireNonNull(raw);
-	// Objects.requireNonNull(expanded);
-	// Objects.requireNonNull(source);
-	// }
+public record KeyValue(String key, String expanded, Meta meta) {
 
 	public KeyValue {
 		Objects.requireNonNull(key);
@@ -27,7 +18,7 @@ public record KeyValue(String key, //
 	}
 
 	public KeyValue(String key, String raw) {
-		this(key, raw, new Meta(raw, Source.EMPTY, Set.of()));
+		this(key, raw, Meta.of(raw, Source.EMPTY, Set.of()));
 	}
 
 	public final static String REDACTED_MESSAGE = "REDACTED";
@@ -57,12 +48,6 @@ public record KeyValue(String key, //
 		return this;
 	}
 
-	// public KeyValue withFlags(Collection<Flag> flagsCol) {
-	// var flags = EnumSet.noneOf(Flag.class);
-	// flags.addAll(flagsCol);
-	// return new KeyValue(key, raw, expanded, source, flags);
-	// }
-	//
 	public KeyValue addFlags(Collection<Flag> flagsCol) {
 		var flags = EnumSet.noneOf(Flag.class);
 		flags.addAll(flags());
@@ -71,14 +56,30 @@ public record KeyValue(String key, //
 		return new KeyValue(key, expanded, meta);
 	}
 
-	public record Meta(String raw, Source source, Set<Flag> flags) {
-		public Meta {
+	public sealed interface Meta {
+
+		String raw();
+
+		Source source();
+
+		Set<Flag> flags();
+
+		Meta withFlags(Collection<Flag> flags);
+
+		static Meta of(String raw, Source source, Set<Flag> flags) {
+			return new DefaultMeta(raw, source, flags);
+		}
+
+	}
+
+	record DefaultMeta(String raw, Source source, Set<Flag> flags) implements Meta {
+		public DefaultMeta {
 			flags = FlagSet.copyOf(flags, Flag.class);
 		}
 
-		Meta withFlags(Collection<Flag> flags) {
+		public Meta withFlags(Collection<Flag> flags) {
 			var flagsCopy = FlagSet.copyOf(flags, Flag.class);
-			return new Meta(raw, source, flagsCopy);
+			return new DefaultMeta(raw, source, flagsCopy);
 		}
 	}
 
@@ -127,7 +128,7 @@ public record KeyValue(String key, //
 			var flags = EnumSet.copyOf(this.meta.flags());
 			flags.remove(Flag.SENSITIVE);
 			var source = meta.source();
-			Meta meta = new Meta(raw, source, flags);
+			Meta meta = new DefaultMeta(raw, source, flags);
 			return new KeyValue(key, expanded, meta);
 		}
 		return this;
@@ -142,7 +143,7 @@ public record KeyValue(String key, //
 		return "KeyValue [key=" + kv.key //
 				+ ", raw=" + kv.raw() //
 				+ ", expanded=" + kv.expanded //
-				+ ", source=" + kv.meta().source //
+				+ ", source=" + kv.meta().source() //
 				+ ", flags=" + kv.flags() //
 				+ "]";
 	}

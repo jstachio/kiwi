@@ -25,9 +25,8 @@ import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.KeyValuesMedia.Formatter;
 import io.jstach.kiwi.kvs.KeyValuesMedia.Parser;
-import io.jstach.kiwi.kvs.KeyValuesServiceProvider.MediaFinder;
 
-enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter, MediaFinder {
+enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 
 	PROPERTIES("text/x-java-properties", "properties") {
 		@Override

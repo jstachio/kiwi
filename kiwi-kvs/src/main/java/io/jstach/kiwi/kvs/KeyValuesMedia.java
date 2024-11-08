@@ -12,9 +12,9 @@ import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.kiwi.kvs.KeyValuesServiceProvider.MediaFinder;
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
 
-public interface KeyValuesMedia extends MediaFinder {
+public interface KeyValuesMedia extends KeyValuesMediaFinder {
 
 	public String getMediaType();
 
@@ -33,18 +33,6 @@ public interface KeyValuesMedia extends MediaFinder {
 	public static KeyValuesMedia ofUrlEncoded() {
 		return DefaultKeyValuesMedia.URLENCODED;
 	}
-
-	// @Override
-	// default Optional<KeyValuesMedia> findMedia(String mediaType) {
-	// var mt = getMediaType();
-	// if (mt.equals(mediaType)) {
-	// return Optional.of(this);
-	// }
-	// if (hasFileExt(mediaType)) {
-	// return Optional.of(this);
-	// }
-	// return Optional.empty();
-	// }
 
 	@Override
 	default Optional<KeyValuesMedia> findByExt(String ext) {

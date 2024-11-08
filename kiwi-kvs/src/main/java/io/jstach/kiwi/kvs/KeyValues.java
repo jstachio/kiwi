@@ -85,7 +85,7 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 		public KeyValue build(String key, String value) {
 			var s = new KeyValue.Source(source, reference, index.incrementAndGet());
-			var m = new KeyValue.Meta(value, s, flags);
+			var m = KeyValue.Meta.of(value, s, flags);
 			return new KeyValue(key, value, m);
 		}
 
@@ -125,7 +125,6 @@ public interface KeyValues extends Iterable<KeyValue> {
 		return ToStringableKeyValues.of(() -> stream().filter(predicate));
 	}
 
-	@SuppressWarnings("null")
 	default KeyValues flatMap(Function<KeyValue, KeyValues> func) {
 		var f = func.andThen(KeyValues::stream);
 		return ToStringableKeyValues.of(() -> stream().flatMap(f));
@@ -153,10 +152,6 @@ public interface KeyValues extends Iterable<KeyValue> {
 		stream().forEach(kv -> m.put(kv.key(), kv.expanded()));
 		return m;
 	}
-
-	// default String toString(KeyValuesMedia.Formatter formatter) {
-	// return formatter.format(this.map(kv -> kv.redact("REDACTED")));
-	// }
 
 }
 

@@ -11,7 +11,7 @@ import io.jstach.kiwi.kvs.interpolate.StrSubstitutor.StrLookup;
 
 public interface Interpolator {
 
-	public static Interpolator create(Function<String, @Nullable String> f) {
+	public static Interpolator create(@SuppressWarnings("exports") Function<String, @Nullable String> f) {
 		return new InternalInterpolator(f);
 	}
 

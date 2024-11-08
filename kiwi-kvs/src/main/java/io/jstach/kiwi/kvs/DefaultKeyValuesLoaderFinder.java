@@ -13,9 +13,9 @@ import java.util.stream.Stream;
 
 import io.jstach.kiwi.kvs.KeyValuesEnvironment.ResourceStreamLoader;
 import io.jstach.kiwi.kvs.KeyValuesMedia.Parser;
-import io.jstach.kiwi.kvs.KeyValuesServiceProvider.LoaderFinder;
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
 
-enum DefaultLoaderFinder implements LoaderFinder {
+enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
 	CLASSPATH {
 

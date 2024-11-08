@@ -4,18 +4,18 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
-import io.jstach.kiwi.kvs.KeyValuesServiceProvider.LoaderFinder.LoaderContext;
-import io.jstach.kiwi.kvs.KeyValuesServiceProvider.MediaFinder;
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder.LoaderContext;
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
 
-public interface KeyValuesServiceProvider {
+public sealed interface KeyValuesServiceProvider {
 
-	public interface LoaderFinder extends KeyValuesServiceProvider {
+	public non-sealed interface KeyValuesLoaderFinder extends KeyValuesServiceProvider {
 
 		public sealed interface LoaderContext {
 
 			KeyValuesEnvironment environment();
 
-			MediaFinder mediaFinder();
+			KeyValuesMediaFinder mediaFinder();
 
 			Variables variables();
 
@@ -34,7 +34,7 @@ public interface KeyValuesServiceProvider {
 
 	}
 
-	public interface MediaFinder extends KeyValuesServiceProvider {
+	public non-sealed interface KeyValuesMediaFinder extends KeyValuesServiceProvider {
 
 		default Optional<KeyValuesMedia> findByResource(KeyValuesResource resource) {
 			String mediaType = resource.mediaType();
@@ -54,7 +54,7 @@ public interface KeyValuesServiceProvider {
 
 }
 
-record DefaultLoaderContext(KeyValuesEnvironment environment, MediaFinder mediaFinder, Variables variables,
+record DefaultLoaderContext(KeyValuesEnvironment environment, KeyValuesMediaFinder mediaFinder, Variables variables,
 		KeyValuesResourceParser resourceParser) implements LoaderContext {
 	static LoaderContext of(KeyValuesSystem system, Variables variables, KeyValuesResourceParser resourceParser) {
 		return new DefaultLoaderContext(system.environment(), system.mediaFinder(), variables, resourceParser);

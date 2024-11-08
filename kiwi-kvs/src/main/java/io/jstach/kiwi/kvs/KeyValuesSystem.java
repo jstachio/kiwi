@@ -8,19 +8,19 @@ import java.util.ServiceLoader;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.kiwi.kvs.KeyValuesServiceProvider.LoaderFinder;
-import io.jstach.kiwi.kvs.KeyValuesServiceProvider.MediaFinder;
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
 
-public interface KeyValuesSystem {
+public sealed interface KeyValuesSystem {
 
 	public KeyValuesEnvironment environment();
 
-	public LoaderFinder loaderFinder();
+	public KeyValuesLoaderFinder loaderFinder();
 
-	public MediaFinder mediaFinder();
+	public KeyValuesMediaFinder mediaFinder();
 
 	default KeyValuesLoader.Builder loader() {
-		return new KeyValuesLoader.Builder(DefaultKeyValuesResourceLoader.of(this, Variables.empty()));
+		return new KeyValuesLoader.Builder(variables -> DefaultKeyValuesResourceLoader.of(this, variables));
 	}
 
 	public static KeyValuesSystem defaults() {
@@ -35,9 +35,10 @@ public interface KeyValuesSystem {
 
 		private @Nullable KeyValuesEnvironment environment;
 
-		private List<LoaderFinder> loadFinders = new ArrayList<>(List.of(DefaultLoaderFinder.values()));
+		private List<KeyValuesLoaderFinder> loadFinders = new ArrayList<>(
+				List.of(DefaultKeyValuesLoaderFinder.values()));
 
-		private List<MediaFinder> mediaFinders = new ArrayList<>(List.of(DefaultKeyValuesMedia.values()));
+		private List<KeyValuesMediaFinder> mediaFinders = new ArrayList<>(List.of(DefaultKeyValuesMedia.values()));
 
 		private @Nullable ServiceLoader<KeyValuesServiceProvider> serviceLoader;
 
@@ -46,12 +47,12 @@ public interface KeyValuesSystem {
 			return this;
 		}
 
-		public Builder loadFinder(LoaderFinder loadFinder) {
+		public Builder loadFinder(KeyValuesLoaderFinder loadFinder) {
 			this.loadFinders.add(loadFinder);
 			return this;
 		}
 
-		public Builder mediaFinder(MediaFinder mediaFinder) {
+		public Builder mediaFinder(KeyValuesMediaFinder mediaFinder) {
 			this.mediaFinders.add(mediaFinder);
 			return this;
 		}
@@ -72,19 +73,19 @@ public interface KeyValuesSystem {
 
 			if (serviceLoader != null) {
 				serviceLoader.forEach(s -> {
-					if (s instanceof LoaderFinder rl) {
+					if (s instanceof KeyValuesLoaderFinder rl) {
 						loadFinders.add(rl);
 					}
-					if (s instanceof MediaFinder m) {
+					if (s instanceof KeyValuesMediaFinder m) {
 						mediaFinders.add(m);
 					}
 				});
 			}
 
-			LoaderFinder loadFinder = (context, resource) -> {
+			KeyValuesLoaderFinder loadFinder = (context, resource) -> {
 				return loadFinders.stream().flatMap(rl -> rl.findLoader(context, resource).stream()).findFirst();
 			};
-			MediaFinder mediaFinder = new CompositeMediaFinder(mediaFinders);
+			KeyValuesMediaFinder mediaFinder = new CompositeMediaFinder(mediaFinders);
 
 			return new DefaultKeyValuesSystem(environment, loadFinder, mediaFinder);
 		}
@@ -93,7 +94,7 @@ public interface KeyValuesSystem {
 
 }
 
-record CompositeMediaFinder(List<MediaFinder> finders) implements MediaFinder {
+record CompositeMediaFinder(List<KeyValuesMediaFinder> finders) implements KeyValuesMediaFinder {
 	CompositeMediaFinder {
 		finders = List.copyOf(finders);
 	}
@@ -116,7 +117,7 @@ record CompositeMediaFinder(List<MediaFinder> finders) implements MediaFinder {
 
 }
 
-record DefaultKeyValuesSystem(KeyValuesEnvironment environment, LoaderFinder loaderFinder,
-		MediaFinder mediaFinder) implements KeyValuesSystem {
+record DefaultKeyValuesSystem(KeyValuesEnvironment environment, KeyValuesLoaderFinder loaderFinder,
+		KeyValuesMediaFinder mediaFinder) implements KeyValuesSystem {
 
 }
