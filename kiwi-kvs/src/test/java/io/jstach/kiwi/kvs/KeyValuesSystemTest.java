@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -54,12 +55,15 @@ class KeyValuesSystemTest {
 			assertEquals(expected, actual);
 		}
 
+		var map = Map.of("fromMap2", "2", "fromMap1", "1");
+
 		var kvs = KeyValuesSystem.builder()
 			.environment(environment)
 			.build() //
 			.loader() //
 			.add(system)
 			.add("classpath:/test-props/testLoader.properties")
+			.add("extra", KeyValues.builder().add(map.entrySet()).build())
 			.load();
 
 		System.out.println(kvs);
@@ -71,6 +75,8 @@ class KeyValuesSystemTest {
 					blah=/home/kenny
 					message=/home/kenny hello
 					mypassword=REDACTED
+					fromMap1=1
+					fromMap2=2
 					]
 					""";
 			assertEquals(expected, actual);
@@ -83,6 +89,8 @@ class KeyValuesSystemTest {
 					blah=/home/kenny
 					message=/home/kenny hello
 					mypassword=1.2.3.4.5
+					fromMap1=1
+					fromMap2=2
 									""";
 			assertEquals(expected, actual);
 		}

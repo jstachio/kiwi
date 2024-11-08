@@ -34,15 +34,6 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		return DEFAULT;
 	}
 
-	public static String validateResourceName(String identifier) {
-		if (identifier == null || !identifier.matches("[a-zA-Z0-9]+")) {
-			throw new IllegalArgumentException(
-					"Invalid identifier: must contain only alphanumeric characters (no underscores) and not be null. input: "
-							+ identifier);
-		}
-		return identifier;
-	}
-
 	public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
 		String name = resource.name();
 		var uri = resource.uri();

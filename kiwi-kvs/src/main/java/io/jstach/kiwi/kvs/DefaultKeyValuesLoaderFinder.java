@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
+
 import io.jstach.kiwi.kvs.KeyValuesEnvironment.ResourceStreamLoader;
 import io.jstach.kiwi.kvs.KeyValuesMedia.Parser;
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
@@ -18,7 +20,21 @@ import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
 enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
 	CLASSPATH {
+		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
+			var parser = context.requireParser(resource);
+			return load(context, resource, parser);
+		}
+	},
+	FILE {
+		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
+			var parser = context.requireParser(resource);
+			return load(context, resource, parser);
+		}
 
+		@Override
+		boolean matches(KeyValuesResource resource) {
+			return filePathOrNull(resource.uri()) != null;
+		}
 	},
 	SYSTEM {
 		@Override
@@ -51,6 +67,13 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			}
 			return scheme.startsWith(scheme + ".");
 		}
+	},
+	NULL {
+		@Override
+		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
+			throw new RuntimeException("null resource not allowed. " + resource);
+		}
+
 	};
 
 	@Override
@@ -69,10 +92,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		return loader;
 	}
 
-	protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
-		var parser = context.requireParser(resource);
-		return load(context, resource, parser);
-	}
+	protected abstract KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException;
 
 	protected KeyValues load(LoaderContext context, KeyValuesResource resource, Parser parser) throws IOException {
 		var is = openURI(resource.uri(), context.environment().getResourceStreamLoader());
@@ -114,6 +134,16 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		return kvs;
 	}
 
+	static @Nullable Path filePathOrNull(URI u) {
+		if ("file".equals(u.getScheme())) {
+			return Path.of(u);
+		}
+		else if (u.getScheme() == null && u.getPath() != null) {
+			return Path.of(u.getPath());
+		}
+		return null;
+	}
+
 	static InputStream openURI(URI u, ResourceStreamLoader loader) throws IOException {
 		if ("classpath".equals(u.getScheme())) {
 			String path = u.getPath();
@@ -130,15 +160,12 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			}
 			return stream;
 		}
-		else if ("file".equals(u.getScheme())) {
-			return Files.newInputStream(Path.of(u));
+
+		var path = filePathOrNull(u);
+		if (path != null) {
+			return Files.newInputStream(path);
 		}
-		else if (u.getScheme() == null && u.getPath() != null) {
-			return Files.newInputStream(Path.of(u.getPath()));
-		}
-		else {
-			return u.toURL().openStream();
-		}
+		throw new FileNotFoundException("URI is not classpath or file. URI: " + u);
 	}
 
 }

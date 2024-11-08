@@ -35,6 +35,16 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		return meta().flags();
 	}
 
+	KeyValue replaceNullSource(URI uri) {
+		var original = this.meta.source();
+		if (!original.isNullResource()) {
+			return this;
+		}
+		var source = original.withURI(uri);
+		var meta = this.meta.withSource(source);
+		return new KeyValue(key, expanded, meta);
+	}
+
 	public KeyValue withExpanded(String expanded) {
 		return new KeyValue(key, expanded, meta);
 	}
@@ -66,6 +76,8 @@ public record KeyValue(String key, String expanded, Meta meta) {
 
 		Meta withFlags(Collection<Flag> flags);
 
+		Meta withSource(Source source);
+
 		static Meta of(String raw, Source source, Set<Flag> flags) {
 			return new DefaultMeta(raw, source, flags);
 		}
@@ -81,6 +93,10 @@ public record KeyValue(String key, String expanded, Meta meta) {
 			var flagsCopy = FlagSet.copyOf(flags, Flag.class);
 			return new DefaultMeta(raw, source, flagsCopy);
 		}
+
+		public Meta withSource(Source source) {
+			return new DefaultMeta(raw, source, flags);
+		}
 	}
 
 	public record Source(URI uri, @Nullable KeyValue reference, int index) {
@@ -91,6 +107,14 @@ public record KeyValue(String key, String expanded, Meta meta) {
 
 		public Source() {
 			this(NULL_URI, null, 0);
+		}
+
+		boolean isNullResource() {
+			return uri.equals(NULL_URI);
+		}
+
+		Source withURI(URI uri) {
+			return new Source(uri, reference, index);
 		}
 
 	}

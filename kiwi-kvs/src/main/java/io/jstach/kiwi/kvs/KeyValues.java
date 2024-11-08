@@ -3,6 +3,7 @@ package io.jstach.kiwi.kvs;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SequencedCollection;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -81,6 +83,19 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 		public Builder add(Entry<String, String> e) {
 			return add(e.getKey(), e.getValue());
+		}
+
+		private static final Comparator<Entry<String, String>> entryComparator = Map.Entry
+			.<String, String>comparingByKey()
+			.thenComparing(Entry::getValue);
+
+		public Builder add(Collection<Entry<String, String>> entries) {
+			Stream<Entry<String, String>> stream = switch (entries) {
+				case SequencedCollection<Entry<String, String>> sc -> sc.stream();
+				default -> entries.stream().sorted(entryComparator);
+			};
+			stream.forEach(this::add);
+			return this;
 		}
 
 		public KeyValue build(String key, String value) {

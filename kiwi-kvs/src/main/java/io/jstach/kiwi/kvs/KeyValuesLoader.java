@@ -15,20 +15,26 @@ public interface KeyValuesLoader {
 
 	public class Builder implements KeyValuesLoader {
 
-		private final Function<Variables, KeyValuesResourceLoader> loaderFactory;
+		private final Function<Variables, KeyValuesSourceLoader> loaderFactory;
 
-		private final List<KeyValuesResource> resources = new ArrayList<>();
+		private final List<KeyValuesSource> sources = new ArrayList<>();
 
 		private Variables variables = Variables.empty();
 
-		Builder(Function<Variables, KeyValuesResourceLoader> loaderFactory) {
+		Builder(Function<Variables, KeyValuesSourceLoader> loaderFactory) {
 			super();
 			this.loaderFactory = loaderFactory;
 		}
 
 		public Builder add(KeyValuesResource resource) {
-			resources.add(resource);
+			sources.add(resource);
 			return this;
+		}
+
+		public Builder add(String name, KeyValues keyValues) {
+			sources.add(new NamedKeyValues(name, keyValues));
+			return this;
+
 		}
 
 		public Builder add(URI uri) {
@@ -45,7 +51,7 @@ public interface KeyValuesLoader {
 		}
 
 		public KeyValuesLoader build() {
-			var resources = this.resources.isEmpty() ? List.of(defaultResource()) : List.copyOf(this.resources);
+			var resources = this.sources.isEmpty() ? List.of(defaultResource()) : List.copyOf(this.sources);
 			return () -> loaderFactory.apply(variables).load(resources);
 		}
 

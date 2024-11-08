@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.Variables.Parameters;
 
-public sealed interface KeyValuesResource permits InternalKeyValuesResource {
+public sealed interface KeyValuesResource extends KeyValuesSource permits InternalKeyValuesResource {
 
 	public URI uri();
 
@@ -149,7 +149,7 @@ record DefaultKeyValuesResource(URI uri, //
 	}
 
 	public static String validateResourceName(String identifier) {
-		return DefaultKeyValuesResourceParser.validateResourceName(identifier);
+		return KeyValuesSource.validateName(identifier);
 	}
 
 	@Override

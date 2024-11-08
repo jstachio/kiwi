@@ -15,13 +15,12 @@ import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.KeyValue.Flag;
-import io.jstach.kiwi.kvs.KeyValuesEnvironment.Logger;
 
 /*
  * This class is not reusable or threadsafe unless
  * the static of method is used.
  */
-class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
+class DefaultKeyValuesResourceLoader implements KeyValuesSourceLoader {
 
 	private final KeyValuesSystem system;
 
@@ -31,17 +30,19 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	private final Map<String, KeyValue> keys = new LinkedHashMap<>();
 
-	private final List<KeyValuesResource> resourcesStack = new ArrayList<>();
+	private final List<KeyValuesSource> sourcesStack = new ArrayList<>();
 
 	private final List<KeyValue> keyValuesStore = new ArrayList<>();
 
 	private final KeyValuesResourceParser resourceParser = DefaultKeyValuesResourceParser.of();
 
-	static KeyValuesResourceLoader of(KeyValuesSystem system, Variables rootVariables) {
-		record ReusableLoader(KeyValuesSystem system, Variables rootVariables) implements KeyValuesResourceLoader {
+	private final KeyValuesEnvironment.Logger logger;
+
+	static KeyValuesSourceLoader of(KeyValuesSystem system, Variables rootVariables) {
+		record ReusableLoader(KeyValuesSystem system, Variables rootVariables) implements KeyValuesSourceLoader {
 
 			@Override
-			public KeyValues load(List<? extends KeyValuesResource> resources) throws IOException {
+			public KeyValues load(List<? extends KeyValuesSource> resources) throws IOException {
 				return new DefaultKeyValuesResourceLoader(system, rootVariables).load(resources);
 			}
 		}
@@ -53,25 +54,32 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 		this.system = system;
 		this.variableStore = new LinkedHashMap<>();
 		this.variables = Variables.builder().add(variableStore).add(rootVariables).build();
+		this.logger = system.environment().getLogger();
 	}
 
 	@Override
-	public KeyValues load(List<? extends KeyValuesResource> _resources) throws IOException {
-		if (_resources.isEmpty()) {
+	public KeyValues load(List<? extends KeyValuesSource> sources) throws IOException {
+		if (sources.isEmpty()) {
 			return KeyValues.empty();
 		}
 
-		var fs = this.resourcesStack;
-		var logger = system.environment().getLogger();
+		var fs = this.sourcesStack;
 
 		KeyValues keyValues = () -> keyValuesStore.stream();
 
-		fs.addAll(0, _resources);
+		fs.addAll(0, sources);
 		for (; !fs.isEmpty();) {
 			// pop
-			var resource = (InternalKeyValuesResource) fs.remove(0);
-			var flags = resource.loadFlags();
-			var kvs = load(resource, flags, variables, logger);
+			var resource = fs.remove(0);
+			Set<LoadFlag> flags = switch (resource) {
+				case InternalKeyValuesResource ir -> ir.loadFlags();
+				case NamedKeyValues _kvs -> Set.of();
+			};
+
+			var kvs = switch (resource) {
+				case InternalKeyValuesResource ir -> load(ir, flags);
+				case NamedKeyValues _kvs -> _kvs.keyValues();
+			};
 
 			var kvFlags = LoadFlag.toKeyValueFlags(flags);
 			if (!kvFlags.isEmpty()) {
@@ -116,12 +124,18 @@ class DefaultKeyValuesResourceLoader implements KeyValuesResourceLoader {
 
 	}
 
+	static String describe(KeyValuesSource source) {
+		return switch (source) {
+			case KeyValuesResource r -> describe(r);
+			case NamedKeyValues _kvs -> "In memory provided KeyValues";
+		};
+	}
+
 	static String describe(KeyValuesResource resource) {
 		return DefaultKeyValuesResource.describe(resource, true);
 	}
 
-	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags, Variables variables, Logger logger)
-			throws IOException, FileNotFoundException {
+	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags) throws IOException, FileNotFoundException {
 		var context = DefaultLoaderContext.of(system, variables, resourceParser);
 		try {
 			logger.load(resource);
