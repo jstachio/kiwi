@@ -10,27 +10,42 @@ import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 
 public record KeyValue(String key, //
-		String raw, //
-		String expanded, //
-		Source source, //
-		Set<Flag> flags) {
+		String expanded, Meta meta) {
+
+	// public KeyValue {
+	// flags = FlagSet.copyOf(flags, Flag.class);
+	// Objects.requireNonNull(key);
+	// Objects.requireNonNull(raw);
+	// Objects.requireNonNull(expanded);
+	// Objects.requireNonNull(source);
+	// }
 
 	public KeyValue {
-		flags = FlagSet.copyOf(flags, Flag.class);
 		Objects.requireNonNull(key);
-		Objects.requireNonNull(raw);
 		Objects.requireNonNull(expanded);
-		Objects.requireNonNull(source);
+		Objects.requireNonNull(meta);
 	}
 
 	public KeyValue(String key, String raw) {
-		this(key, raw, raw, Source.EMPTY, Set.of());
+		this(key, raw, new Meta(raw, Source.EMPTY, Set.of()));
 	}
 
 	public final static String REDACTED_MESSAGE = "REDACTED";
 
+	public String value() {
+		return this.expanded;
+	}
+
+	public String raw() {
+		return meta().raw();
+	}
+
+	Set<Flag> flags() {
+		return meta().flags();
+	}
+
 	public KeyValue withExpanded(String expanded) {
-		return new KeyValue(key, raw, expanded, source, flags);
+		return new KeyValue(key, expanded, meta);
 	}
 
 	public KeyValue withExpanded(@SuppressWarnings("exports") Function<String, @Nullable String> expanded) {
@@ -42,17 +57,29 @@ public record KeyValue(String key, //
 		return this;
 	}
 
-	public KeyValue withFlags(Collection<Flag> flagsCol) {
-		var flags = EnumSet.noneOf(Flag.class);
-		flags.addAll(flagsCol);
-		return new KeyValue(key, raw, expanded, source, flags);
-	}
-
+	// public KeyValue withFlags(Collection<Flag> flagsCol) {
+	// var flags = EnumSet.noneOf(Flag.class);
+	// flags.addAll(flagsCol);
+	// return new KeyValue(key, raw, expanded, source, flags);
+	// }
+	//
 	public KeyValue addFlags(Collection<Flag> flagsCol) {
 		var flags = EnumSet.noneOf(Flag.class);
 		flags.addAll(flags());
 		flags.addAll(flagsCol);
-		return new KeyValue(key, raw, expanded, source, flags);
+		var meta = this.meta.withFlags(flags);
+		return new KeyValue(key, expanded, meta);
+	}
+
+	public record Meta(String raw, Source source, Set<Flag> flags) {
+		public Meta {
+			flags = FlagSet.copyOf(flags, Flag.class);
+		}
+
+		Meta withFlags(Collection<Flag> flags) {
+			var flagsCopy = FlagSet.copyOf(flags, Flag.class);
+			return new Meta(raw, source, flagsCopy);
+		}
 	}
 
 	public record Source(URI uri, @Nullable KeyValue reference, int index) {
@@ -86,7 +113,7 @@ public record KeyValue(String key, //
 	}
 
 	public boolean isFlag(Flag flag) {
-		return flags().contains(flag);
+		return meta().flags().contains(flag);
 	}
 
 	public KeyValue redact() {
@@ -95,12 +122,13 @@ public record KeyValue(String key, //
 
 	public KeyValue redact(String redactMessage) {
 		if (isSensitive()) {
-			String raw = redactMessage;
 			String expanded = redactMessage;
-			var flags = EnumSet.copyOf(this.flags);
-			flags = EnumSet.copyOf(flags);
+			String raw = redactMessage;
+			var flags = EnumSet.copyOf(this.meta.flags());
 			flags.remove(Flag.SENSITIVE);
-			return new KeyValue(key, raw, expanded, source, flags);
+			var source = meta.source();
+			Meta meta = new Meta(raw, source, flags);
+			return new KeyValue(key, expanded, meta);
 		}
 		return this;
 	}
@@ -112,10 +140,10 @@ public record KeyValue(String key, //
 
 	private static String toString(KeyValue kv) {
 		return "KeyValue [key=" + kv.key //
-				+ ", raw=" + kv.raw //
+				+ ", raw=" + kv.raw() //
 				+ ", expanded=" + kv.expanded //
-				+ ", source=" + kv.source //
-				+ ", flags=" + kv.flags //
+				+ ", source=" + kv.meta().source //
+				+ ", flags=" + kv.flags() //
 				+ "]";
 	}
 

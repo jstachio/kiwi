@@ -195,7 +195,7 @@ record DefaultKeyValuesResource(URI uri, //
 			var ref = resource.reference();
 			if (ref != null) {
 				sb.append(" specified with key: ");
-				sb.append("'").append(ref.key()).append("' in uri='").append(ref.source().uri()).append("'");
+				sb.append("'").append(ref.key()).append("' in uri='").append(ref.meta().source().uri()).append("'");
 			}
 		}
 		return sb;

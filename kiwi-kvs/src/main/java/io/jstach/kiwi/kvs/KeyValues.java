@@ -84,9 +84,9 @@ public interface KeyValues extends Iterable<KeyValue> {
 		}
 
 		public KeyValue build(String key, String value) {
-
 			var s = new KeyValue.Source(source, reference, index.incrementAndGet());
-			return new KeyValue(key, value, value, s, flags);
+			var m = new KeyValue.Meta(value, s, flags);
+			return new KeyValue(key, value, m);
 		}
 
 		public KeyValues build() {
