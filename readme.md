@@ -53,6 +53,8 @@ _load_foo=classpath:/foo.properties
 port.prefix=1
 ```
 
+(take note of the `_load_foo` key)
+
 **foo.properties loaded** (second loaded resource):
 
 
@@ -61,9 +63,10 @@ port.prefix=1
 user.name=kenny
 message="Merchandising"
 db.port=${port.prefix}5672
-_load_bar=file:/${user.home}/.config/myapp/user.properties
-_flag_bar=sensitive
+_load_user=file:/${user.home}/.config/myapp/user.properties
+_flags_user=sensitive,no_require
 ```
+(take note of the `_load_user` and `_flag_user` key)
 
 **user.properties** (third loaded resource treated as sensitive)
 
@@ -72,7 +75,9 @@ secret=12345 # my luggage combination
 port.prefix=3
 ```
 
-The effective key values printed out will be:
+After that system properties, then environment variables and then command line key values are added. 
+
+Ignoring environment variables and system properties our effective key values printed out will be:
 
 ```properties
 message=Merchandising
@@ -82,6 +87,24 @@ db.port=35672
 secret=REDACTED
 ```
 
+
+Let us go back to the original code. It should be pretty
+obvious now that the same thing can be done like: 
+
+```java
+var kvs = KeyValuesSystem.defaults()
+  .loader()
+  .add("classpath:/start.properties")
+  .load();
+```
+
+With `start.properties` having the additional key values:
+
+```properties
+_load_system-system:///
+_load_env=env:///
+_load_cmd=cmd:///-D
+```
 
 ## Kiwi is not a `System.getProperty` or other config framework replacements
 
@@ -150,7 +173,7 @@ The most important one is `_load_name` where name is the name you like to give t
 ### KeyValuesResource 
 
 A `KeyValuesResource` has a `URI` and symbolic name (used to find configuration). 
-It is backed by a key/value with additional meta data on how to load that resource. A
+It is backed by a key/value with additional meta data on how to load that resource. 
 URIs are designed to point at resources and the additional meta data 
 in a `KeyValuesResource` surprise surprise is more `KeyValues`. 
 
@@ -163,28 +186,30 @@ Some examples are:
 * The key values should not be interpolated because the data is raw
 * The loaded key values should or should not load other key values
 
-This is all configurable again through key values (and URIs).
+This is all configurable again through key values (and URIs) particularly
+the `_flags_name` key.
 
-### KeyValuesResourceLoader
 
-A resource loader will take a `KeyValuesResource` and turn it into `KeyValues`.
+### KeyValuesLoader
 
-Essentially it is an extension point to take a URI and load `KeyValues` usually
+A KeyValues loader usually takes a  `KeyValuesResource` and turns it into `KeyValues`.
+
+It is an extension point that in simple terms takes a URI and loads `KeyValues` usually
 based on the schema of the URI. For example `classpath` will use the JDK 
 classloader mechanism and `file` will use `java.io`/`java.nio` file loading.
 
-This is part of the library is extendable.
+This part of the library is extendable and custom loaders can be manually wired or the service loader can be used.
 
 ### KeyValueMedia
 
-Some `KeyValuesResourceLoader`s will know how to parse the `URI` directly to key values
+Some `KeyValuesLoader` will know how to parse the `URI` directly to key values
 BUT many will will want to use a parser. 
 
 Kiwi provides a framework to parse and format key values from/to byte streams, 
 or strings based on ["media type" aka "Content Type" aka MIME](https://en.wikipedia.org/wiki/Media_type) 
 or file extension.
 
-This part of the library is extendable.
+This part of the library is extendable and custom media types can be manually wired or the service loader can be used.
 
 ## History
 
