@@ -20,7 +20,7 @@ import io.jstach.kiwi.kvs.KeyValue.Flag;
  * This class is not reusable or threadsafe unless
  * the static of method is used.
  */
-class DefaultKeyValuesResourceLoader implements KeyValuesSourceLoader {
+class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 
 	private final KeyValuesSystem system;
 
@@ -43,13 +43,13 @@ class DefaultKeyValuesResourceLoader implements KeyValuesSourceLoader {
 
 			@Override
 			public KeyValues load(List<? extends KeyValuesSource> resources) throws IOException {
-				return new DefaultKeyValuesResourceLoader(system, rootVariables).load(resources);
+				return new DefaultKeyValuesSourceLoader(system, rootVariables).load(resources);
 			}
 		}
 		return new ReusableLoader(system, rootVariables);
 	}
 
-	private DefaultKeyValuesResourceLoader(KeyValuesSystem system, Variables rootVariables) {
+	private DefaultKeyValuesSourceLoader(KeyValuesSystem system, Variables rootVariables) {
 		super();
 		this.system = system;
 		this.variableStore = new LinkedHashMap<>();
@@ -120,7 +120,7 @@ class DefaultKeyValuesResourceLoader implements KeyValuesSourceLoader {
 			 */
 			variableStore.putAll(keyValues.interpolate(variables));
 		}
-		return KeyValues.of(keyValuesStore).expand(variables).memoize();
+		return keyValues.expand(variables).memoize();
 
 	}
 

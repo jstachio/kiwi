@@ -97,6 +97,12 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		public Meta withSource(Source source) {
 			return new DefaultMeta(raw, source, flags);
 		}
+
+		@Override
+		public String toString() {
+			return "Meta[raw=" + raw + ", source=" + Source.toString(source) + ", flags=" + flags + "]";
+		}
+
 	}
 
 	public record Source(URI uri, @Nullable KeyValue reference, int index) {
@@ -115,6 +121,13 @@ public record KeyValue(String key, String expanded, Meta meta) {
 
 		Source withURI(URI uri) {
 			return new Source(uri, reference, index);
+		}
+
+		private static String toString(Source source) {
+			if (source.isNullResource()) {
+				return "empty";
+			}
+			return source.toString();
 		}
 
 	}
@@ -164,10 +177,10 @@ public record KeyValue(String key, String expanded, Meta meta) {
 	}
 
 	private static String toString(KeyValue kv) {
-		return "KeyValue [key=" + kv.key //
+		return "KeyValue[key=" + kv.key //
 				+ ", raw=" + kv.raw() //
 				+ ", expanded=" + kv.expanded //
-				+ ", source=" + kv.meta().source() //
+				+ ", source=" + Source.toString(kv.meta().source())//
 				+ ", flags=" + kv.flags() //
 				+ "]";
 	}

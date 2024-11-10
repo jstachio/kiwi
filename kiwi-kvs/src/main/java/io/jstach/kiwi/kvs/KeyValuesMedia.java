@@ -1,6 +1,5 @@
 package io.jstach.kiwi.kvs;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,35 +68,35 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 		}
 
 	}
-
-	public static InputStream stringToInputStream(String s) {
-		return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
-	}
+	//
+	// public static InputStream stringToInputStream(String s) {
+	// return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
+	// }
 
 	public interface Parser {
 
 		void parse(InputStream input, BiConsumer<String, String> consumer) throws IOException;
 
 		default KeyValues parse(KeyValuesResource source, InputStream is) throws IOException {
-			var b = KeyValues.Builder.of(source.uri());
+			var b = KeyValues.builder(source);
 			parse(is, b::add);
 			return b.build();
 		}
 
-		default void parse(String input, BiConsumer<String, String> consumer) {
-			try {
-				parse(stringToInputStream(input), consumer);
-			}
-			catch (IOException e) {
-				throw new UncheckedIOException(e);
-			}
-		}
-
-		default KeyValues parse(String input) {
-			var b = KeyValues.Builder.of(URI.create("null://"));
-			parse(input, b::add);
-			return b.build();
-		}
+		// default void parse(String input, BiConsumer<String, String> consumer) {
+		// try {
+		// parse(stringToInputStream(input), consumer);
+		// }
+		// catch (IOException e) {
+		// throw new UncheckedIOException(e);
+		// }
+		// }
+		//
+		// default KeyValues parse(String input) {
+		// var b = KeyValues.builder();
+		// parse(input, b::add);
+		// return b.build();
+		// }
 
 	}
 

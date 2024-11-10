@@ -82,7 +82,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 
 	@Override
 	public KeyValues filterResources(KeyValues keyValues) {
-		return KeyValues.of(keyValues.stream().filter(this::filter).toList());
+		return keyValues.filter(this::filter);
 	}
 
 	private @Nullable KeyValuesResource parseOrNull(KeyValue keyValue, KeyValues keyValues) {

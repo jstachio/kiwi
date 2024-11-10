@@ -39,7 +39,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 	SYSTEM {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
-			var builder = KeyValues.builder(resource.uri());
+			var builder = KeyValues.builder(resource);
 			var properties = context.environment().getSystemProperties();
 			for (var sp : properties.stringPropertyNames()) {
 				String value = properties.getProperty(sp);
@@ -119,7 +119,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
 		var logger = context.environment().getLogger();
 		logger.info("Found profiles: " + profiles);
-		var builder = KeyValues.builder(resource.uri());
+		var builder = KeyValues.builder(resource);
 
 		int i = 0;
 		for (var p : profiles) {

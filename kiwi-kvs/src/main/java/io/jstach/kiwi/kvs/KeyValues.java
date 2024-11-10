@@ -30,19 +30,19 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 	public Stream<KeyValue> stream();
 
-	public static Builder builder(URI uri) {
-		return Builder.of(uri);
+	public static Builder builder(KeyValuesResource resource) {
+		return new Builder(resource.uri(), resource.reference());
 	}
 
 	public static Builder builder() {
-		return Builder.of(KeyValue.Source.NULL_URI);
+		return new Builder(KeyValue.Source.NULL_URI, null);
 	}
 
 	public static KeyValues empty() {
 		return KeyValuesEmpty.KeyValuesEmpty;
 	}
 
-	public static KeyValues of(Collection<KeyValue> kvs) {
+	public static KeyValues copyOf(SequencedCollection<KeyValue> kvs) {
 		return new ListKeyValues(List.copyOf(kvs));
 	}
 
@@ -50,7 +50,7 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 		private final URI source;
 
-		private @Nullable KeyValue reference;
+		private final @Nullable KeyValue reference;
 
 		private final AtomicInteger index = new AtomicInteger();
 
@@ -58,17 +58,13 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 		private final EnumSet<KeyValue.Flag> flags = EnumSet.noneOf(KeyValue.Flag.class);
 
-		public static Builder of(URI uri) {
-			return new Builder(uri);
-		}
+		private final boolean noSource;
 
-		private Builder(URI source) {
+		private Builder(URI source, @Nullable KeyValue reference) {
 			super();
 			this.source = source;
-		}
-
-		public Builder reference(KeyValue reference) {
-			return this;
+			this.reference = reference;
+			this.noSource = source.equals(KeyValue.Source.NULL_URI);
 		}
 
 		public Builder flag(KeyValue.Flag flag) {
@@ -89,29 +85,36 @@ public interface KeyValues extends Iterable<KeyValue> {
 			.<String, String>comparingByKey()
 			.thenComparing(Entry::getValue);
 
+		public Builder add(SequencedCollection<Entry<String, String>> entries) {
+			for (var e : entries) {
+				add(e);
+			}
+			return this;
+		}
+
 		public Builder add(Collection<Entry<String, String>> entries) {
-			Stream<Entry<String, String>> stream = switch (entries) {
-				case SequencedCollection<Entry<String, String>> sc -> sc.stream();
-				default -> entries.stream().sorted(entryComparator);
-			};
-			stream.forEach(this::add);
+			switch (entries) {
+				case SequencedCollection<Entry<String, String>> sc -> add(sc);
+				default -> entries.stream().sorted(entryComparator).forEach(this::add);
+			}
+			;
 			return this;
 		}
 
 		public KeyValue build(String key, String value) {
-			var s = new KeyValue.Source(source, reference, index.incrementAndGet());
+			var s = noSource ? KeyValue.Source.EMPTY : new KeyValue.Source(source, reference, index.incrementAndGet());
 			var m = KeyValue.Meta.of(value, s, flags);
 			return new KeyValue(key, value, m);
 		}
 
 		public KeyValues build() {
-			return KeyValues.of(List.copyOf(keyValues));
+			return KeyValues.copyOf(keyValues);
 		}
 
 	}
 
 	public static Collector<KeyValue, ?, KeyValues> collector() {
-		return Collectors.collectingAndThen(Collectors.toList(), KeyValues::of);
+		return Collectors.collectingAndThen(Collectors.toList(), KeyValues::copyOf);
 	}
 
 	public static Collector<Map.Entry<String, String>, ?, KeyValues> collector(Builder builder) {
@@ -155,7 +158,10 @@ public interface KeyValues extends Iterable<KeyValue> {
 	}
 
 	default KeyValues memoize() {
-		return of(stream().toList());
+		if (this instanceof MemoizedKeyValues mkvs) {
+			return mkvs;
+		}
+		return copyOf(stream().toList());
 	}
 
 	default KeyValues redact() {
@@ -208,6 +214,10 @@ record PrintableKeyValues(KeyValues values) implements ToStringableKeyValues {
 }
 
 record ListKeyValues(List<KeyValue> keyValues) implements ToStringableKeyValues, MemoizedKeyValues {
+
+	ListKeyValues {
+		keyValues = List.copyOf(keyValues);
+	}
 
 	@Override
 	public Stream<KeyValue> stream() {

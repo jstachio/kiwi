@@ -17,6 +17,10 @@ import io.jstach.kiwi.kvs.KeyValuesEnvironment.Logger;
 
 class KeyValuesSystemTest {
 
+	/*
+	 * Yes it is ridiculous how this is all one test at the moment. It is essentially a
+	 * smoke test and not a unit test.
+	 */
 	@Test
 	void testLoader() throws FileNotFoundException, IOException {
 		Properties properties = new Properties();
@@ -96,6 +100,25 @@ class KeyValuesSystemTest {
 		}
 
 		{
+			KeyValuesMedia.Formatter formatter = (a, _kvs) -> {
+				for (var kv : _kvs) {
+					a.append(kv.toString()).append("\n");
+				}
+			};
+
+			String actual = formatter.format(kvs);
+			String expected = """
+					KeyValue[key=stuff, raw=${user.home}, expanded=/home/kenny, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=1], flags=[]]
+					KeyValue[key=blah, raw=${MISSING:-${stuff}}, expanded=/home/kenny, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=2], flags=[]]
+					KeyValue[key=message, raw=${stuff} hello, expanded=/home/kenny hello, source=Source[uri=classpath:/test-props/testLoader-child.properties, reference=KeyValue[key=_load_child, raw=classpath:/test-props/testLoader-child.properties, expanded=classpath:/test-props/testLoader-child.properties, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=3], flags=[]], index=1], flags=[]]
+					KeyValue[key=mypassword, raw=REDACTED, expanded=REDACTED, source=Source[uri=classpath:/test-props/testLoader-sensitive.properties, reference=KeyValue[key=_load_luggage, raw=classpath:/test-props/testLoader-sensitive.properties, expanded=classpath:/test-props/testLoader-sensitive.properties, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=8], flags=[]], index=1], flags=[]]
+					KeyValue[key=fromMap1, raw=1, expanded=1, source=Source[uri=null:///extra, reference=null, index=0], flags=[]]
+					KeyValue[key=fromMap2, raw=2, expanded=2, source=Source[uri=null:///extra, reference=null, index=0], flags=[]]
+														""";
+			assertEquals(expected, actual);
+		}
+
+		{
 
 			String actual = logger.toString();
 			String expected = """
@@ -120,11 +143,12 @@ class KeyValuesSystemTest {
 			.name("system")
 			.noInterpolation(true)
 			.noAddKeyValues(true)
+			.sensitive(true)
 			.parameter("custom", "something")
 			.build();
 		String actual = system.toString();
 		String expected = """
-				DefaultKeyValuesResource[uri=system:///, name=system, loadFlags=[NO_ADD, NO_INTERPOLATE], reference=null, mediaType=null, parameters=MapParameters[map={custom=something}]]"""
+				DefaultKeyValuesResource[uri=system:///, name=system, loadFlags=[NO_ADD, NO_INTERPOLATE, SENSITIVE], reference=null, mediaType=null, parameters=MapParameters[map={custom=something}]]"""
 			.trim();
 		assertEquals(expected, actual);
 	}

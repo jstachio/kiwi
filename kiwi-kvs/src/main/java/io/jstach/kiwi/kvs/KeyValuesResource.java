@@ -105,6 +105,11 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 			return this;
 		}
 
+		public Builder sensitive(boolean flag) {
+			LoadFlag.SENSITIVE.set(flags, flag);
+			return this;
+		}
+
 		Builder _flags(Set<LoadFlag> flags) {
 			this.flags.clear();
 			this.flags.addAll(flags);
@@ -133,6 +138,8 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 sealed interface InternalKeyValuesResource extends KeyValuesResource {
 
 	Set<LoadFlag> loadFlags();
+
+	boolean isRedacted();
 
 }
 
@@ -185,8 +192,8 @@ record DefaultKeyValuesResource(URI uri, //
 	}
 
 	static StringBuilder describe(StringBuilder sb, KeyValuesResource resource, boolean includeRef) {
-
-		sb.append("uri='").append(resource.uri()).append("'");
+		String uri = redactURI(resource);
+		sb.append("uri='").append(uri).append("'");
 		var flags = loadFlags(resource);
 		if (!flags.isEmpty()) {
 			sb.append(" flags=").append(flags);
@@ -199,6 +206,26 @@ record DefaultKeyValuesResource(URI uri, //
 			}
 		}
 		return sb;
+	}
+
+	private static String redactURI(KeyValuesResource resource) {
+		var ir = (InternalKeyValuesResource) resource;
+		String uri = ir.isRedacted() ? (resource.uri().getScheme() + ":" + KeyValue.REDACTED_MESSAGE)
+				: resource.uri().toString();
+		return uri;
+	}
+
+	public boolean isRedacted() {
+		// TODO hmm if the resource has sensitive info should its URI be redacated as
+		// well?
+		// if (LoadFlag.SENSITIVE.isSet(loadFlags())) {
+		// return true;
+		// }
+		var ref = this.reference();
+		if (ref == null) {
+			return false;
+		}
+		return ref.isSensitive();
 	}
 
 	static String describe(KeyValuesResource resource, boolean includeRef) {

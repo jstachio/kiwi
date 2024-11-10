@@ -48,29 +48,29 @@ public interface Variables {
 		return EmptyVariables.EMPTY_VARIABLES;
 	}
 
-	default String requireElse(String key, String fallback) {
-		String r = getValue(key);
-		if (r == null) {
-			return Objects.requireNonNull(fallback);
-		}
-		return r;
-	}
-
-	default Optional<Entry<String, String>> findEntry(String... name) {
-		for (String k : name) {
-			if (k == null)
-				continue;
-			String prop = getValue(k);
-			if (prop != null)
-				return Optional.of(Map.entry(k, prop));
-		}
-		return Optional.empty();
-	}
-
-	default boolean matches(Entry<String, String> entry) {
-		String v = entry.getValue();
-		return v.equals(getValue(entry.getKey()));
-	}
+	// default String requireElse(String key, String fallback) {
+	// String r = getValue(key);
+	// if (r == null) {
+	// return Objects.requireNonNull(fallback);
+	// }
+	// return r;
+	// }
+	//
+	// default Optional<Entry<String, String>> findEntry(String... name) {
+	// for (String k : name) {
+	// if (k == null)
+	// continue;
+	// String prop = getValue(k);
+	// if (prop != null)
+	// return Optional.of(Map.entry(k, prop));
+	// }
+	// return Optional.empty();
+	// }
+	//
+	// default boolean matches(Entry<String, String> entry) {
+	// String v = entry.getValue();
+	// return v.equals(getValue(entry.getKey()));
+	// }
 
 	public static Variables.Builder builder() {
 		return new Builder();
@@ -153,9 +153,9 @@ public interface Variables {
 
 	}
 
-	default Interpolator toInterpolator() {
-		return Interpolator.create(this::getValue);
-	}
+	// default Interpolator toInterpolator() {
+	// return Interpolator.create(this::getValue);
+	// }
 
 	public static Variables create(Properties properties) {
 		return properties::getProperty;
