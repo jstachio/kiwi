@@ -85,6 +85,11 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 			return this;
 		}
 
+		public Builder clearParameters() {
+			parameters.clear();
+			return this;
+		}
+
 		public Builder parameter(String key, String value) {
 			parameters.put(key, value);
 			return this;
@@ -132,6 +137,30 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 		}
 
 	}
+
+	// class ParameterException extends RuntimeException {
+	//
+	// private static final long serialVersionUID = 8696834012139564241L;
+	// private final KeyValuesResource resource;
+	// private final String parameter;
+	//
+	// public ParameterException(
+	// KeyValuesResource resource,
+	// String parameter,
+	// String message) {
+	// super(message + resourceDescribe(resource, parameter));
+	// this.resource = resource;
+	// this.parameter = parameter;
+	// }
+	//
+	//
+	// private static String resourceDescribe(KeyValuesResource resource, String
+	// parameter) {
+	// StringBuilder sb = new StringBuilder();
+	// return DefaultKeyValuesResource.describe(sb, resource, false)
+	// .append(" for parameter '").append(parameter).append("'" ).toString();
+	// }
+	// }
 
 }
 
@@ -191,6 +220,10 @@ record DefaultKeyValuesResource(URI uri, //
 		return defaultResource.loadFlags();
 	}
 
+	/*
+	 * TODO: The printing of resources is kind of a mess. A builder is probably a better
+	 * solution.
+	 */
 	static StringBuilder describe(StringBuilder sb, KeyValuesResource resource, boolean includeRef) {
 		String uri = redactURI(resource);
 		sb.append("uri='").append(uri).append("'");
@@ -203,6 +236,22 @@ record DefaultKeyValuesResource(URI uri, //
 			if (ref != null) {
 				sb.append(" specified with key: ");
 				sb.append("'").append(ref.key()).append("' in uri='").append(ref.meta().source().uri()).append("'");
+			}
+		}
+		return sb;
+	}
+
+	static StringBuilder fullDescribe(StringBuilder sb, KeyValuesResource resource) {
+		describe(sb, resource, false);
+		var ref = resource.reference();
+		while (ref != null) {
+			sb.append("\n\t<-- ");
+			var source = ref.meta().source();
+			sb.append("uri='").append(source.uri()).append("'");
+			ref = source.reference();
+			if (ref != null) {
+				sb.append(" specified with key: ");
+				sb.append("'").append(ref.key()).append("'");
 			}
 		}
 		return sb;

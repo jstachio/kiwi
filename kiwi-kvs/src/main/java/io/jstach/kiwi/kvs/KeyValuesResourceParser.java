@@ -152,10 +152,10 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 
 	private String paramName(String resourceName, String key) {
 		String prefix = externalResourceKey2Prefix(ResourceKey.PARAM, resourceName);
-		if (!resourceName.startsWith(prefix)) {
+		if (!key.startsWith(prefix)) {
 			throw new IllegalArgumentException("Parameter prefix is incorrect. " + key);
 		}
-		String name = resourceName.substring(prefix.length());
+		String name = key.substring(prefix.length());
 		if (name.isBlank()) {
 			throw new IllegalArgumentException("Resource Parameter is bad. " + key);
 		}

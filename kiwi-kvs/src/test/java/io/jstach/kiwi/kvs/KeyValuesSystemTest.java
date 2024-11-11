@@ -78,6 +78,8 @@ class KeyValuesSystemTest {
 					stuff=/home/kenny
 					blah=/home/kenny
 					message=/home/kenny hello
+					profile1=loaded 2
+					profile2=loaded
 					mypassword=REDACTED
 					fromMap1=1
 					fromMap2=2
@@ -92,6 +94,8 @@ class KeyValuesSystemTest {
 					stuff=/home/kenny
 					blah=/home/kenny
 					message=/home/kenny hello
+					profile1=loaded 2
+					profile2=loaded
 					mypassword=1.2.3.4.5
 					fromMap1=1
 					fromMap2=2
@@ -111,10 +115,13 @@ class KeyValuesSystemTest {
 					KeyValue[key=stuff, raw=${user.home}, expanded=/home/kenny, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=1], flags=[]]
 					KeyValue[key=blah, raw=${MISSING:-${stuff}}, expanded=/home/kenny, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=2], flags=[]]
 					KeyValue[key=message, raw=${stuff} hello, expanded=/home/kenny hello, source=Source[uri=classpath:/test-props/testLoader-child.properties, reference=KeyValue[key=_load_child, raw=classpath:/test-props/testLoader-child.properties, expanded=classpath:/test-props/testLoader-child.properties, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=3], flags=[]], index=1], flags=[]]
+					KeyValue[key=profile1, raw=loaded, expanded=loaded 2, source=Source[uri=classpath:/test-props/testLoader-profile1.properties, reference=KeyValue[key=_load_profiles0, raw=classpath:/test-props/testLoader-profile1.properties, expanded=classpath:/test-props/testLoader-profile1.properties, source=Source[uri=profile.classpath:/test-props/testLoader-__PROFILE__.properties, reference=KeyValue[key=_load_profiles, raw=profile.classpath:/test-props/testLoader-__PROFILE__.properties, expanded=profile.classpath:/test-props/testLoader-__PROFILE__.properties, source=Source[uri=classpath:/test-props/testLoader-child.properties, reference=KeyValue[key=_load_child, raw=classpath:/test-props/testLoader-child.properties, expanded=classpath:/test-props/testLoader-child.properties, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=3], flags=[]], index=2], flags=[]], index=1], flags=[]], index=1], flags=[]]
+					KeyValue[key=profile1, raw=loaded 2, expanded=loaded 2, source=Source[uri=classpath:/test-props/testLoader-profile2.properties, reference=KeyValue[key=_load_profiles1, raw=classpath:/test-props/testLoader-profile2.properties, expanded=classpath:/test-props/testLoader-profile2.properties, source=Source[uri=profile.classpath:/test-props/testLoader-__PROFILE__.properties, reference=KeyValue[key=_load_profiles, raw=profile.classpath:/test-props/testLoader-__PROFILE__.properties, expanded=profile.classpath:/test-props/testLoader-__PROFILE__.properties, source=Source[uri=classpath:/test-props/testLoader-child.properties, reference=KeyValue[key=_load_child, raw=classpath:/test-props/testLoader-child.properties, expanded=classpath:/test-props/testLoader-child.properties, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=3], flags=[]], index=2], flags=[]], index=3], flags=[]], index=1], flags=[]]
+					KeyValue[key=profile2, raw=loaded, expanded=loaded, source=Source[uri=classpath:/test-props/testLoader-profile2.properties, reference=KeyValue[key=_load_profiles1, raw=classpath:/test-props/testLoader-profile2.properties, expanded=classpath:/test-props/testLoader-profile2.properties, source=Source[uri=profile.classpath:/test-props/testLoader-__PROFILE__.properties, reference=KeyValue[key=_load_profiles, raw=profile.classpath:/test-props/testLoader-__PROFILE__.properties, expanded=profile.classpath:/test-props/testLoader-__PROFILE__.properties, source=Source[uri=classpath:/test-props/testLoader-child.properties, reference=KeyValue[key=_load_child, raw=classpath:/test-props/testLoader-child.properties, expanded=classpath:/test-props/testLoader-child.properties, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=3], flags=[]], index=2], flags=[]], index=3], flags=[]], index=2], flags=[]]
 					KeyValue[key=mypassword, raw=REDACTED, expanded=REDACTED, source=Source[uri=classpath:/test-props/testLoader-sensitive.properties, reference=KeyValue[key=_load_luggage, raw=classpath:/test-props/testLoader-sensitive.properties, expanded=classpath:/test-props/testLoader-sensitive.properties, source=Source[uri=classpath:/test-props/testLoader.properties, reference=null, index=8], flags=[]], index=1], flags=[]]
 					KeyValue[key=fromMap1, raw=1, expanded=1, source=Source[uri=null:///extra, reference=null, index=0], flags=[]]
 					KeyValue[key=fromMap2, raw=2, expanded=2, source=Source[uri=null:///extra, reference=null, index=0], flags=[]]
-														""";
+																			""";
 			assertEquals(expected, actual);
 		}
 
@@ -128,11 +135,18 @@ class KeyValuesSystemTest {
 					[INFO ] Loaded  uri='classpath:/test-props/testLoader.properties'
 					[DEBUG] Loading uri='classpath:/test-props/testLoader-child.properties' specified with key: '_load_child' in uri='classpath:/test-props/testLoader.properties'
 					[INFO ] Loaded  uri='classpath:/test-props/testLoader-child.properties'
+					[DEBUG] Loading uri='profile.classpath:/test-props/testLoader-__PROFILE__.properties' specified with key: '_load_profiles' in uri='classpath:/test-props/testLoader-child.properties'
+					[INFO ] Found profiles: [profile1, profile2]
+					[INFO ] Loaded  uri='profile.classpath:/test-props/testLoader-__PROFILE__.properties'
+					[DEBUG] Loading uri='classpath:/test-props/testLoader-profile1.properties' specified with key: '_load_profiles0' in uri='profile.classpath:/test-props/testLoader-__PROFILE__.properties'
+					[INFO ] Loaded  uri='classpath:/test-props/testLoader-profile1.properties'
+					[DEBUG] Loading uri='classpath:/test-props/testLoader-profile2.properties' specified with key: '_load_profiles1' in uri='profile.classpath:/test-props/testLoader-__PROFILE__.properties'
+					[INFO ] Loaded  uri='classpath:/test-props/testLoader-profile2.properties'
 					[DEBUG] Loading uri='classpath:/test-props/testLoader-doesnotexist.properties' flags=[NO_REQUIRE] specified with key: '_load_noexist' in uri='classpath:/test-props/testLoader.properties'
 					[DEBUG] Missing uri='classpath:/test-props/testLoader-doesnotexist.properties' flags=[NO_REQUIRE]
 					[DEBUG] Loading uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE] specified with key: '_load_luggage' in uri='classpath:/test-props/testLoader.properties'
 					[INFO ] Loaded  uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE]
-					""";
+										""";
 			assertEquals(expected, actual);
 		}
 	}
@@ -155,19 +169,19 @@ class KeyValuesSystemTest {
 
 	class TestLogger implements Logger {
 
-		private final List<String> events = new ArrayList<>();
+		final List<String> events = new ArrayList<>();
 
 		public TestLogger() {
 			super();
 		}
 
-		public void clear() {
-			events.clear();
-		}
-
-		public List<String> getEvents() {
-			return events;
-		}
+		// public void clear() {
+		// events.clear();
+		// }
+		//
+		// public List<String> getEvents() {
+		// return events;
+		// }
 
 		@Override
 		public void debug(String message) {

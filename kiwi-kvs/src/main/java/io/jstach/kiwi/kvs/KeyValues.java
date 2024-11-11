@@ -224,6 +224,11 @@ record ListKeyValues(List<KeyValue> keyValues) implements ToStringableKeyValues,
 		return keyValues.stream();
 	}
 
+	@Override
+	public Iterator<KeyValue> iterator() {
+		return keyValues.iterator();
+	}
+
 	public KeyValues memoize() {
 		return this;
 	}
@@ -289,13 +294,18 @@ class KeyValuesInterpolator {
 
 }
 
-enum KeyValuesEmpty implements KeyValues {
+enum KeyValuesEmpty implements KeyValues, ToStringableKeyValues {
 
 	KeyValuesEmpty;
 
 	@Override
 	public Stream<KeyValue> stream() {
 		return Stream.empty();
+	}
+
+	@Override
+	public String toString() {
+		return "KeyValues[]";
 	}
 
 }

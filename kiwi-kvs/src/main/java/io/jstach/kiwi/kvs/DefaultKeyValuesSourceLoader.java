@@ -30,13 +30,20 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 
 	private final Map<String, KeyValue> keys = new LinkedHashMap<>();
 
-	private final List<KeyValuesSource> sourcesStack = new ArrayList<>();
+	private final List<Node> sourcesStack = new ArrayList<>();
 
 	private final List<KeyValue> keyValuesStore = new ArrayList<>();
 
 	private final KeyValuesResourceParser resourceParser = DefaultKeyValuesResourceParser.of();
 
 	private final KeyValuesEnvironment.Logger logger;
+
+	/*
+	 * TODO We use a node to wrap a source to represent each branch to fully recover the
+	 * load path but we probably do not need to do this as each kv has the source.
+	 */
+	record Node(KeyValuesSource current, @Nullable Node parent) {
+	}
 
 	static KeyValuesSourceLoader of(KeyValuesSystem system, Variables rootVariables) {
 		record ReusableLoader(KeyValuesSystem system, Variables rootVariables) implements KeyValuesSourceLoader {
@@ -66,18 +73,21 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		var fs = this.sourcesStack;
 
 		KeyValues keyValues = () -> keyValuesStore.stream();
-
-		fs.addAll(0, sources);
+		{
+			List<Node> nodes = sources.stream().map(s -> new Node(s, null)).toList();
+			fs.addAll(0, nodes);
+		}
 		for (; !fs.isEmpty();) {
 			// pop
-			var resource = fs.remove(0);
+			var node = fs.remove(0);
+			var resource = node.current;
 			Set<LoadFlag> flags = switch (resource) {
 				case InternalKeyValuesResource ir -> ir.loadFlags();
 				case NamedKeyValues _kvs -> Set.of();
 			};
 
 			var kvs = switch (resource) {
-				case InternalKeyValuesResource ir -> load(ir, flags);
+				case InternalKeyValuesResource ir -> load(node, ir, flags);
 				case NamedKeyValues _kvs -> _kvs.keyValues();
 			};
 
@@ -92,8 +102,9 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 				kvs = kvs.expand(variables);
 			}
 			var foundResources = resourceParser.parseResources(kvs);
+			var nodes = foundResources.stream().map(s -> new Node(s, node)).toList();
 			// push
-			fs.addAll(0, foundResources);
+			fs.addAll(0, nodes);
 			kvs = resourceParser.filterResources(kvs);
 			boolean added = false;
 			if (!LoadFlag.NO_ADD.isSet(flags)) {
@@ -107,7 +118,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 				}
 				if (!added && LoadFlag.NO_EMPTY.isSet(flags)) {
 					throw new IOException("Resource did not have any key values and was flagged not empty. resource: "
-							+ describe(resource));
+							+ describe(node));
 				}
 			}
 			else {
@@ -124,25 +135,38 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 
 	}
 
-	static String describe(KeyValuesSource source) {
+	static StringBuilder describe(StringBuilder sb, KeyValuesSource source) {
 		return switch (source) {
-			case KeyValuesResource r -> describe(r);
-			case NamedKeyValues _kvs -> "In memory provided KeyValues";
+			case KeyValuesResource r -> DefaultKeyValuesResource.fullDescribe(sb, r);
+			// DefaultKeyValuesResource.describe(sb, r, true);
+			case NamedKeyValues _kvs -> sb.append("In memory provided KeyValues");
 		};
 	}
 
-	static String describe(KeyValuesResource resource) {
-		return DefaultKeyValuesResource.describe(resource, true);
+	static String describe(Node node) {
+		StringBuilder sb = new StringBuilder();
+		describe(sb, node);
+		return sb.toString();
 	}
 
-	KeyValues load(KeyValuesResource resource, Set<LoadFlag> flags) throws IOException, FileNotFoundException {
+	static void describe(StringBuilder sb, Node node) {
+		describe(sb, node.current);
+		// var current = node.parent;
+		// while (current != null) {
+		// sb.append("\n\t <-- ");
+		// sb.append(describe(current.current));
+		// current = current.parent;
+		// }
+	}
+
+	KeyValues load(Node node, KeyValuesResource resource, Set<LoadFlag> flags)
+			throws IOException, FileNotFoundException {
 		var context = DefaultLoaderContext.of(system, variables, resourceParser);
 		try {
 			logger.load(resource);
 			var kvs = system.loaderFinder()
 				.findLoader(context, resource)
-				.orElseThrow(
-						() -> new IOException("Resource Loader could not be found. resource: " + describe(resource)))
+				.orElseThrow(() -> new IOException("Resource Loader could not be found. resource: " + describe(node)))
 				.load();
 			logger.loaded(resource);
 			return kvs;
@@ -152,7 +176,10 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 			if (LoadFlag.NO_REQUIRE.isSet(flags)) {
 				return KeyValues.empty();
 			}
-			throw new IOException("Resource could not be loaded. resource: " + describe(resource), e);
+			throw new IOException("Resource could not be found. resource: " + describe(node), e);
+		}
+		catch (IOException e) {
+			throw new IOException("Resource could not be loaded. resource: " + describe(node), e);
 		}
 
 	}

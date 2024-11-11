@@ -52,11 +52,11 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
 	},
 	PROFILE {
-		private final static String scheme = "profile";
+		private final static String SCHEME = "profile";
 
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
-			return profiles(scheme, context, resource);
+			return profiles(SCHEME, context, resource);
 		}
 
 		@Override
@@ -65,7 +65,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			if (scheme == null) {
 				return false;
 			}
-			return scheme.startsWith(scheme + ".");
+			return scheme.startsWith(SCHEME + ".");
 		}
 	},
 	NULL {
@@ -107,9 +107,10 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		String uriString = resource.uri().toString();
 		uriString = uriString.substring(scheme.length() + 1);
 		// var uri = URI.create(uriString);
-		var profile = context.variables().getValue("_profile");
+		var profile = resource.parameters().getValue("profile");
 		if (profile == null) {
-			throw new IOException("_profile variable is required. Set it to CSV list of profiles.");
+			// TODO custom exception for missing parameters ?
+			throw new IOException("profile parameter is required. Set it to CSV list of profiles.");
 		}
 		if (!uriString.contains("__PROFILE__")) {
 			throw new IOException(
@@ -126,7 +127,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			var value = uriString.replace("__PROFILE__", p);
 			var b = resource.toBuilder();
 			b.uri(URI.create(value));
-			b.name(resource.name() + i);
+			b.name(resource.name() + i++);
 			var profileResource = b.build();
 			context.formatResource(profileResource, builder::add);
 		}
