@@ -99,7 +99,7 @@ public sealed interface KeyValuesSystem {
 	 * services discovered via the {@link ServiceLoader}, you need to explicitly set it
 	 * using {@link #serviceLoader(ServiceLoader)}.
 	 */
-	public static class Builder {
+	public final static class Builder {
 
 		private @Nullable KeyValuesEnvironment environment;
 
@@ -109,6 +109,9 @@ public sealed interface KeyValuesSystem {
 		private List<KeyValuesMediaFinder> mediaFinders = new ArrayList<>(List.of(DefaultKeyValuesMedia.values()));
 
 		private @Nullable ServiceLoader<KeyValuesServiceProvider> serviceLoader;
+
+		private Builder() {
+		}
 
 		/**
 		 * Sets the {@link KeyValuesEnvironment} to be used by the

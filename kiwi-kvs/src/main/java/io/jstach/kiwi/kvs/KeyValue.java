@@ -118,6 +118,17 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		return new KeyValue(key, expanded, meta);
 	}
 
+	/**
+	 * Returns a new {@code KeyValue} instance with its value expanded using the provided
+	 * function. The expansion function takes the key as input and returns the expanded
+	 * value, or {@code null} if no expansion is necessary. If an expanded value is
+	 * provided by the function, a new {@code KeyValue} instance is created with that
+	 * expanded value; otherwise, the current instance is returned unchanged.
+	 * @param expanded a function that takes the key as input and returns the expanded
+	 * value or {@code null} if no expansion is needed
+	 * @return a new {@code KeyValue} instance with the expanded value, or the original
+	 * instance if no expansion was applied
+	 */
 	public KeyValue withExpanded(@SuppressWarnings("exports") Function<String, @Nullable String> expanded) {
 		String n = key();
 		String exp = expanded.apply(n);
@@ -157,18 +168,6 @@ public record KeyValue(String key, String expanded, Meta meta) {
 	 * <h2>Immutability:</h2> Implementations of {@code Meta} are immutable, ensuring that
 	 * once created, the metadata cannot be altered. However, methods are provided to
 	 * create modified copies with updated flags or source information.
-	 *
-	 * <h2>Usage Example:</h2> The following example shows how to create and modify a
-	 * {@code Meta} instance:
-	 *
-	 * @snippet : KeyValue.Meta meta = KeyValue.Meta.of("rawValue", KeyValue.Source.EMPTY,
-	 * Set.of(KeyValue.Flag.NO_INTERPOLATION)); System.out.println("Raw: " + meta.raw());
-	 * System.out.println("Source: " + meta.source()); System.out.println("Flags: " +
-	 * meta.flags());
-	 *
-	 * // Adding a new flag KeyValue.Meta updatedMeta =
-	 * meta.withFlags(Set.of(KeyValue.Flag.SENSITIVE)); System.out.println("Updated Flags:
-	 * " + updatedMeta.flags());
 	 *
 	 */
 	public sealed interface Meta {
@@ -284,6 +283,10 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		 */
 		public static Source EMPTY = new Source();
 
+		/**
+		 * Creates an empty source.
+		 * @see #EMPTY
+		 */
 		public Source() {
 			this(NULL_URI, null, 0);
 		}
@@ -328,15 +331,6 @@ public record KeyValue(String key, String expanded, Meta meta) {
 	 * <li>{@link #SENSITIVE} - Marks the key-value as containing sensitive information,
 	 * such as passwords or secrets, which may be redacted when displayed.</li>
 	 * </ul>
-	 *
-	 * <h2>Usage Example:</h2> The following example demonstrates checking if a flag is
-	 * set on a {@link KeyValue}:
-	 *
-	 * @snippet : KeyValue kv = new KeyValue("password", "secretValue"); kv =
-	 * kv.addFlags(Set.of(KeyValue.Flag.SENSITIVE)); if (kv.isSensitive()) {
-	 * System.out.println("Sensitive value: " + kv.redact()); } else {
-	 * System.out.println("Value: " + kv.value()); }
-	 *
 	 */
 	public enum Flag {
 
@@ -346,6 +340,7 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		 * as-is.
 		 */
 		NO_INTERPOLATION,
+
 		/**
 		 * Marks the key-value as containing sensitive information. When this flag is set,
 		 * the value may be redacted when displayed to avoid leaking secrets.
@@ -364,14 +359,32 @@ public record KeyValue(String key, String expanded, Meta meta) {
 
 	}
 
+	/**
+	 * Checks if the {@link Flag#NO_INTERPOLATION} flag is set on this {@code KeyValue}.
+	 * This indicates that the value should not undergo any interpolation or variable
+	 * substitution.
+	 * @return {@code true} if the {@code NO_INTERPOLATION} flag is set, otherwise
+	 * {@code false}.
+	 */
 	public boolean isNoInterpolation() {
 		return isFlag(Flag.NO_INTERPOLATION);
 	}
 
+	/**
+	 * Checks if the {@link Flag#SENSITIVE} flag is set on this {@code KeyValue}. A
+	 * sensitive value is marked to indicate that it should be treated as confidential and
+	 * may be redacted when displayed to prevent leaking sensitive information.
+	 * @return {@code true} if the {@code SENSITIVE} flag is set, otherwise {@code false}.
+	 */
 	public boolean isSensitive() {
 		return isFlag(Flag.SENSITIVE);
 	}
 
+	/**
+	 * Checks if a specific flag is set on this {@code KeyValue}.
+	 * @param flag the flag to check
+	 * @return {@code true} if the specified flag is set, otherwise {@code false}.
+	 */
 	public boolean isFlag(Flag flag) {
 		return meta().flags().contains(flag);
 	}

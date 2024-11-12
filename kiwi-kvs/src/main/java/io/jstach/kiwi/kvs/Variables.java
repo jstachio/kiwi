@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
@@ -20,7 +21,8 @@ import io.jstach.kiwi.kvs.Variables.Parameters;
  * contexts where key-to-value mappings are required for interpolation. Unlike
  * {@link KeyValues}, there are no duplicate keys in {@code Variables}.
  */
-public interface Variables {
+@FunctionalInterface
+public interface Variables extends Function<String, @Nullable String> {
 
 	/**
 	 * Retrieves the value mapped to the specified key.
@@ -28,6 +30,11 @@ public interface Variables {
 	 * @return the value associated with the key, or {@code null} if not found
 	 */
 	public @Nullable String getValue(String key);
+
+	@Override
+	default @Nullable String apply(String t) {
+		return getValue(t);
+	}
 
 	/**
 	 * Represents a specialized {@code Variables} interface that can list all keys it
@@ -93,12 +100,15 @@ public interface Variables {
 	 * A builder class for creating composite {@link Variables} instances by combining
 	 * multiple sources of key-to-value mappings.
 	 */
-	public static class Builder {
+	public final static class Builder {
 
 		@Nullable
 		private Map<String, String> properties = null;
 
 		private List<Variables> suppliers = new ArrayList<>();
+
+		private Builder() {
+		}
 
 		/**
 		 * Adds a key-value mapping to this builder.

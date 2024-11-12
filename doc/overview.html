@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kiwi Overview</title>
+</head>
+<body>
+
+<h1 id="kiwi">Kiwi</h1>
+
+<h2 class="toc-title">Contents</h2>
+
+<div class="js-toc-content">
+
+<h2 id="description">Description</h2>
+
+<p>A non-opinionated Java <em>bootstrapping configuration</em> library that allows recursive chain loading of configuration from key values.</p>
+
+<p><strong>Key values are everywhere</strong> (also known as associative arrays, list of tuples, or name-value pairs)!</p>
+
+<p>Environment variables, system properties, cloud metadata, vault, HTTP FORM post, URI queries, command line arguments, and even most forms of JSON, HOCON, TOML, YAML, and XML can all be represented as simple <em>"key value"</em> pairs.</p>
+
+<p>Thus, it is the perfect common denominator for providing applications with initial configuration. We call this <em>"bootstrapping configuration"</em> and it is usually gathered even before logging.</p>
+
+<p>To do this, Kiwi loads streams of key values (<code>KeyValue</code>) from resources. What is unique about it is that certain key values will load more key values to the current stream, which is what we call chaining.</p>
+
+<pre><code>URI -&gt; KeyValues* -&gt; URI* -&gt; KeyValues -&gt; ...
+</code></pre>
+
+<p>Streams are useful because they can be filtered and transformed, which matters because keys and values from various sources often need transformation. For example, environment variable names often need to be converted to lower case, and some prefix removed.</p>
+
+<p><strong>In short, it is a micro configuration framework that itself can be configured with key values.</strong></p>
+
+<h2 id="adding-kiwi">Adding Kiwi to Your Project</h2>
+
+<p>To use Kiwi in your project, add the following dependency to your build configuration:</p>
+
+<h3 id="maven">Maven</h3>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;io.jstach.kiwi&lt;/groupId&gt;
+    &lt;artifactId&gt;kiwi-kvs&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<h3 id="gradle">Gradle</h3>
+<pre><code>implementation 'io.jstach.kiwi:kiwi-kvs:1.0.0'
+</code></pre>
+
+<h2 id="example-usage">Example Usage</h2>
+
+<p>A simple example using <code>java.util.Properties</code> files that could be parsed to <code>KeyValues</code>:</p>
+
+<pre><code>var kvs = KeyValuesSystem.defaults()
+    .loader()
+    .add("classpath:/start.properties")
+    .add("system:///") // add system properties to override
+    .add("env:///")    // add environment variables to override
+    .add("cmd:///-D")  // add command line for final override using the prefix of -D
+    .load();
+
+// Give the key values to some other config framework like Spring:
+var map = kvs.toMap();
+ConfigurableEnvironment env = applicationContext.getEnvironment();
+env.getPropertySources().addFirst(new MapPropertySource("start", map));
+</code></pre>
+
+<h3 id="example-properties-files">Example Properties Files</h3>
+
+<strong>start.properties (first loaded)</strong>
+
+<pre><code>message=Hello ${user.name}
+_load_foo=classpath:/foo.properties
+port.prefix=1
+</code></pre>
+
+<p>(take note of the <code>_load_foo</code> key)</p>
+
+<strong>foo.properties (second loaded resource)</strong>
+
+<pre><code>user.name=Barf
+message=Merchandising
+db.port=${port.prefix}5672
+_load_user=file:/${user.home}/.config/myapp/user.properties
+_flags_user=sensitive,no_require
+</code></pre>
+
+<p>(take note of the <code>_load_user</code> and <code>_flags_user</code> keys)</p>
+
+<strong>user.properties (third loaded resource treated as sensitive)</strong>
+
+<pre><code>secret=12345 # my luggage combination
+port.prefix=3
+</code></pre>
+
+<p>After that, system properties, then environment variables, and then command line key values are added. Ignoring environment variables and system properties, our effective key values printed out will be:</p>
+
+<pre><code>message=Merchandising
+user.name=Barf
+port.prefix=3
+db.port=35672
+secret=REDACTED
+</code></pre>
+
+<h2 id="architecture">Architecture</h2>
+
+<p>Kiwi's two major concepts are:</p>
+<ol>
+    <li>KeyValues - a stream of key values</li>
+    <li>Resources - a URI with associated key value metadata</li>
+</ol>
+
+<p>Resources are used to load key values, and key values can be used to specify and find more resources (to load more key values). Kiwi is recursive.</p>
+
+<h3 id="keyvalue">KeyValue</h3>
+
+<p>A <code>KeyValue</code> object in Kiwi, unlike a <code>Map.Entry&lt;String, String&gt;</code>, has more information than just the simple tuple of <code>key</code> and <code>value</code>. <code>KeyValue</code> objects are:</p>
+<ul>
+    <li>Immutable</li>
+    <li>Have interpolated values as well as the original pre-interpolated value</li>
+    <li>Contain source information</li>
+    <li>Indicate whether or not they should be used for interpolation</li>
+    <li>Indicate whether or not they should be printed (e.g., marking as sensitive information)</li>
+</ul>
+
+<p><strong>Note:</strong> A <code>KeyValue</code> can be a special key that references another resource to load, typically prefixed with an underscore (e.g., <code>_load_name</code>).</p>
+
+<h3 id="interpolation">Interpolation</h3>
+
+<p>Kiwi can perform Bash-like interpolation on a stream of <code>KeyValues</code>, using the key values themselves and <code>Variables</code>, which are <code>Function&lt;String, String&gt;</code>. Interpolation can be disabled for specific resources using a resource flag.</p>
+
+<h2 id="key-advantages-of-kiwi">Key Advantages of Kiwi</h2>
+<ul>
+    <li><strong>Zero opinions</strong> - It does not assume default resource names or loading order; you have full control.</li>
+    <li>Zero dependencies</li>
+    <li>Zero reflection</li>
+    <li>Zero auto-loading - You choose the resources and order.</li>
+    <li>Zero logging (unless you choose to add it)</li>
+    <li>Fast initialization and highly configurable</li>
+    <li>Framework agnostic</li>
+</ul>
+
+<h2 id="extensibility">Extensibility</h2>
+
+<p>Kiwi supports extensibility through the {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider} interface, allowing custom loaders and media handlers to be integrated and discovered via the {@link java.util.ServiceLoader} mechanism.</p>
+</div>
+</body>
+</html>
