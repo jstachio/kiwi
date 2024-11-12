@@ -9,28 +9,95 @@ import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
+/**
+ * Represents a key-value pair in the Kiwi configuration system. Unlike a simple 
+ * {@code Map.Entry<String, String>}, this record holds additional metadata 
+ * that provides more context about the key-value pair, such as:
+ * 
+ * <ul>
+ *   <li>The original raw value (before any interpolation).</li>
+ *   <li>The expanded value (after interpolation).</li>
+ *   <li>Source information indicating where the key-value pair was loaded from.</li>
+ *   <li>Flags indicating special behavior (e.g., sensitive data or disabling interpolation).</li>
+ * </ul>
+ * 
+ * This class is immutable and provides methods for handling sensitive data, 
+ * interpolation, and chaining resources for further key-value loading.
+ * 
+ * <h2>Example Usage</h2>
+ * 
+ * The following example shows how to load key-values using the Kiwi system:
+ * 
+ * {@snippet : 
+ * var kvs = KeyValuesSystem.defaults()
+ *   .loader()
+ *   .add("classpath:/start.properties")
+ *   .add("system:///")
+ *   .add("env:///")
+ *   .load();
+ * 
+ * // Accessing key-value pairs:
+ * for (KeyValue kv : kvs) {
+ *     System.out.println("Key: " + kv.key() + ", Value: " + kv.value());
+ * }
+ * }
+ * @param key the key associated with this key-value pair.
+ * @param expanded the value after any interpolation.
+ * @param meta additional metadata associated with this key-value pair.
+ */
 public record KeyValue(String key, String expanded, Meta meta) {
 
+    /**
+     * Constructs a new {@code KeyValue} with the given key, expanded value, 
+     * and associated metadata.
+     * 
+     * @param key the key associated with this key-value pair (cannot be {@code null}).
+     * @param expanded the value after any interpolation (cannot be {@code null}).
+     * @param meta additional metadata (cannot be {@code null}).
+     */
 	public KeyValue {
 		Objects.requireNonNull(key);
 		Objects.requireNonNull(expanded);
 		Objects.requireNonNull(meta);
 	}
 
+    /**
+     * Constructs a new {@code KeyValue} with a raw value, using the provided 
+     * key and raw value. The {@link Meta} information will be initialized with 
+     * default settings.
+     * 
+     * @param key the key associated with this key-value pair.
+     * @param raw the raw (unexpanded) value associated with this key.
+     */
 	public KeyValue(String key, String raw) {
 		this(key, raw, Meta.of(raw, Source.EMPTY, Set.of()));
 	}
 
 	public final static String REDACTED_MESSAGE = "REDACTED";
 
+    /**
+     * Gets the expanded value after interpolation.
+     * 
+     * @return the expanded value.
+     */
 	public String value() {
 		return this.expanded;
 	}
 
+    /**
+     * Gets the original raw value before any interpolation.
+     * 
+     * @return the raw value.
+     */
 	public String raw() {
 		return meta().raw();
 	}
 
+    /**
+     * Gets the set of flags associated with this key-value pair.
+     * 
+     * @return the flags as an immutable set.
+     */
 	Set<Flag> flags() {
 		return meta().flags();
 	}
@@ -45,6 +112,12 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		return new KeyValue(key, expanded, meta);
 	}
 
+    /**
+     * Creates a new {@code KeyValue} with an updated expanded value.
+     * 
+     * @param expanded the new expanded value.
+     * @return a new {@code KeyValue} with the updated expanded value.
+     */
 	public KeyValue withExpanded(String expanded) {
 		return new KeyValue(key, expanded, meta);
 	}
@@ -58,6 +131,12 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		return this;
 	}
 
+    /**
+     * Adds additional flags to this {@code KeyValue} and returns a new instance.
+     * 
+     * @param flagsCol a collection of flags to add.
+     * @return a new {@code KeyValue} with the added flags.
+     */
 	public KeyValue addFlags(Collection<Flag> flagsCol) {
 		var flags = EnumSet.noneOf(Flag.class);
 		flags.addAll(flags());
@@ -66,18 +145,86 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		return new KeyValue(key, expanded, meta);
 	}
 
+	/**
+	 * Metadata associated with a {@link KeyValue}. This interface encapsulates additional information
+	 * about a key-value pair, such as its raw, unexpanded value, its source, and any flags that
+	 * modify its behavior.
+	 * 
+	 * <h2>Components:</h2>
+	 * <ul>
+	 *   <li>{@link #raw()} - The original, unexpanded value associated with the key.</li>
+	 *   <li>{@link #source()} - The source of the key-value, represented by a {@link KeyValue.Source}.</li>
+	 *   <li>{@link #flags()} - A set of {@link KeyValue.Flag} that can modify how the key-value is processed.</li>
+	 * </ul>
+	 * 
+	 * <h2>Immutability:</h2>
+	 * Implementations of {@code Meta} are immutable, ensuring that once created, the metadata
+	 * cannot be altered. However, methods are provided to create modified copies with updated
+	 * flags or source information.
+	 * 
+	 * <h2>Usage Example:</h2>
+	 * The following example shows how to create and modify a {@code Meta} instance:
+	 * 
+	 * @snippet :
+	 * KeyValue.Meta meta = KeyValue.Meta.of("rawValue", KeyValue.Source.EMPTY, Set.of(KeyValue.Flag.NO_INTERPOLATION));
+	 * System.out.println("Raw: " + meta.raw());
+	 * System.out.println("Source: " + meta.source());
+	 * System.out.println("Flags: " + meta.flags());
+	 * 
+	 * // Adding a new flag
+	 * KeyValue.Meta updatedMeta = meta.withFlags(Set.of(KeyValue.Flag.SENSITIVE));
+	 * System.out.println("Updated Flags: " + updatedMeta.flags());
+	 * 
+	 */
 	public sealed interface Meta {
 
+	    /**
+	     * Retrieves the raw, unexpanded value associated with the {@link KeyValue}.
+	     * 
+	     * @return the original raw value as a {@link String}.
+	     */
 		String raw();
 
+	    /**
+	     * Returns the source from which the key-value pair was loaded.
+	     * 
+	     * @return a {@link KeyValue.Source} representing the origin of the key-value.
+	     */
 		Source source();
 
+	    /**
+	     * Retrieves any flags associated with the key-value. These flags can alter how the
+	     * key-value is interpreted or displayed.
+	     * 
+	     * @return a {@link Set} of {@link KeyValue.Flag} representing the flags.
+	     */
 		Set<Flag> flags();
 
+	    /**
+	     * Creates a new {@code Meta} instance with the specified flags.
+	     * 
+	     * @param flags the collection of flags to include in the new metadata.
+	     * @return a new {@code Meta} instance with the updated flags.
+	     */
 		Meta withFlags(Collection<Flag> flags);
 
+	    /**
+	     * Creates a new {@code Meta} instance with the specified source.
+	     * 
+	     * @param source the new source to associate with the metadata.
+	     * @return a new {@code Meta} instance with the updated source.
+	     */
 		Meta withSource(Source source);
 
+	    /**
+	     * Factory method to create a new {@code Meta} instance with the specified raw value,
+	     * source, and flags.
+	     * 
+	     * @param raw the raw value associated with the key-value.
+	     * @param source the source from which the key-value was loaded.
+	     * @param flags the flags associated with the key-value.
+	     * @return a new {@code Meta} instance.
+	     */
 		static Meta of(String raw, Source source, Set<Flag> flags) {
 			return new DefaultMeta(raw, source, flags);
 		}
@@ -105,20 +252,66 @@ public record KeyValue(String key, String expanded, Meta meta) {
 
 	}
 
+	/**
+	 * Represents the source information for a {@link KeyValue}. A {@code Source} can indicate
+	 * where the key-value pair was loaded from, such as a configuration file, system properties,
+	 * or environment variables. It also supports linking a key-value pair to another one 
+	 * through the {@code reference} field.
+	 *
+	 * <h2>Fields:</h2>
+	 * <ul>
+	 *   <li>{@code uri} - The URI representing the origin of the key-value pair.</li>
+	 *   <li>{@code reference} - An optional {@link KeyValue} that this key-value depends on 
+	 *   (e.g., for chained loading).</li>
+	 *   <li>{@code index} - A numerical identifier that can be used for ordering or tracking.</li>
+	 * </ul>
+	 * 
+	 * <h2>Usage Example:</h2>
+	 * 
+	 * The following example demonstrates creating a source from a URI:
+	 * 
+	 * {@snippet :
+	 * URI fileUri = URI.create("file:///config.properties");
+	 * KeyValue.Source source = new KeyValue.Source(fileUri, null, 0);
+	 * System.out.println("Source URI: " + source.uri());
+	 * }
+	 * 
+	 * @param uri the URI representing the origin of the key-value pair.
+	 * @param reference an optional key-value pair that this one references.
+	 * @param index an optional index for ordering.
+	 */
 	public record Source(URI uri, @Nullable KeyValue reference, int index) {
 
+	    /**
+	     * A constant representing a "null" URI for cases where the source is not specified.
+	     */
 		public static URI NULL_URI = URI.create("null:///");
 
+	    /**
+	     * A default, empty source instance used when no specific source information is available.
+	     */
 		public static Source EMPTY = new Source();
 
 		public Source() {
 			this(NULL_URI, null, 0);
 		}
 
+	    /**
+	     * Checks if this {@code Source} is considered a null resource.
+	     * 
+	     * @return {@code true} if the source URI is {@link #NULL_URI}, otherwise {@code false}.
+	     */
 		boolean isNullResource() {
 			return uri.equals(NULL_URI);
 		}
 
+	    /**
+	     * Creates a new {@code Source} instance with the specified URI, keeping 
+	     * the other fields the same.
+	     * 
+	     * @param uri the new URI to set.
+	     * @return a new {@code Source} with the updated URI.
+	     */
 		Source withURI(URI uri) {
 			return new Source(uri, reference, index);
 		}
@@ -132,10 +325,51 @@ public record KeyValue(String key, String expanded, Meta meta) {
 
 	}
 
+	/**
+	 * Enumeration representing flags that can modify the behavior of a {@link KeyValue}.
+	 * These flags provide additional metadata that can influence how key-value pairs 
+	 * are processed, stored, or displayed.
+	 * 
+	 * <h2>Flags:</h2>
+	 * <ul>
+	 *   <li>{@link #NO_INTERPOLATION} - Indicates that the key-value should not be interpolated,
+	 *   meaning its value should not undergo any variable substitution.</li>
+	 *   <li>{@link #SENSITIVE} - Marks the key-value as containing sensitive information,
+	 *   such as passwords or secrets, which may be redacted when displayed.</li>
+	 * </ul>
+	 * 
+	 * <h2>Usage Example:</h2>
+	 * The following example demonstrates checking if a flag is set on a {@link KeyValue}:
+	 * 
+	 * @snippet :
+	 * KeyValue kv = new KeyValue("password", "secretValue");
+	 * kv = kv.addFlags(Set.of(KeyValue.Flag.SENSITIVE));
+	 * if (kv.isSensitive()) {
+	 *     System.out.println("Sensitive value: " + kv.redact());
+	 * } else {
+	 *     System.out.println("Value: " + kv.value());
+	 * }
+	 * 
+	 */
 	public enum Flag {
 
-		NO_INTERPOLATION, SENSITIVE;
+	    /**
+	     * Indicates that the key-value pair should not undergo any interpolation or variable
+	     * substitution. Useful for cases where the raw value should be preserved as-is.
+	     */
+		NO_INTERPOLATION,
+	    /**
+	     * Marks the key-value as containing sensitive information. When this flag is set,
+	     * the value may be redacted when displayed to avoid leaking secrets.
+	     */
+		SENSITIVE;
 
+	    /**
+	     * Checks if this flag is set for the given {@link KeyValue}.
+	     * 
+	     * @param kv the key-value pair to check.
+	     * @return {@code true} if the flag is set on the provided key-value, otherwise {@code false}.
+	     */
 		public boolean isSet(KeyValue kv) {
 			return kv.isFlag(NO_INTERPOLATION);
 		}
@@ -154,10 +388,21 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		return meta().flags().contains(flag);
 	}
 
+    /**
+     * Redacts the sensitive value in this key-value pair by replacing it with a default message.
+     * 
+     * @return a new {@code KeyValue} with the sensitive data redacted.
+     */
 	public KeyValue redact() {
 		return redact(REDACTED_MESSAGE);
 	}
 
+    /**
+     * Redacts the sensitive value in this key-value pair by replacing it with a custom message.
+     * 
+     * @param redactMessage the message to use for redaction.
+     * @return a new {@code KeyValue} with the sensitive data redacted.
+     */
 	public KeyValue redact(String redactMessage) {
 		if (isSensitive()) {
 			String expanded = redactMessage;

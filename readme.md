@@ -143,7 +143,7 @@ Yes Kiwi is very [Simple but simple is good](https://www.infoq.com/presentations
 * Extendable key value format loading
 * Chaining of overriding key values
 * Can simulate other configuration frameworks loading easily with k/v configuration.
-* Allow users to chose where configuration comes from without recompiling.
+* Allow users to choose where configuration comes from without recompiling.
 
 The last point is what really separates out Kiwi from other systems. 
 For example if you want to use environment variables with some special prefix without recompiling the application
