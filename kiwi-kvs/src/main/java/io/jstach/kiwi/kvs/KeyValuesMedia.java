@@ -210,33 +210,6 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 	}
 
 	/**
-	 * An exception thrown when a media type-related error occurs.
-	 */
-	public class MediaTypeException extends RuntimeException {
-
-		private static final long serialVersionUID = 1L;
-
-		/**
-		 * Constructs a new {@code MediaTypeException} with the specified detail message
-		 * and cause.
-		 * @param message the detail message
-		 * @param cause the cause of the exception
-		 */
-		public MediaTypeException(@Nullable String message, @Nullable Throwable cause) {
-			super(message, cause);
-		}
-
-		/**
-		 * Constructs a new {@code MediaTypeException} with the specified detail message.
-		 * @param message the detail message
-		 */
-		public MediaTypeException(@Nullable String message) {
-			super(message);
-		}
-
-	}
-
-	/**
 	 * Checks if a given filename has the file extension associated with this media type.
 	 * @param filename the filename to check
 	 * @return {@code true} if the filename ends with the media type's file extension,

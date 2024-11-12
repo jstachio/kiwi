@@ -10,12 +10,54 @@ import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.KeyValuesResource.Builder;
 
+/*
+ * The idea here is to keep all the parsing logic separated from the core domain so that
+ * we can switch the key value patterns of loading.
+ */
+
+/**
+ * This interface handles parsing and determining special keys for loading additional
+ * key-value pairs. The logic for parsing is separated from the core domain to allow
+ * flexibility in switching key-value patterns for loading resources.
+ *
+ * <p>
+ * The `KeyValuesResourceParser` processes `KeyValues` streams to extract and format
+ * resource references, supporting the recursive loading mechanism in Kiwi.
+ *
+ * <p>
+ * Example usage might include parsing key-values to find resource URIs or formatting a
+ * resource into its key-value representation.
+ */
 sealed interface KeyValuesResourceParser {
 
+	/**
+	 * Parses a {@link KeyValues} stream and returns a list of {@link KeyValuesResource}
+	 * objects representing resources that should be loaded.
+	 * @param keyValues the key-values to parse for resource references
+	 * @return a list of resources parsed from the key-values
+	 */
 	List<KeyValuesResource> parseResources(KeyValues keyValues);
 
+	/**
+	 * Filters out the key-values that are related to resource loading from a given
+	 * {@link KeyValues} stream.
+	 * @param keyValues the key-values to filter
+	 * @return a {@link KeyValues} instance with resource-related key-values removed
+	 */
 	KeyValues filterResources(KeyValues keyValues);
 
+	/**
+	 * Converts a {@link KeyValuesResource} into its key-value representation and applies
+	 * the resulting key-value pairs to a provided consumer. This method effectively
+	 * serializes the resource into a format that would be parsed back into a resource by
+	 * the library.
+	 *
+	 * <p>
+	 * The output can include keys that represent the URI, parameters, flags, and other
+	 * metadata associated with the resource.
+	 * @param resource the resource to format
+	 * @param consumer the consumer to apply the serialized key-value pairs
+	 */
 	void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer);
 
 }
