@@ -11,6 +11,9 @@ import org.jspecify.annotations.Nullable;
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
 
+/*
+ *  The next interface is the main entry point into Kiwi. The readme shows some examples of how to use it particularly the `loader` method which returns a loader builder.
+ */
 public sealed interface KeyValuesSystem {
 
 	public KeyValuesEnvironment environment();
