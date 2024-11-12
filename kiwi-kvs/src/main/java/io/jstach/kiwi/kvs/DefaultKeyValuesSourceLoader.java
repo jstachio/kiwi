@@ -161,9 +161,12 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 
 	KeyValues load(Node node, KeyValuesResource resource, Set<LoadFlag> flags)
 			throws IOException, FileNotFoundException {
+		logger.load(resource);
+		if (LoadFlag.NO_LOAD_CHILDREN.isSet(flags)) {
+			throw new IOException("Resource is not allowed to load children. resource: " + describe(node));
+		}
 		var context = DefaultLoaderContext.of(system, variables, resourceParser);
 		try {
-			logger.load(resource);
 			var kvs = system.loaderFinder()
 				.findLoader(context, resource)
 				.orElseThrow(() -> new IOException("Resource Loader could not be found. resource: " + describe(node)))

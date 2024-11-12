@@ -240,6 +240,15 @@ _param_[name]_[key]=String
 ```
 The `[name]` part should be replaced with a name of ones choosing where only case sensitive alphanumeric characters are allowed. 
 
+#### Resource Flags
+
+This is currently a subset of the flags:
+
+* `no_require` - Resources are usually required to exist otherwise failure. This flag makes them not required.
+* `sensitive` - The key values loaded from the resource will be marked as sensitive and thus will not be outputted on `toString` etc.
+* `no_add` - The key values will not be added to the final result but will be used as `variables`.
+* `no_load_children` - The resource is not allowed to chain additional resources (not allowed to use `_load_`).
+
 ### KeyValuesLoader
 
 A KeyValues loader usually takes a  `KeyValuesResource` and turns it into `KeyValues`.
@@ -249,6 +258,48 @@ based on the schema of the URI. For example `classpath` will use the JDK
 classloader mechanism and `file` will use `java.io`/`java.nio` file loading.
 
 This part of the library is extendable and custom loaders can be manually wired or the service loader can be used.
+
+Out of the box Kiwi supports by schema:
+
+* `classpath`
+* `file`
+* `system` - System properties
+* `env` - Environment variables
+* `cmd` - Command line argument pairs separated by `=`.
+* `profile.[schema]` - Will load multiple resources based on a CSV of profiles where the profile name replaces part of the URI.
+
+Other URI schemas will be added soon usually as separate modules like dotenv, HOCON, Terraform/Tofu `tfvars.json` format etc.
+
+#### Profiles URI
+
+Probably the more confusing KeyValuesLoader is the `profile` which deserves an example:
+
+```properties
+PROFILES=profile1,profile2 # this could come from env variable
+
+_load_profiles=profile.classpath:/app-__PROFILE__.properties
+_param_profiles_profile=${PROFILES}
+_flags_profiles=no_require
+```
+
+Which will try to load:
+
+* `classpath:/app-profile1.properties`
+* `classpath:/app-profile2.properties`
+
+But not fail if those resources are not found.
+
+The above is not special internal encapsulated logic. The profiles loader just
+generates key values:
+
+```properties
+_load_profiles1=classpath:/app-profile1.properties
+_flags_profiles1=no_require
+_load_profiles2=classpath:/app-profile2.properties
+_flags_profiles2=no_require
+```
+
+So one can make something similar if they like.
 
 ### KeyValuesMedia
 
@@ -260,6 +311,13 @@ or strings based on ["media type" aka "Content Type" aka MIME](https://en.wikipe
 or file extension.
 
 This part of the library is extendable and custom media types can be manually wired or the service loader can be used.
+
+Out of the box Kiwi supports:
+
+ * `java.util.Properties` format.
+ * URL Query percent encoding format.
+
+Other formats will be added soon usually as separate modules like dotenv, HOCON, Terraform/Tofu `tfvars.json` format etc.
 
 ### KeyValuesSystem
 
