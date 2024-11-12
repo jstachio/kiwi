@@ -4,7 +4,7 @@ A non-opinionated Java *bootstrapping configuration* library
 that allows recursive chain loading of configuration from key values.
 
 **Key values are everywhere** 
-(also known as an associative arrays, or name value pairs)!
+(also known as an associative arrays, list of tuples, or name value pairs)!
 
 Environment variables, System properties, cloud meta data, vault,
 HTTP FORM post, URI queries, command line arguments
@@ -27,7 +27,7 @@ and some prefix removed.
 
 **In short it is a micro configuration framework that itself can be configured with key values.**
 
-A simple example using  `java.util.Properties` files that could be parsed to `KeyValues` would be:
+A simple example using `java.util.Properties` files that could be parsed to `KeyValues` would be:
 
 
 ```java
@@ -36,7 +36,7 @@ var kvs = KeyValuesSystem.defaults()
   .add("classpath:/start.properties")
   .add("system:///") // add system properties to override
   .add("env:///")    // add env variables to override
-  .add("cmd:///-D")  // add command line for final override
+  .add("cmd:///-D")  // add command line for final override using the prefix of -D
   .load();
 
 // give the key values to some other config framework like Spring:
@@ -60,13 +60,13 @@ port.prefix=1
 
 ```properties
 
-user.name=kenny
-message="Merchandising"
+user.name=Barf
+message=Merchandising
 db.port=${port.prefix}5672
 _load_user=file:/${user.home}/.config/myapp/user.properties
 _flags_user=sensitive,no_require
 ```
-(take note of the `_load_user` and `_flag_user` key)
+(take note of the `_load_user` and `_flags_user` key)
 
 **user.properties** (third loaded resource treated as sensitive)
 
@@ -81,7 +81,7 @@ Ignoring environment variables and system properties our effective key values pr
 
 ```properties
 message=Merchandising
-user.name=kenny
+user.name=Barf
 port.prefix=3
 db.port=35672
 secret=REDACTED
@@ -101,10 +101,15 @@ var kvs = KeyValuesSystem.defaults()
 With `start.properties` having the additional key values:
 
 ```properties
-_load_system-system:///
+message=Hello ${user.name}
+port.prefix=1
+_load_foo=classpath:/foo.properties
+_load_system=system:///
 _load_env=env:///
 _load_cmd=cmd:///-D
 ```
+
+(If you don't like the syntax of the special loading keys that is indeed configurable... through key values of course.)
 
 ## Kiwi is not a `System.getProperty` or other config framework replacements
 
@@ -120,6 +125,8 @@ In fact Kiwi rather just fill `System.getProperties` from loaded resources so th
 you do not have to use another library for configuration lookup. That is for retrieval 
 a singleton like `System.getProperties` is often good enough for simple applications. 
 
+Yes Kiwi is very [Simple but simple is good](https://www.infoq.com/presentations/Simple-Made-Easy/).
+
 
 ## Kiwi's advantages:
 
@@ -131,9 +138,17 @@ a singleton like `System.getProperties` is often good enough for simple applicat
 *  a `module-info.java`, jspecify annotations, and  jdk 21 ready.
 * **Framework agnostic!**
 * Fast initialization
+* Simple interpolation system that can be disabled for certain resources
+* Certain resources can be treated as sensitive
+* Extendable key value format loading
 * Chaining of overriding key values
 * Can simulate other configuration frameworks loading easily with k/v configuration.
+* Allow users to chose where configuration comes from without recompiling.
 
+The last point is what really separates out Kiwi from other systems. 
+For example if you want to use environment variables with some special prefix without recompiling the application
+you can. Or perhaps you want to use a special properties file in your home directory.
+While there are applications and such that allow naive file *"includes"* (for example NGINX) but usually it is only files.
 
 ## Architecture
 
@@ -144,6 +159,8 @@ Kiwi's two major concepts are:
 
 Resources are used to load key values and key values can be used to specify and find more resources 
 (to load more key values). Kiwi is recursive.
+
+For the rest of the explanation of architecture we will go bottom up.
 
 ### KeyValue
 
@@ -165,15 +182,40 @@ as well as parse and format.
 * Order can be important
 * There can be duplicate "keys" (that may or may not override in the final result)
 
-Finally a KeyValue can be a special key that can reference another resource to load.
+Finally a `KeyValue` can be a special key that can reference another resource to load.
 
 These keys are usually prefixed with `_` to avoid collision and maximum compatibility.
 The most important one is `_load_name` where name is the name you like to give the resource and the value is a `URI`.
+This mini DSL syntax in the future will be configurable so that you can pick different key name patterns.
+
+### Interpolation
+
+Kiwi can do Bash like interpolation on a stream of `KeyValues`. It does this by using
+the key values themselves and `Variables`. `Variables` are simply `Function<String,String>`.
+This allows you to interpolate on key values with things you do not want in the final
+result (`KeyValues`). For example a common practice is to use `System.getProperties()` as variables
+but often you do not want all of the system properties to end up in the `KeyValues`.
+
+Interpolation can be disabled with the resource flag `no_interpolation`.
+
+Furthermore you can load up a resource as variables instead of `KeyValues`
+with the resource flag `no_add`.
+
+```properties
+# first loaded properties
+_load_system=system:///
+_flags_system=no_add
+_load_app=classpath:/app.properties
+```
+
+Often interpolation will create a new stream of KeyValues where the value
+part of the key is replaced with the interpolated results however the original value
+is always retained.
 
 ### KeyValuesResource 
 
 A `KeyValuesResource` has a `URI` and symbolic name (used to find configuration). 
-It is backed by a key/value with additional meta data on how to load that resource. 
+It is backed by a key value with additional meta data on how to load that resource. 
 URIs are designed to point at resources and the additional meta data 
 in a `KeyValuesResource` surprise surprise is more `KeyValues`. 
 
@@ -189,6 +231,14 @@ Some examples are:
 This is all configurable again through key values (and URIs) particularly
 the `_flags_name` key.
 
+The default key value pattern to specify resources is:
+
+```properties
+_load_[name]=URI
+_flags_[name]=CSV of flag names
+_param_[name]_[key]=String
+```
+The `[name]` part should be replaced with a name of ones choosing where only case sensitive alphanumeric characters are allowed. 
 
 ### KeyValuesLoader
 
@@ -200,7 +250,7 @@ classloader mechanism and `file` will use `java.io`/`java.nio` file loading.
 
 This part of the library is extendable and custom loaders can be manually wired or the service loader can be used.
 
-### KeyValueMedia
+### KeyValuesMedia
 
 Some `KeyValuesLoader` will know how to parse the `URI` directly to key values
 BUT many will will want to use a parser. 
@@ -210,6 +260,12 @@ or strings based on ["media type" aka "Content Type" aka MIME](https://en.wikipe
 or file extension.
 
 This part of the library is extendable and custom media types can be manually wired or the service loader can be used.
+
+### KeyValuesSystem
+
+This is the entrypoint into Kiwi and used to load the initial part of the chain of resources.
+The bootstrapping part of your application will call it first and will often and of the
+the loaded key values to something else.
 
 ## History
 
