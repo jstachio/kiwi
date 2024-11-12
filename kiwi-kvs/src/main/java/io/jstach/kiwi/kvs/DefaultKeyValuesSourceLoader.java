@@ -192,7 +192,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 enum LoadFlag {
 
 	/**
-	 * Makes it maybe.
+	 * Makes the resource optional so that if it is not found an error does not happen.
 	 */
 	NO_REQUIRE,
 	/**

@@ -31,32 +31,32 @@ import io.jstach.kiwi.kvs.interpolate.Interpolator.MissingVariableInterpolationE
  * manipulation, transformation, and expansion. This interface serves as a central point
  * for managing key-value pairs, allowing operations such as filtering, mapping, and
  * interpolation.
- * 
+ *
  * <h2>Key Features:</h2>
  * <ul>
- *   <li>Provides methods for building key-value pairs with {@link Builder}.</li>
- *   <li>Supports functional transformations using {@link #map(UnaryOperator)},
- *       {@link #filter(Predicate)}, and {@link #flatMap(Function)}.</li>
- *   <li>Allows interpolation and expansion of values using variable substitution.</li>
- *   <li>Can convert key-values to a {@link Map} representation.</li>
+ * <li>Provides methods for building key-value pairs with {@link Builder}.</li>
+ * <li>Supports functional transformations using {@link #map(UnaryOperator)},
+ * {@link #filter(Predicate)}, and {@link #flatMap(Function)}.</li>
+ * <li>Allows interpolation and expansion of values using variable substitution.</li>
+ * <li>Can convert key-values to a {@link Map} representation.</li>
  * </ul>
- * 
- * <h2>Usage Example:</h2>
- * The following example demonstrates how to create, expand, and transform key-values:
- * 
+ *
+ * <h2>Usage Example:</h2> The following example demonstrates how to create, expand, and
+ * transform key-values:
+ *
  * {@snippet :
  * // Create a builder and add key-value pairs
  * KeyValues.Builder builder = KeyValues.builder();
  * builder.add("key1", "value1");
  * builder.add("key2", "${key1}-suffix");
- * 
+ *
  * // Build the KeyValues collection
  * KeyValues kvs = builder.build();
- * 
+ *
  * // Interpolate values using a Variables map
  * Variables variables = Variables.of("key1", "interpolated");
  * KeyValues expanded = kvs.expand(variables);
- * 
+ *
  * // Convert to a map
  * Map<String, String> map = expanded.toMap();
  * System.out.println(map); // {key1=interpolated, key2=interpolated-suffix}
@@ -64,75 +64,70 @@ import io.jstach.kiwi.kvs.interpolate.Interpolator.MissingVariableInterpolationE
  */
 public interface KeyValues extends Iterable<KeyValue> {
 
-    /**
-     * Returns a stream of the contained {@link KeyValue} entries.
-     * 
-     * @return a {@link Stream} of key-value pairs.
-     */
+	/**
+	 * Returns a stream of the contained {@link KeyValue} entries.
+	 * @return a {@link Stream} of key-value pairs.
+	 */
 	public Stream<KeyValue> stream();
 
-    /**
-     * Creates a new {@link Builder} for constructing a {@code KeyValues} instance.
-     * 
-     * @param resource a {@link KeyValuesResource} defining the source URI and reference key-value.
-     * @return a new {@link Builder}.
-     */
+	/**
+	 * Creates a new {@link Builder} for constructing a {@code KeyValues} instance.
+	 * @param resource a {@link KeyValuesResource} defining the source URI and reference
+	 * key-value.
+	 * @return a new {@link Builder}.
+	 */
 	public static Builder builder(KeyValuesResource resource) {
 		return new Builder(resource.uri(), resource.reference());
 	}
 
-    /**
-     * Creates a new {@link Builder} with a default, empty source.
-     * 
-     * @return a new {@link Builder}.
-     */
+	/**
+	 * Creates a new {@link Builder} with a default, empty source.
+	 * @return a new {@link Builder}.
+	 */
 	public static Builder builder() {
 		return new Builder(KeyValue.Source.NULL_URI, null);
 	}
 
-    /**
-     * Returns an empty {@code KeyValues} instance.
-     * 
-     * @return an empty {@code KeyValues} collection.
-     */
+	/**
+	 * Returns an empty {@code KeyValues} instance.
+	 * @return an empty {@code KeyValues} collection.
+	 */
 	public static KeyValues empty() {
 		return KeyValuesEmpty.KeyValuesEmpty;
 	}
 
-    /**
-     * Creates a {@code KeyValues} instance by copying the given collection.
-     * 
-     * @param kvs a {@link SequencedCollection} of key-value pairs.
-     * @return a new {@code KeyValues} instance containing the provided key-values.
-     */
+	/**
+	 * Creates a {@code KeyValues} instance by copying the given collection.
+	 * @param kvs a {@link SequencedCollection} of key-value pairs.
+	 * @return a new {@code KeyValues} instance containing the provided key-values.
+	 */
 	public static KeyValues copyOf(SequencedCollection<KeyValue> kvs) {
 		return new ListKeyValues(List.copyOf(kvs));
 	}
 
 	/**
 	 * A builder for constructing {@link KeyValues} instances from key-value pairs.
-	 * 
+	 *
 	 * <p>
 	 * The builder is designed to create key-value pairs with associated metadata,
 	 * including flags and source information. It supports adding entries both
 	 * individually and from collections, and allows setting flags for all added entries.
 	 * </p>
-	 * 
-	 * <h2>Usage Example:</h2>
-	 * The following example demonstrates how to use the builder:
-	 * 
+	 *
+	 * <h2>Usage Example:</h2> The following example demonstrates how to use the builder:
+	 *
 	 * {@snippet :
 	 * // Create a new builder
 	 * KeyValues.Builder builder = KeyValues.builder();
-	 * 
+	 *
 	 * // Add key-value pairs
 	 * builder.add("host", "localhost");
 	 * builder.add("port", "8080");
 	 * builder.flag(KeyValue.Flag.SENSITIVE);
-	 * 
+	 *
 	 * // Build the KeyValues instance
 	 * KeyValues kvs = builder.build();
-	 * 
+	 *
 	 * // Convert to a map
 	 * Map<String, String> map = kvs.toMap();
 	 * System.out.println(map); // Output: {host=localhost, port=8080}
@@ -152,12 +147,11 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 		private final boolean noSource;
 
-	    /**
-	     * Constructs a new {@code Builder} with the specified source URI and reference.
-	     * 
-	     * @param source    the URI representing the source of these key-values.
-	     * @param reference an optional reference {@link KeyValue}, can be {@code null}.
-	     */
+		/**
+		 * Constructs a new {@code Builder} with the specified source URI and reference.
+		 * @param source the URI representing the source of these key-values.
+		 * @param reference an optional reference {@link KeyValue}, can be {@code null}.
+		 */
 		private Builder(URI source, @Nullable KeyValue reference) {
 			super();
 			this.source = source;
@@ -165,35 +159,32 @@ public interface KeyValues extends Iterable<KeyValue> {
 			this.noSource = source.equals(KeyValue.Source.NULL_URI);
 		}
 
-	    /**
-	     * Adds a flag that will be applied to all key-value pairs added by this builder.
-	     * 
-	     * @param flag the {@link KeyValue.Flag} to add.
-	     * @return this builder, for method chaining.
-	     */
+		/**
+		 * Adds a flag that will be applied to all key-value pairs added by this builder.
+		 * @param flag the {@link KeyValue.Flag} to add.
+		 * @return this builder, for method chaining.
+		 */
 		public Builder flag(KeyValue.Flag flag) {
 			flags.add(flag);
 			return this;
 		}
 
-	    /**
-	     * Adds a key-value pair to the builder.
-	     * 
-	     * @param key   the key as a {@link String}.
-	     * @param value the value as a {@link String}.
-	     * @return this builder, for method chaining.
-	     */
+		/**
+		 * Adds a key-value pair to the builder.
+		 * @param key the key as a {@link String}.
+		 * @param value the value as a {@link String}.
+		 * @return this builder, for method chaining.
+		 */
 		public Builder add(String key, String value) {
 			keyValues.add(build(key, value));
 			return this;
 		}
 
-	    /**
-	     * Adds a key-value pair to the builder from a map entry.
-	     * 
-	     * @param e a {@link Map.Entry} representing the key and value.
-	     * @return this builder, for method chaining.
-	     */
+		/**
+		 * Adds a key-value pair to the builder from a map entry.
+		 * @param e a {@link Map.Entry} representing the key and value.
+		 * @return this builder, for method chaining.
+		 */
 		public Builder add(Entry<String, String> e) {
 			return add(e.getKey(), e.getValue());
 		}
@@ -202,13 +193,12 @@ public interface KeyValues extends Iterable<KeyValue> {
 			.<String, String>comparingByKey()
 			.thenComparing(Entry::getValue);
 
-	    /**
-	     * Adds a collection of entries to the builder. The entries are added in the order
-	     * they appear in the collection.
-	     * 
-	     * @param entries a {@link SequencedCollection} of entries to add.
-	     * @return this builder, for method chaining.
-	     */
+		/**
+		 * Adds a collection of entries to the builder. The entries are added in the order
+		 * they appear in the collection.
+		 * @param entries a {@link SequencedCollection} of entries to add.
+		 * @return this builder, for method chaining.
+		 */
 		public Builder add(SequencedCollection<Entry<String, String>> entries) {
 			for (var e : entries) {
 				add(e);
@@ -218,13 +208,12 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 		/**
 		 * Adds a collection of entries to the builder.
-		 * 
+		 *
 		 * <p>
-		 * If the collection is a {@link SequencedCollection}, the entries are added in the
-		 * original order of the collection. Otherwise, the entries are first sorted
+		 * If the collection is a {@link SequencedCollection}, the entries are added in
+		 * the original order of the collection. Otherwise, the entries are first sorted
 		 * lexicographically by key and then by value before being added.
 		 * </p>
-		 * 
 		 * @param entries a {@link Collection} of entries to add.
 		 * @return this builder, for method chaining.
 		 */
@@ -237,48 +226,46 @@ public interface KeyValues extends Iterable<KeyValue> {
 			return this;
 		}
 
-	    /**
-	     * Constructs a {@link KeyValue} with the given key and value, including flags and
-	     * source information.
-	     * 
-	     * @param key   the key as a {@link String}.
-	     * @param value the value as a {@link String}.
-	     * @return a new {@link KeyValue} with the specified key, value, and metadata.
-	     */
+		/**
+		 * Constructs a {@link KeyValue} with the given key and value, including flags and
+		 * source information.
+		 * @param key the key as a {@link String}.
+		 * @param value the value as a {@link String}.
+		 * @return a new {@link KeyValue} with the specified key, value, and metadata.
+		 */
 		public KeyValue build(String key, String value) {
 			var s = noSource ? KeyValue.Source.EMPTY : new KeyValue.Source(source, reference, index.incrementAndGet());
 			var m = KeyValue.Meta.of(value, s, flags);
 			return new KeyValue(key, value, m);
 		}
 
-
-	    /**
-	     * Builds and returns a {@link KeyValues} instance containing all the key-value
-	     * pairs added to this builder.
-	     * 
-	     * @return a new {@link KeyValues} instance.
-	     */
+		/**
+		 * Builds and returns a {@link KeyValues} instance containing all the key-value
+		 * pairs added to this builder.
+		 * @return a new {@link KeyValues} instance.
+		 */
 		public KeyValues build() {
 			return KeyValues.copyOf(keyValues);
 		}
 
 	}
 
-    /**
-     * Collects a stream of {@link KeyValue} into a {@code KeyValues} instance.
-     * 
-     * @return a {@link Collector} that accumulates key-values into a {@code KeyValues} object.
-     */
+	/**
+	 * Collects a stream of {@link KeyValue} into a {@code KeyValues} instance.
+	 * @return a {@link Collector} that accumulates key-values into a {@code KeyValues}
+	 * object.
+	 */
 	public static Collector<KeyValue, ?, KeyValues> collector() {
 		return Collectors.collectingAndThen(Collectors.toList(), KeyValues::copyOf);
 	}
 
-    /**
-     * Collects a stream of {@link Map.Entry} into a {@code KeyValues} using the provided builder.
-     * 
-     * @param builder the {@link Builder} to use for constructing the key-values.
-     * @return a {@link Collector} that accumulates entries into a {@code KeyValues} object.
-     */
+	/**
+	 * Collects a stream of {@link Map.Entry} into a {@code KeyValues} using the provided
+	 * builder.
+	 * @param builder the {@link Builder} to use for constructing the key-values.
+	 * @return a {@link Collector} that accumulates entries into a {@code KeyValues}
+	 * object.
+	 */
 	public static Collector<Map.Entry<String, String>, ?, KeyValues> collector(Builder builder) {
 		return Collector.of(() -> builder,
 				// Accumulator: add each entry to the builder
@@ -297,63 +284,59 @@ public interface KeyValues extends Iterable<KeyValue> {
 		return stream().iterator();
 	}
 
-    /**
-     * Applies a transformation function to each key-value pair in the collection.
-     * 
-     * @param kv a {@link UnaryOperator} to transform each key-value.
-     * @return a new {@code KeyValues} with transformed entries.
-     */
+	/**
+	 * Applies a transformation function to each key-value pair in the collection.
+	 * @param kv a {@link UnaryOperator} to transform each key-value.
+	 * @return a new {@code KeyValues} with transformed entries.
+	 */
 	default KeyValues map(UnaryOperator<KeyValue> kv) {
 		return ToStringableKeyValues.of(() -> stream().map(kv));
 	}
 
-    /**
-     * Filters the key-value pairs based on a predicate.
-     * 
-     * @param predicate a {@link Predicate} to test each key-value.
-     * @return a new {@code KeyValues} with filtered entries.
-     */
+	/**
+	 * Filters the key-value pairs based on a predicate.
+	 * @param predicate a {@link Predicate} to test each key-value.
+	 * @return a new {@code KeyValues} with filtered entries.
+	 */
 	default KeyValues filter(Predicate<KeyValue> predicate) {
 		return ToStringableKeyValues.of(() -> stream().filter(predicate));
 	}
 
-    /**
-     * Flattens the key-values by applying a mapping function that returns another {@code KeyValues}.
-     * 
-     * @param func a function that transforms a {@link KeyValue} into another {@code KeyValues}.
-     * @return a new flattened {@code KeyValues}.
-     */
+	/**
+	 * Flattens the key-values by applying a mapping function that returns another
+	 * {@code KeyValues}.
+	 * @param func a function that transforms a {@link KeyValue} into another
+	 * {@code KeyValues}.
+	 * @return a new flattened {@code KeyValues}.
+	 */
 	default KeyValues flatMap(Function<KeyValue, KeyValues> func) {
 		var f = func.andThen(KeyValues::stream);
 		return ToStringableKeyValues.of(() -> stream().flatMap(f));
 	}
 
-    /**
-     * Interpolates the values using the provided {@link Variables} map.
-     * 
-     * @param variables a {@link Variables} map for value substitution.
-     * @return a map of interpolated key-values.
-     */
+	/**
+	 * Interpolates the values using the provided {@link Variables} map.
+	 * @param variables a {@link Variables} map for value substitution.
+	 * @return a map of interpolated key-values.
+	 */
 	default Map<String, String> interpolate(Variables variables) {
 		return KeyValuesInterpolator.interpolateKeyValues(this, variables);
 	}
-	
-    /**
-     * Expands the key-values using variable interpolation.
-     * 
-     * @param variables a {@link Variables} map for value substitution.
-     * @return a new {@code KeyValues} with expanded values.
-     */
+
+	/**
+	 * Expands the key-values using variable interpolation.
+	 * @param variables a {@link Variables} map for value substitution.
+	 * @return a new {@code KeyValues} with expanded values.
+	 */
 	default KeyValues expand(Variables variables) {
 		Map<String, String> interpolated = interpolate(variables);
 		return map(kv -> kv.withExpanded(interpolated::get));
 	}
 
-    /**
-     * Returns a memoized version of this {@code KeyValues}.
-     * 
-     * @return a memoized {@code KeyValues} instance.
-     */
+	/**
+	 * Returns a memoized version of this {@code KeyValues}.
+	 * @return a memoized {@code KeyValues} instance.
+	 */
 	default KeyValues memoize() {
 		if (this instanceof MemoizedKeyValues mkvs) {
 			return mkvs;
@@ -361,20 +344,18 @@ public interface KeyValues extends Iterable<KeyValue> {
 		return copyOf(stream().toList());
 	}
 
-    /**
-     * Redacts sensitive key-value entries by replacing their values.
-     * 
-     * @return a new {@code KeyValues} with redacted entries.
-     */
+	/**
+	 * Redacts sensitive key-value entries by replacing their values.
+	 * @return a new {@code KeyValues} with redacted entries.
+	 */
 	default KeyValues redact() {
 		return this.map(KeyValue::redact);
 	}
 
-    /**
-     * Converts the key-values to a map where each key maps to its expanded value.
-     * 
-     * @return a {@link Map} of key-value pairs.
-     */
+	/**
+	 * Converts the key-values to a map where each key maps to its expanded value.
+	 * @return a {@link Map} of key-value pairs.
+	 */
 	default Map<String, String> toMap() {
 		Map<String, String> m = new LinkedHashMap<>();
 		stream().forEach(kv -> m.put(kv.key(), kv.expanded()));

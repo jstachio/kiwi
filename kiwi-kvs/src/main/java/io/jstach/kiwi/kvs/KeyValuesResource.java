@@ -13,24 +13,80 @@ import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.Variables.Parameters;
 
+/**
+ * Represents a resource that contains key-value pairs to be loaded and processed. A
+ * {@code KeyValuesResource} includes a URI, optional parameters, and metadata flags that
+ * determine its behavior during loading.
+ *
+ * <p>
+ * Resources can be configured with flags and parameters to indicate characteristics such
+ * as whether the values are sensitive or should be used for interpolation.
+ *
+ * <p>
+ * Example usage for building a {@code KeyValuesResource}:
+ * {@snippet :
+ * var resource = KeyValuesResource.builder("classpath:/config.properties")
+ * 	.name("config")
+ * 	.parameter("key1", "value1")
+ * 	.sensitive(true)
+ * 	.build();
+ * }
+ *
+ * @see KeyValuesSource
+ * @see LoadFlag
+ */
 public sealed interface KeyValuesResource extends KeyValuesSource permits InternalKeyValuesResource {
 
+	/**
+	 * Returns the URI of the resource.
+	 * @return the URI of the resource
+	 */
 	public URI uri();
 
+	/**
+	 * Returns the parameters associated with the resource.
+	 * @return the parameters as {@link Parameters}
+	 */
 	public Parameters parameters();
 
+	/**
+	 * Returns the name of the resource.
+	 * @return the name of the resource
+	 */
 	public String name();
 
+	/**
+	 * Returns the {@link KeyValue} that references this resource, if any.
+	 * @return the reference {@code KeyValue}, or {@code null} if not applicable
+	 */
 	public @Nullable KeyValue reference();
 
+	/**
+	 * Returns the media type of the resource, if specified.
+	 * @return the media type, or {@code null} if not specified
+	 */
 	public @Nullable String mediaType();
 
+	/**
+	 * Creates a builder based on the current state of this {@code KeyValuesResource}.
+	 * @return a {@code Builder} initialized with the current state
+	 */
 	public Builder toBuilder();
 
+	/**
+	 * Creates a builder for a {@code KeyValuesResource} from the given URI.
+	 * @param uri the URI for the resource
+	 * @return a new {@code Builder} instance
+	 */
 	public static Builder builder(URI uri) {
 		return new Builder(uri, uriToName(uri));
 	}
 
+	/**
+	 * Creates a builder for a {@code KeyValuesResource} from the given URI string.
+	 * @param uri the URI string for the resource
+	 * @return a new {@code Builder} instance
+	 */
 	public static Builder builder(String uri) {
 		return builder(URI.create(uri));
 	}
@@ -41,6 +97,9 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 			.encodeToString(uri.toASCIIString().getBytes(StandardCharsets.US_ASCII));
 	}
 
+	/**
+	 * Builder class for creating instances of {@code KeyValuesResource}.
+	 */
 	public final class Builder {
 
 		URI uri;
@@ -75,41 +134,81 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 			this.mediaType = mediaType;
 		}
 
+		/**
+		 * Sets the URI for the resource.
+		 * @param uri the URI to set
+		 * @return this builder instance
+		 */
 		public Builder uri(URI uri) {
 			this.uri = uri;
 			return this;
 		}
 
+		/**
+		 * Sets the name for the resource.
+		 * @param name the name to set
+		 * @return this builder instance
+		 */
 		public Builder name(String name) {
 			this.name = Objects.requireNonNull(name);
 			return this;
 		}
 
+		/**
+		 * Clears all parameters associated with the resource.
+		 * @return this builder instance
+		 */
 		public Builder clearParameters() {
 			parameters.clear();
 			return this;
 		}
 
+		/**
+		 * Adds a parameter key-value pair to the resource.
+		 * @param key the parameter key
+		 * @param value the parameter value
+		 * @return this builder instance
+		 */
 		public Builder parameter(String key, String value) {
 			parameters.put(key, value);
 			return this;
 		}
 
+		/**
+		 * Sets the media type for the resource.
+		 * @param mediaType the media type to set
+		 * @return this builder instance
+		 */
 		public Builder mediaType(String mediaType) {
 			this.mediaType = mediaType;
 			return this;
 		}
 
+		/**
+		 * Sets or clears the {@link LoadFlag#NO_INTERPOLATE} flag.
+		 * @param flag whether to set or clear the flag
+		 * @return this builder instance
+		 */
 		public Builder noInterpolation(boolean flag) {
 			LoadFlag.NO_INTERPOLATE.set(flags, flag);
 			return this;
 		}
 
+		/**
+		 * Sets or clears the {@link LoadFlag#NO_ADD} flag.
+		 * @param flag whether to set or clear the flag
+		 * @return this builder instance
+		 */
 		public Builder noAddKeyValues(boolean flag) {
 			LoadFlag.NO_ADD.set(flags, flag);
 			return this;
 		}
 
+		/**
+		 * Marks the resource as sensitive, meaning its values should not be printed.
+		 * @param flag whether to mark the resource as sensitive
+		 * @return this builder instance
+		 */
 		public Builder sensitive(boolean flag) {
 			LoadFlag.SENSITIVE.set(flags, flag);
 			return this;
@@ -126,6 +225,11 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 			return this;
 		}
 
+		/**
+		 * Builds and returns a {@code KeyValuesResource} based on the current builder
+		 * state.
+		 * @return a new {@code KeyValuesResource} instance
+		 */
 		public KeyValuesResource build() {
 			return DefaultKeyValuesResource.of(this);
 		}
@@ -137,30 +241,6 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 		}
 
 	}
-
-	// class ParameterException extends RuntimeException {
-	//
-	// private static final long serialVersionUID = 8696834012139564241L;
-	// private final KeyValuesResource resource;
-	// private final String parameter;
-	//
-	// public ParameterException(
-	// KeyValuesResource resource,
-	// String parameter,
-	// String message) {
-	// super(message + resourceDescribe(resource, parameter));
-	// this.resource = resource;
-	// this.parameter = parameter;
-	// }
-	//
-	//
-	// private static String resourceDescribe(KeyValuesResource resource, String
-	// parameter) {
-	// StringBuilder sb = new StringBuilder();
-	// return DefaultKeyValuesResource.describe(sb, resource, false)
-	// .append(" for parameter '").append(parameter).append("'" ).toString();
-	// }
-	// }
 
 }
 
