@@ -1,7 +1,11 @@
+[![Github](https://github.com/jstachio/kiwi/actions/workflows/maven.yml/badge.svg)](https://github.com/jstachio/kiwi/actions)
+
 # Kiwi
 
 A non-opinionated Java *bootstrapping configuration* library
 that allows recursive chain loading of configuration from key values.
+
+
 
 **Key values are everywhere** 
 (also known as an associative arrays, list of tuples, or name value pairs)!
@@ -26,6 +30,14 @@ For example environment variable names often need to be converted to lower case
 and some prefix removed.
 
 **In short it is a micro configuration framework that itself can be configured with key values.**
+
+## Documentation
+
+* **[Latest SNAPSHOT Kiwi doc](https://jstach.io/kiwi/)**
+* **[Current released Kiwi doc](https://jstach.io/doc/kiwi/current/apidocs)**
+
+
+## Example
 
 A simple example using `java.util.Properties` files that could be parsed to `KeyValues` would be:
 
