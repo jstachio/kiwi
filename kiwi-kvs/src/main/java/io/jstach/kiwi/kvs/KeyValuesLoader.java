@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import io.jstach.kiwi.kvs.interpolate.Interpolator.InterpolationException;
 
@@ -39,6 +40,8 @@ public interface KeyValuesLoader {
 	 */
 	public class Builder implements KeyValuesLoader {
 
+		private final Supplier<KeyValuesResource> defaultResource;
+
 		private final Function<Variables, KeyValuesSourceLoader> loaderFactory;
 
 		private final List<KeyValuesSource> sources = new ArrayList<>();
@@ -47,11 +50,13 @@ public interface KeyValuesLoader {
 
 		/**
 		 * Constructs a new {@code Builder} with a specified loader factory.
+		 * @param defaultResource default resource if add is never called.
 		 * @param loaderFactory a function that creates a {@link KeyValuesSourceLoader}
 		 * based on provided variables
 		 */
-		Builder(Function<Variables, KeyValuesSourceLoader> loaderFactory) {
+		Builder(Supplier<KeyValuesResource> defaultResource, Function<Variables, KeyValuesSourceLoader> loaderFactory) {
 			super();
+			this.defaultResource = defaultResource;
 			this.loaderFactory = loaderFactory;
 		}
 
@@ -114,7 +119,7 @@ public interface KeyValuesLoader {
 		 * @return a new {@link KeyValuesLoader} instance
 		 */
 		public KeyValuesLoader build() {
-			var resources = this.sources.isEmpty() ? List.of(defaultResource()) : List.copyOf(this.sources);
+			var resources = this.sources.isEmpty() ? List.of(defaultResource.get()) : List.copyOf(this.sources);
 			return () -> loaderFactory.apply(variables).load(resources);
 		}
 
@@ -127,14 +132,6 @@ public interface KeyValuesLoader {
 		@Override
 		public KeyValues load() throws IOException, FileNotFoundException {
 			return build().load();
-		}
-
-		/**
-		 * Provides a default {@link KeyValuesResource} when no sources are specified.
-		 * @return the default resource to use
-		 */
-		private static KeyValuesResource defaultResource() {
-			return KeyValuesResource.builder(URI.create("classpath:/system.properties")).build();
 		}
 
 	}

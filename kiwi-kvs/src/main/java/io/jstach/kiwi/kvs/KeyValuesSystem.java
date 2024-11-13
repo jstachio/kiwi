@@ -36,7 +36,7 @@ import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
  * @see KeyValuesEnvironment
  * @see KeyValuesServiceProvider
  */
-public sealed interface KeyValuesSystem {
+public sealed interface KeyValuesSystem extends AutoCloseable {
 
 	/**
 	 * Returns the {@link KeyValuesEnvironment} instance used for system-level
@@ -69,16 +69,30 @@ public sealed interface KeyValuesSystem {
 	 * @return a new {@link KeyValuesLoader.Builder} instance
 	 */
 	default KeyValuesLoader.Builder loader() {
-		return new KeyValuesLoader.Builder(variables -> DefaultKeyValuesSourceLoader.of(this, variables));
+		return new KeyValuesLoader.Builder(() -> environment().defaultResource(),
+				variables -> DefaultKeyValuesSourceLoader.of(this, variables));
+	}
+	
+	/**
+	 * This signals to the logger that
+	 * this key value system will not be used anymore
+	 * but there is guarantee of this.
+	 */
+	@Override
+	default void close() {
+		environment().getLogger().closed(this);
 	}
 
 	/**
 	 * Returns a default implementation of {@code KeyValuesSystem} configured with
-	 * standard settings.
+	 * standard settings and a ServiceLoader based on {@link KeyValuesServiceProvider} and
+	 * its classloader.
 	 * @return the default {@code KeyValuesSystem} instance
 	 */
 	public static KeyValuesSystem defaults() {
-		return builder().build();
+		return builder()
+			.useServiceLoader()
+			.build();
 	}
 
 	/**
@@ -159,6 +173,16 @@ public sealed interface KeyValuesSystem {
 		public Builder serviceLoader(ServiceLoader<KeyValuesServiceProvider> serviceLoader) {
 			this.serviceLoader = serviceLoader;
 			return this;
+		}
+		
+		/**
+		 * Uses the default service loader to load extensions.
+		 * @return this.
+		 */
+		public Builder useServiceLoader() {
+			return serviceLoader(
+					ServiceLoader.load(KeyValuesServiceProvider.class, 
+							KeyValuesServiceProvider.class.getClassLoader()));
 		}
 
 		/**

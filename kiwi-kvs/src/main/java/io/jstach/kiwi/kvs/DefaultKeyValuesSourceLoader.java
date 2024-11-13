@@ -50,7 +50,17 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 
 			@Override
 			public KeyValues load(List<? extends KeyValuesSource> resources) throws IOException {
-				return new DefaultKeyValuesSourceLoader(system, rootVariables).load(resources);
+				try {
+					return new DefaultKeyValuesSourceLoader(system, rootVariables).load(resources);
+				}
+				catch (RuntimeException e) {
+					system.environment().getLogger().fatal(e);
+					throw e;
+				}
+				catch (IOException e) {
+					system.environment().getLogger().fatal(e);
+					throw e;
+				}
 			}
 		}
 		return new ReusableLoader(system, rootVariables);

@@ -967,5 +967,6 @@
   </profiles>
   <modules>
     <module>kiwi-kvs</module>
+    <module>kiwi-boot</module>
   </modules>
 </project>
