@@ -167,7 +167,7 @@ class KeyValuesSystemTest {
 		assertEquals(expected, actual);
 	}
 
-	class TestLogger implements Logger {
+	static class TestLogger implements Logger {
 
 		final List<String> events = new ArrayList<>();
 

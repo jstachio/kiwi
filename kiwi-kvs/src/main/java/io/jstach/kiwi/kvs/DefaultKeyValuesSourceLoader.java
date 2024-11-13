@@ -201,7 +201,7 @@ enum LoadFlag {
 	NO_EMPTY,
 	/**
 	 * Confusing but this means the resource should not have its properties overriden. Not
-	 * to be confused with {@link #NO_REPLACE_EXISTING_KEY_VALUE} which sounds like what
+	 * to be confused with {@link #NO_REPLACE} which sounds like what
 	 * this does.
 	 */
 	LOCK,
@@ -238,8 +238,10 @@ enum LoadFlag {
 	 */
 	INHERIT;
 
+	@SuppressWarnings("ImmutableEnumChecker")
 	private final Set<String> names;
 
+	@SuppressWarnings("ImmutableEnumChecker")
 	private final Set<String> reverseNames;
 
 	private LoadFlag() {

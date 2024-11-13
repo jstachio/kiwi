@@ -31,7 +31,7 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 	PROPERTIES("text/x-java-properties", "properties") {
 		@Override
 		public void parse(InputStream is, BiConsumer<String, String> consumer) throws IOException {
-			PropertiesParser.readProperties(new InputStreamReader(is), consumer);
+			PropertiesParser.readProperties(new InputStreamReader(is, StandardCharsets.UTF_8), consumer);
 		}
 
 		@Override
@@ -106,6 +106,7 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 	}
 
 	static void parseUriQuery(String query, boolean decode, BiConsumer<String, String> consumer) {
+		@SuppressWarnings("StringSplitter")
 		String[] pairs = query.split("&");
 		for (String pair : pairs) {
 			int idx = pair.indexOf("=");

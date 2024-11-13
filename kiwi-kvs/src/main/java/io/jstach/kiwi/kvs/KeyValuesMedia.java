@@ -81,7 +81,7 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 
 	@Override
 	default Optional<KeyValuesMedia> findByExt(String ext) {
-		if (getFileExt().equalsIgnoreCase(ext)) {
+		if (ext.equalsIgnoreCase(getFileExt())) {
 			return Optional.of(this);
 		}
 		return Optional.empty();

@@ -224,11 +224,13 @@ public record KeyValue(String key, String expanded, Meta meta) {
 			flags = FlagSet.copyOf(flags, Flag.class);
 		}
 
+		@Override
 		public Meta withFlags(Collection<Flag> flags) {
 			var flagsCopy = FlagSet.copyOf(flags, Flag.class);
 			return new DefaultMeta(raw, source, flagsCopy);
 		}
 
+		@Override
 		public Meta withSource(Source source) {
 			return new DefaultMeta(raw, source, flags);
 		}

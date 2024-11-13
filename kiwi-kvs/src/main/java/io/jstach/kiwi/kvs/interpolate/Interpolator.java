@@ -79,7 +79,9 @@ class InternalInterpolator implements Interpolator {
 		StrSubstitutor st = new StrSubstitutor(new StrLookup() {
 			@Override
 			public @Nullable String lookup(@Nullable String variable, boolean defaultValue) {
-				requireNonNull(variable, "variable was null");
+				if (variable == null) {
+					throw new NullPointerException("variable was null");
+				}
 				String v = lookup.apply(variable);
 				if (v == null) {
 					if (key.equals(variable) || defaultValue) {

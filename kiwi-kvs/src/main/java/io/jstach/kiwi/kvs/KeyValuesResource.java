@@ -344,6 +344,7 @@ record DefaultKeyValuesResource(URI uri, //
 		return uri;
 	}
 
+	@Override
 	public boolean isRedacted() {
 		// TODO hmm if the resource has sensitive info should its URI be redacated as
 		// well?

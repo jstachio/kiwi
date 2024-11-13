@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.kiwi.kvs.KeyValuesResource.Builder;
 
 /*
  * The idea here is to keep all the parsing logic separated from the core domain so that
@@ -76,6 +75,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		return DEFAULT;
 	}
 
+	@Override
 	public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
 		String name = resource.name();
 		var uri = resource.uri();
@@ -151,31 +151,34 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		return builder.build();
 	}
 
-	private @Nullable Builder builderOrNull(KeyValue reference) {
-		var resource = parse(reference);
+	private  KeyValuesResource. @Nullable Builder builderOrNull(KeyValue reference) {
+		var resource = parseOrNull(reference);
 		if (resource == null) {
 			return null;
 		}
-		return new Builder(resource.uri(), resource.resourceName());
+		return new KeyValuesResource.Builder(resource.uri(), resource.resourceName());
 	}
 
 	private boolean filter(KeyValue kv) {
 		return resourceKeyOrNull(kv) == null;
 	}
 
-	private Resource parse(KeyValue keyValue) {
+	private @Nullable Resource parseOrNull(KeyValue keyValue) {
 		String key = keyValue.key();
 		var matcher = this.pattern.matcher(key);
 		if (matcher.find()) {
 			String name = matcher.group(1);
+			if (name == null) {
+				throw new NullPointerException("Pattern did not have group 1. pattern=" + this.pattern);
+			}
 			var uri = URI.create(keyValue.expanded());
 			return new Resource(name, uri);
 		}
 		return null;
 	}
 
-	@Nullable
-	private ResourceKey resourceKeyOrNull(KeyValue kv) {
+	
+	private @Nullable ResourceKey resourceKeyOrNull(KeyValue kv) {
 		for (var key : ResourceKey.values()) {
 			if (kv.key().startsWith(key.prefix)) {
 				return key;

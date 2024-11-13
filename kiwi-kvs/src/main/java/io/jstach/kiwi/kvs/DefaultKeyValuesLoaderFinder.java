@@ -8,6 +8,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -20,12 +21,14 @@ import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
 enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
 	CLASSPATH {
+		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var parser = context.requireParser(resource);
 			return load(context, resource, parser);
 		}
 	},
 	FILE {
+		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var parser = context.requireParser(resource);
 			return load(context, resource, parser);
@@ -100,7 +103,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 	}
 
 	boolean matches(KeyValuesResource resource) {
-		return name().toLowerCase().equals(resource.uri().getScheme());
+		return name().toLowerCase(Locale.ROOT).equals(resource.uri().getScheme());
 	}
 
 	static KeyValues profiles(String scheme, LoaderContext context, KeyValuesResource resource) throws IOException {

@@ -102,8 +102,7 @@ public interface Variables extends Function<String, @Nullable String> {
 	 */
 	public final static class Builder {
 
-		@Nullable
-		private Map<String, String> properties = null;
+		private @Nullable Map<String, String> properties = null;
 
 		private List<Variables> suppliers = new ArrayList<>();
 
@@ -263,6 +262,7 @@ record MapParameters(Map<String, String> map) implements Parameters {
 	}
 
 	@Override
+	@SuppressWarnings("return")
 	public Iterable<String> keys() {
 		return map.keySet();
 	}

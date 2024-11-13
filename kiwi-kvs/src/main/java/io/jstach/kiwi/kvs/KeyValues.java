@@ -31,6 +31,13 @@ import io.jstach.kiwi.kvs.interpolate.Interpolator.MissingVariableInterpolationE
  * manipulation, transformation, and expansion. This interface serves as a central point
  * for managing key-value pairs, allowing operations such as filtering, mapping, and
  * interpolation.
+ * 
+ * <p>
+ * KeyValues is basically a glorified  {@code Supplier<Stream<KeyValue>>}. If the key values
+ * will be streamed multiple times it is recommended to call {@link #memoize()} which will
+ * copy the key values if the key values are not already memoized.
+ * </p>
+ * 
  *
  * <h2>Key Features:</h2>
  * <ul>
@@ -93,7 +100,7 @@ public interface KeyValues extends Iterable<KeyValue> {
 	 * @return an empty {@code KeyValues} collection.
 	 */
 	public static KeyValues empty() {
-		return KeyValuesEmpty.KeyValuesEmpty;
+		return KeyValuesEmpty.EMPTY;
 	}
 
 	/**
@@ -334,7 +341,9 @@ public interface KeyValues extends Iterable<KeyValue> {
 	}
 
 	/**
-	 * Returns a memoized version of this {@code KeyValues}.
+	 * Returns a memoized version of this {@code KeyValues} which
+	 * means repeated calls to iteratore or stream over the KeyValues
+	 * will always generate the same result.
 	 * @return a memoized {@code KeyValues} instance.
 	 */
 	default KeyValues memoize() {
@@ -417,6 +426,7 @@ record ListKeyValues(List<KeyValue> keyValues) implements ToStringableKeyValues,
 		return keyValues.iterator();
 	}
 
+	@Override
 	public KeyValues memoize() {
 		return this;
 	}
@@ -484,7 +494,7 @@ class KeyValuesInterpolator {
 
 enum KeyValuesEmpty implements KeyValues, ToStringableKeyValues {
 
-	KeyValuesEmpty;
+	EMPTY;
 
 	@Override
 	public Stream<KeyValue> stream() {
