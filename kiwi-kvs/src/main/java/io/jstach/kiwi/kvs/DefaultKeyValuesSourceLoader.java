@@ -201,8 +201,7 @@ enum LoadFlag {
 	NO_EMPTY,
 	/**
 	 * Confusing but this means the resource should not have its properties overriden. Not
-	 * to be confused with {@link #NO_REPLACE} which sounds like what
-	 * this does.
+	 * to be confused with {@link #NO_REPLACE} which sounds like what this does.
 	 */
 	LOCK,
 	/**

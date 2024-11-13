@@ -269,13 +269,9 @@ class StrSubstitutor {
 		throw new IllegalStateException(buf.toString());
 	}
 
-	private @Nullable String resolveVariable(final String variableName, 
-			@SuppressWarnings("unused")
-			final StringBuilder buf, 
-			@SuppressWarnings("unused")
-			final int startPos,
-			@SuppressWarnings("unused")
-			final int endPos, boolean defaultValue) {
+	private @Nullable String resolveVariable(final String variableName,
+			@SuppressWarnings("unused") final StringBuilder buf, @SuppressWarnings("unused") final int startPos,
+			@SuppressWarnings("unused") final int endPos, boolean defaultValue) {
 		final StrLookup resolver = variableResolver;
 		return resolver.lookup(variableName, defaultValue);
 	}

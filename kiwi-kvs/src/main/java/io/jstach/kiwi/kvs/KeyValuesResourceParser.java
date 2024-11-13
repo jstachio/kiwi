@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
-
 /*
  * The idea here is to keep all the parsing logic separated from the core domain so that
  * we can switch the key value patterns of loading.
@@ -151,7 +150,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		return builder.build();
 	}
 
-	private  KeyValuesResource. @Nullable Builder builderOrNull(KeyValue reference) {
+	private KeyValuesResource.@Nullable Builder builderOrNull(KeyValue reference) {
 		var resource = parseOrNull(reference);
 		if (resource == null) {
 			return null;
@@ -177,7 +176,6 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		return null;
 	}
 
-	
 	private @Nullable ResourceKey resourceKeyOrNull(KeyValue kv) {
 		for (var key : ResourceKey.values()) {
 			if (kv.key().startsWith(key.prefix)) {

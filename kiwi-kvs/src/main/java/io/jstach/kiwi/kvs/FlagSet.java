@@ -13,9 +13,8 @@ import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Sadly there is no ImmutableEnumSet in Java.
- * We don't use <code>Set.of</code> because its order
- * is not predictable.
+ * Sadly there is no ImmutableEnumSet in Java. We don't use <code>Set.of</code> because
+ * its order is not predictable.
  */
 @SuppressWarnings({})
 final class FlagSet<E extends Enum<E>> implements Set<E> {
@@ -95,7 +94,7 @@ final class FlagSet<E extends Enum<E>> implements Set<E> {
 	}
 
 	@Override
-	@SuppressWarnings({"override.return", "override.param", "toarray.nullable.elements.not.newarray"})
+	@SuppressWarnings({ "override.return", "override.param", "toarray.nullable.elements.not.newarray" })
 	public <T> @Nullable T[] toArray(T[] a) {
 		return set.toArray(a);
 	}
@@ -142,7 +141,7 @@ final class FlagSet<E extends Enum<E>> implements Set<E> {
 
 	@Override
 	// I'm not sure it is possible to placate checker with jspecify for toArray
-	@SuppressWarnings({"override.return", "override.param"})
+	@SuppressWarnings({ "override.return", "override.param" })
 	public <T> @Nullable T[] toArray(IntFunction<T[]> generator) {
 		return set.toArray(generator);
 	}
