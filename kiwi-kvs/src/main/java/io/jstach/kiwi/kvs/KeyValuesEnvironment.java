@@ -7,6 +7,7 @@ import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -56,6 +57,15 @@ public interface KeyValuesEnvironment {
 	 */
 	default Map<String, String> getSystemEnv() {
 		return System.getenv();
+	}
+
+	/**
+	 * Retrieves a random number generator. By default, returns a new {@link Random}
+	 * instance.
+	 * @return random.
+	 */
+	default Random getRandom() {
+		return new Random();
 	}
 
 	/**
@@ -132,9 +142,9 @@ public interface KeyValuesEnvironment {
 	}
 
 	/**
-	 * Key Values Resource focused logging facade and event capture. Logging level condition checking is
-	 * purposely not supplied as these are more like events and many implementations will
-	 * replay when the actual logging sytem loads.
+	 * Key Values Resource focused logging facade and event capture. Logging level
+	 * condition checking is purposely not supplied as these are more like events and many
+	 * implementations will replay when the actual logging sytem loads.
 	 */
 	public interface Logger {
 
@@ -164,7 +174,7 @@ public interface KeyValuesEnvironment {
 		 */
 		default void init(KeyValuesSystem system) {
 		}
-		
+
 		/**
 		 * Logs a debug-level message.
 		 * @param message the message to log
@@ -176,7 +186,7 @@ public interface KeyValuesEnvironment {
 		 * @param message the message to log
 		 */
 		public void info(String message);
-		
+
 		/**
 		 * Logs an warn-level message.
 		 * @param message the message to log
@@ -224,7 +234,7 @@ public interface KeyValuesEnvironment {
 		default void fatal(Exception exception) {
 
 		}
-		
+
 		/**
 		 * Turns a Level into a SLF4J like level String that is all upper case and same
 		 * length with right padding. {@link Level#ALL} is "<code>TRACE</code>",
@@ -260,10 +270,9 @@ enum NoOpLogger implements Logger {
 	@Override
 	public void info(String message) {
 	}
-	
+
 	@Override
-	public void warn(
-			String message) {
+	public void warn(String message) {
 	}
 
 	@Override
@@ -298,13 +307,11 @@ class SystemLogger implements Logger {
 	public void info(String message) {
 		logger.log(Level.INFO, message);
 	}
-	
+
 	@Override
-	public void warn(
-			String message) {
+	public void warn(String message) {
 		logger.log(Level.WARNING, message);
 
-		
 	}
 
 }

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -20,30 +21,109 @@ import io.jstach.kiwi.kvs.KeyValuesEnvironment.Logger;
 import io.jstach.kiwi.kvs.KeyValuesSystem;
 import io.jstach.kiwi.kvs.Variables;
 
+/**
+ * Kiwi Config is tiny opinionated configuration framework modeled after Spring Boot that
+ * uses Kiwi KVS system to load key values into a Map. It is made to be a slightly better
+ * {@link System#getProperties()}.
+ * <p>
+ * Features are purposely very limited.
+ * <p>
+ * The loading is as follows:
+ * <ol>
+ * <li>System.getProperties and System.getEnv are load for interpolation.</li>
+ * <li>Resource <code>classpath:/application.properties</code> is loaded (but not
+ * required)</li>
+ * <li>Resource <code>profile.classpath:/application__PROFILE__.properties</code> is
+ * loaded (but not required)</li>
+ * </ol>
+ * <h2>Example Usage</h2>
+ * {@snippet :
+ * KiwiConfig.of().getProperty(key); // Use instead of System.getProperty
+ * }
+ *
+ */
 public sealed interface KiwiConfig {
 
+	/**
+	 * Analogous to {@link System#getProperty(String)}.
+	 * @param key to use for lookup for matching value.
+	 * @return value or <code>null</code> if not found.
+	 */
 	@Nullable
 	String getProperty(String key);
 
-	String describe(String key);
-
-	Map<String, String> toMap();
-
+	/**
+	 * Set default properties which will be used in addition to those in the found on
+	 * loading. This is analogous to Spring Boots
+	 * <code>SpringApplication.setDefaultProperties</code>.
+	 * @param properties the additional properties to set
+	 */
 	public static void setDefaultProperties(Map<String, String> properties) {
 		Holder.PROPERTIES = KeyValues.builder().add(properties.entrySet()).build();
 	}
 
+	/**
+	 * Gets the global config singleton. Analogous to {@link System#getProperties()}.
+	 * @return global config that is reloadable.
+	 */
 	public static ReloadableConfig of() {
 		return Holder.Hidden.CONFIG;
 	}
-	
-	non-sealed interface ReloadableConfig extends KiwiConfig {
-		public StableConfig stableConfig();
-		public KiwiConfig reload();
+
+	/**
+	 * Creates a stable config based on the opinionated loading. Usually {@link #of()} is
+	 * the more desirable call.
+	 * @return a new loaded stable config.
+	 * @see #of()
+	 */
+	public static StableConfig create() {
+		return Holder.load();
 	}
-	
+
+	/**
+	 * A reloadable config allows reloading but does not guarantee that repeated calls of
+	 * {@link #getProperty(String)} and similar will return the same results. Notice that
+	 * there is no event propagation or watching of resources. That is am exercise for the
+	 * consumer of the library.
+	 */
+	sealed interface ReloadableConfig extends KiwiConfig {
+
+		/**
+		 * The current backing stable config (might be generated).
+		 * @return stable config.
+		 */
+		public StableConfig stableConfig();
+
+		/**
+		 * Will reload the config and return the previous config.
+		 * @return previous config.
+		 */
+		public KiwiConfig reload();
+
+	}
+
+	/**
+	 * A stable config guarantees that repeated calls of {@link #getProperty(String)} and
+	 * similar will return the same result.
+	 */
 	non-sealed interface StableConfig extends KiwiConfig {
-		
+
+		/**
+		 * Describes the key like what resource it came from. Stable Config has this
+		 * method because calling describe on reloadable config may generate different
+		 * results.
+		 * @param key to describe.
+		 * @return description.
+		 * @throws NoSuchElementException if the key is missing.
+		 */
+		String describe(String key) throws NoSuchElementException;
+
+		/**
+		 * Generates a map from the config.
+		 * @return key value map of config.
+		 */
+		Map<String, String> toMap();
+
 	}
 
 }
@@ -56,11 +136,10 @@ class QueueLogger implements Logger {
 	}
 
 	@Override
-	public void init(
-			KeyValuesSystem system) {
+	public void init(KeyValuesSystem system) {
 		events.add(new Event(System.Logger.Level.INFO, "Initializing"));
 	}
-	
+
 	@Override
 	public void debug(String message) {
 		events.add(new Event(System.Logger.Level.DEBUG, message));
@@ -71,10 +150,9 @@ class QueueLogger implements Logger {
 	public void info(String message) {
 		events.add(new Event(System.Logger.Level.INFO, message));
 	}
-	
+
 	@Override
-	public void warn(
-			String message) {
+	public void warn(String message) {
 		events.add(new Event(System.Logger.Level.WARNING, message));
 	}
 
@@ -100,53 +178,58 @@ class QueueLogger implements Logger {
 
 }
 
-class Holder {
+final class Holder {
+
 	static volatile @Nullable KeyValues PROPERTIES;
+
 	static class Hidden {
+
 		final static KiwiConfig.ReloadableConfig CONFIG = new WrapperKiwiConfig(load());
-		
-		static KiwiConfig.StableConfig load() {
 
-			record BootEnvironment(QueueLogger logger) implements KeyValuesEnvironment {
-				@Override
-				public Logger getLogger() {
-					return this.logger;
-				}
-			}
-			var logger = new QueueLogger();
-			try (var system = KeyValuesSystem.builder() //
-				.useServiceLoader()
-				.environment(new BootEnvironment(logger))
-				.build()) {
-				var properties = Holder.PROPERTIES;
+	}
 
-				var loader = system //
-					.loader();
-				if (properties != null) {
-					loader.add("setDefaultProperties", properties);
-				}
-				var kvs = loader
-						.variables(Variables::ofSystemProperties)
-						.variables(Variables::ofSystemEnv)
-						.add("classpath:/application.properties", b -> b.name("application").noRequire(true))
-						.add("profile.classpath:/application-__PROFILE__.properties", b -> b.name("profiles").noRequire(true))
-					.load();
-				Map<String, KeyValue> m = new LinkedHashMap<>();
-				for (var kv : kvs) {
-					m.put(kv.key(), kv);
-				}
-				var config = new DefaultKiwiConfig("application.properties", m);
-				config.setSystemProperties(system);
-				return config;
-			}
-			catch (Exception e) {
-				throw new RuntimeException(e);
+	static KiwiConfig.StableConfig load() {
+
+		record BootEnvironment(QueueLogger logger) implements KeyValuesEnvironment {
+			@Override
+			public Logger getLogger() {
+				return this.logger;
 			}
 		}
+		var logger = new QueueLogger();
+		try (var system = KeyValuesSystem.builder() //
+			.useServiceLoader()
+			.environment(new BootEnvironment(logger))
+			.build()) {
+			var properties = Holder.PROPERTIES;
+
+			var loader = system //
+				.loader();
+			if (properties != null) {
+				loader.add("setDefaultProperties", properties);
+			}
+			var kvs = loader.variables(Variables::ofSystemProperties)
+				.variables(Variables::ofSystemEnv)
+				.variables(RandomVariables::of)
+				.add("classpath:/application.properties", b -> b.name("application").noRequire(true))
+				.add("profile.classpath:/application-__PROFILE__.properties", b -> b.name("profiles").noRequire(true))
+				.load();
+			Map<String, KeyValue> m = new LinkedHashMap<>();
+			for (var kv : kvs) {
+				m.put(kv.key(), kv);
+			}
+			var config = new DefaultKiwiConfig("application.properties", m);
+			config.setSystemProperties(system);
+			return config;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
+
 }
 
-class WrapperKiwiConfig implements KiwiConfig.ReloadableConfig {
+final class WrapperKiwiConfig implements KiwiConfig.ReloadableConfig {
 
 	volatile KiwiConfig.StableConfig config;
 
@@ -161,16 +244,6 @@ class WrapperKiwiConfig implements KiwiConfig.ReloadableConfig {
 	}
 
 	@Override
-	public String describe(String key) {
-		return config.describe(key);
-	}
-
-	@Override
-	public Map<String, String> toMap() {
-		return config.toMap();
-	}
-	
-	@Override
 	public StableConfig stableConfig() {
 		return config;
 	}
@@ -178,14 +251,14 @@ class WrapperKiwiConfig implements KiwiConfig.ReloadableConfig {
 	@Override
 	public KiwiConfig reload() {
 		var c = config;
-		config = Holder.Hidden.load();
+		config = Holder.load();
 		return c;
 
 	}
 
 }
 
-class DefaultKiwiConfig implements KiwiConfig.StableConfig {
+final class DefaultKiwiConfig implements KiwiConfig.StableConfig {
 
 	private final String description;
 
@@ -223,7 +296,7 @@ class DefaultKiwiConfig implements KiwiConfig.StableConfig {
 		}
 		return Map.copyOf(m);
 	}
-	
+
 	void setSystemProperties(KeyValuesSystem system) {
 		var logger = system.environment().getLogger();
 		Map<String, String> properties = toMap();
@@ -233,7 +306,7 @@ class DefaultKiwiConfig implements KiwiConfig.StableConfig {
 		final Set<String> commandLineProperties = getJvmCommandLinePropertyNames();
 		for (Entry<String, String> e : properties.entrySet()) {
 			if (commandLineProperties.contains(e.getKey())) {
-				logger.info( "Not overriding command line property: " + e.getKey());
+				logger.info("Not overriding command line property: " + e.getKey());
 			}
 			else if (denyPropertyToBeOverridden(e.getKey())) {
 				logger.info("Not overriding restricted property: " + e.getKey());
@@ -252,29 +325,23 @@ class DefaultKiwiConfig implements KiwiConfig.StableConfig {
 		for (var e : propertiesToBeSet.entrySet()) {
 			systemProperties.setProperty(e.getKey(), e.getValue());
 		}
-		
+
 	}
-	
-	static boolean denyPropertyToBeOverridden(
-			@Nullable String property) {
+
+	static boolean denyPropertyToBeOverridden(@Nullable String property) {
 		if (property == null)
 			return true;
 
-		return (property.startsWith("java.")
-				|| property.startsWith("sun.")
-				|| property.equals("user.dir")
-				|| property.equals("user.name")
-				|| property.equals("path.separator")
-				|| property.startsWith("os."));
+		return (property.startsWith("java.") || property.startsWith("sun.") || property.equals("user.dir")
+				|| property.equals("user.name") || property.equals("path.separator") || property.startsWith("os."));
 	}
-	
+
 	Set<String> getJvmCommandLinePropertyNames() {
 		if (!isJmxModuleAvailable()) {
 			return Collections.emptySet();
 		}
 		try {
-			List<String> args = ManagementFactory.getRuntimeMXBean()
-				.getInputArguments();
+			List<String> args = ManagementFactory.getRuntimeMXBean().getInputArguments();
 			if (args.isEmpty()) {
 				return Collections.emptySet();
 			}
@@ -296,8 +363,7 @@ class DefaultKiwiConfig implements KiwiConfig.StableConfig {
 
 	private static boolean isJmxModuleAvailable() {
 		ModuleLayer bootLayer = ModuleLayer.boot();
-		return bootLayer.findModule("java.management")
-			.isPresent();
+		return bootLayer.findModule("java.management").isPresent();
 	}
 
 }

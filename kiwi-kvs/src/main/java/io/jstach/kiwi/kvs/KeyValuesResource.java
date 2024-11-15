@@ -72,10 +72,14 @@ public sealed interface KeyValuesResource extends KeyValuesSource, KeyValueRefer
 	 * @return a {@code Builder} initialized with the current state
 	 */
 	public Builder toBuilder();
-	
-	
+
+	// TODO maybe we do not provide this.
+	/**
+	 * Pretty toString of resource.
+	 * @return pretty print resource.
+	 */
 	default String description() {
-		return "uri='" + uri() + "' name='"+ name() + "'";
+		return "uri='" + uri() + "' name='" + name() + "'";
 	}
 
 	/**

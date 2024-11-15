@@ -45,9 +45,11 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 	 */
 	record Node(KeyValuesSource current, @Nullable Node parent) {
 	}
-	
-	static KeyValuesLoader of(KeyValuesSystem system, Variables rootVariables, List<? extends KeyValuesSource> resources) {
-		record ReusableLoader(KeyValuesSystem system, Variables rootVariables, List<? extends KeyValuesSource> resources) implements KeyValuesLoader {
+
+	static KeyValuesLoader of(KeyValuesSystem system, Variables rootVariables,
+			List<? extends KeyValuesSource> resources) {
+		record ReusableLoader(KeyValuesSystem system, Variables rootVariables,
+				List<? extends KeyValuesSource> resources) implements KeyValuesLoader {
 
 			@Override
 			public KeyValues load() throws IOException {
@@ -147,12 +149,12 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		return keyValues.expand(variables).memoize();
 
 	}
-	
+
 	static List<Node> validateNames(List<Node> nodes) {
 		Set<String> names = new HashSet<>();
 		for (var n : nodes) {
 			String name = n.current.name();
-			if (! names.add(name )) {
+			if (!names.add(name)) {
 				throw new IllegalStateException("Duplicate name found in grouped resources. name=" + name);
 			}
 		}

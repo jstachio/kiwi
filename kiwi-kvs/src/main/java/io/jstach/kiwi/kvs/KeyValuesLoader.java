@@ -36,16 +36,15 @@ public interface KeyValuesLoader {
 	/**
 	 * A builder class for constructing instances of {@link KeyValuesLoader}. The builder
 	 * allows adding multiple sources from which key-values will be loaded, as well as
-	 * setting variables for interpolation.
-	 * <strong>Note that the order of the "add" methods does matter.</strong>
+	 * setting variables for interpolation. <strong>Note that the order of the "add" and
+	 * {@link #variables} methods does matter.</strong>
 	 */
 	public class Builder implements KeyValuesLoader {
-
 
 		final Function<Builder, KeyValuesLoader> loaderFactory;
 
 		final List<KeyValuesSource> sources = new ArrayList<>();
-		
+
 		final List<Function<KeyValuesEnvironment, Variables>> variables = new ArrayList<>();
 
 		Builder(Function<Builder, KeyValuesLoader> loaderFactory) {
@@ -62,7 +61,7 @@ public interface KeyValuesLoader {
 			sources.add(resource);
 			return this;
 		}
-		
+
 		/**
 		 * Add resource using callback on builder.
 		 * @param uri uri of resource
@@ -113,13 +112,14 @@ public interface KeyValuesLoader {
 			this.variables.add(e -> variables);
 			return this;
 		}
-		
+
 		/**
-		 * Adds variables that will be resolved based on the environment.
-		 * This is useful if you want to use environment things for variables
-		 * that are bound to {@link KeyValuesEnvironment}.
-		 * This is preferred instead of just creating Variables from 
-		 * {@link System#getProperties()} or {@link System#getenv()} directly.
+		 * Adds variables that will be resolved based on the environment. <strong>
+		 * Variables resolution order is the opposite of KeyValues. Primacy takes
+		 * precedence! </strong> This is useful if you want to use environment things for
+		 * variables that are bound to {@link KeyValuesEnvironment}. This is preferred
+		 * instead of just creating Variables from {@link System#getProperties()} or
+		 * {@link System#getenv()} directly.
 		 * @param variablesFactory function to create variables from environment.
 		 * @return this
 		 * @see Variables#ofSystemProperties(KeyValuesEnvironment)
