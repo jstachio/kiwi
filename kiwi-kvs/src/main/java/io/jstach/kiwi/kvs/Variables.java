@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.SequencedCollection;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -15,11 +18,14 @@ import io.jstach.kiwi.kvs.Variables.Parameters;
 /**
  * Represents a mapping function that associates a key to a value, typically used for
  * variable resolution during interpolation.
- *
  * <p>
  * The {@code Variables} interface allows lookup of values based on keys and is used in
  * contexts where key-to-value mappings are required for interpolation. Unlike
  * {@link KeyValues}, there are no duplicate keys in {@code Variables}.
+ * <strong> Variables unlike KeyValues may not end up in the final config
+ * when loaded and that is why there is a distinction.</strong>. 
+ * This distinction for example allows you to use environment variables for lookup
+ * but not have the final config contain all the environment variables.
  */
 @FunctionalInterface
 public interface Variables extends Function<String, @Nullable String> {
@@ -30,11 +36,39 @@ public interface Variables extends Function<String, @Nullable String> {
 	 * @return the value associated with the key, or {@code null} if not found
 	 */
 	public @Nullable String getValue(String key);
+	
+	default Variables renameKey(Function<String, String> keyFunc) {
+		return k -> (this.getValue(keyFunc.apply(k)));
+	}
 
 	@Override
 	default @Nullable String apply(String t) {
 		return getValue(t);
 	}
+	
+
+	/**
+	 * Find a variable key-value tuple based on vararg keys.
+	 * This method provides ergonomics for searching for fallback keys.
+	 * @param name names to String. Note if an array passed in is null an NPE will be thrown
+	 * but contents of the array (keys) maybe null and are skipped if they are.
+	 * @return optional entry where the key is the first matching key
+	 * and the value is the value associated with that key.
+	 */
+	default Optional<Entry<String, String>> findEntry(
+			String... name) {
+		for (String k : name) {
+			if (k == null)
+				continue;
+			String prop = getValue(k);
+			if (prop != null)
+				return Optional.of(Map.entry(k, prop));
+		}
+		return Optional.empty();
+	 }
+	
+
+	
 
 	/**
 	 * Represents a specialized {@code Variables} interface that can list all keys it
@@ -162,19 +196,13 @@ public interface Variables extends Function<String, @Nullable String> {
 		 * @return a new {@link Variables} instance
 		 */
 		public Variables build() {
-			List<Variables> list = new ArrayList<>(suppliers.size() + 1);
+			List<Variables> candidates = new ArrayList<>(suppliers.size() + 1);
 			Map<String, String> p = properties;
 			if (p != null && !p.isEmpty()) {
-				list.add(p::get);
+				candidates.add(p::get);
 			}
-			list.addAll(suppliers);
-			if (list.isEmpty()) {
-				return empty();
-			}
-			if (list.size() == 1) {
-				return list.get(0);
-			}
-			return Variables.create(list);
+			candidates.addAll(suppliers);
+			return copyOf(candidates);
 		}
 
 		/**
@@ -213,7 +241,24 @@ public interface Variables extends Function<String, @Nullable String> {
 		}
 
 	}
+	
+	/**
+	 * Creates variables from system properties.
+	 * @param env environment facade.
+	 * @return variables.
+	 */
+	public static Variables ofSystemProperties(KeyValuesEnvironment env) {
+		return k -> env.getSystemProperties().getProperty(k);
+	}
 
+	/**
+	 * Creates variables from system environment variables.
+	 * @param env environment facade.
+	 * @return variables.
+	 */
+	public static Variables ofSystemEnv(KeyValuesEnvironment env) {
+		return k -> env.getSystemEnv().get(k);
+	}
 	/**
 	 * Creates a {@code Variables} instance from the provided properties.
 	 * @param properties the properties to use as a variable mapping
@@ -229,8 +274,30 @@ public interface Variables extends Function<String, @Nullable String> {
 	 * @param variables an iterable of {@link Variables} to chain
 	 * @return a new {@code Variables} instance
 	 */
-	public static Variables create(final Iterable<? extends Variables> variables) {
+	static Variables create(final SequencedCollection<? extends Variables> variables) {
 		return new Builder.ChainedVariables(variables);
+	}
+	
+	/**
+	 * Creates a {@code Variables} instance that chains together multiple
+	 * {@link Variables} sources but copies and filters the collection.
+	 * @param variables an iterable of {@link Variables} to chain
+	 * @return a new {@code Variables} instance
+	 */
+	public static Variables copyOf(final SequencedCollection<? extends Variables> variables) {
+		List<Variables> list = new ArrayList<>();
+		for (var v : variables) {
+			if (v != empty()) {
+				list.add(v);
+			}
+		}
+		if (list.isEmpty()) {
+			return empty();
+		}
+		if (list.size() == 1) {
+			return list.get(0);
+		}
+		return Variables.create(list);	
 	}
 
 }

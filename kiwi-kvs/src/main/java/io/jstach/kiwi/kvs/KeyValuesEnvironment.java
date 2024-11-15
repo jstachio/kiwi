@@ -132,7 +132,7 @@ public interface KeyValuesEnvironment {
 	}
 
 	/**
-	 * Key Values Resource focused logging facade. Logging level condition checking is
+	 * Key Values Resource focused logging facade and event capture. Logging level condition checking is
 	 * purposely not supplied as these are more like events and many implementations will
 	 * replay when the actual logging sytem loads.
 	 */
@@ -159,6 +159,13 @@ public interface KeyValuesEnvironment {
 		}
 
 		/**
+		 * When Key Values System is loaded.
+		 * @param system that was just created.
+		 */
+		default void init(KeyValuesSystem system) {
+		}
+		
+		/**
 		 * Logs a debug-level message.
 		 * @param message the message to log
 		 */
@@ -169,6 +176,12 @@ public interface KeyValuesEnvironment {
 		 * @param message the message to log
 		 */
 		public void info(String message);
+		
+		/**
+		 * Logs an warn-level message.
+		 * @param message the message to log
+		 */
+		public void warn(String message);
 
 		/**
 		 * Logs a debug message indicating that a resource is being loaded.
@@ -194,23 +207,42 @@ public interface KeyValuesEnvironment {
 		default void missing(KeyValuesResource resource, FileNotFoundException exception) {
 			debug(DefaultKeyValuesResource.describe(new StringBuilder("Missing "), resource, false).toString());
 		}
-		
+
 		/**
-		 * This signals that key values system will no longer be used to 
-		 * load resources and that some other system can now take over
-		 * perhaps the logging system.
+		 * This signals that key values system will no longer be used to load resources
+		 * and that some other system can now take over perhaps the logging system.
 		 * @param system key value system that was closed.
 		 */
 		default void closed(KeyValuesSystem system) {
 		}
-		
+
 		/**
-		 * This is to signal failure that the KeyValueSystem cannot recover from
-		 * while attempting to load.
+		 * This is to signal failure that the KeyValueSystem cannot recover from while
+		 * attempting to load.
 		 * @param exception unrecoverable key values exception
 		 */
 		default void fatal(Exception exception) {
-			
+
+		}
+		
+		/**
+		 * Turns a Level into a SLF4J like level String that is all upper case and same
+		 * length with right padding. {@link Level#ALL} is "<code>TRACE</code>",
+		 * {@link Level#OFF} is "<code>ERROR</code>" and {@link Level#WARNING} is
+		 * "<code>WARN</code>".
+		 * @param level system logger level.
+		 * @return upper case string of level.
+		 */
+		public static String formatLevel(Level level) {
+			return switch (level) {
+				case DEBUG -> /*   */ "DEBUG";
+				case ALL -> /*     */ "TRACE";
+				case ERROR -> /*   */ "ERROR";
+				case INFO -> /*    */ "INFO ";
+				case OFF -> /*     */ "ERROR";
+				case TRACE -> /*   */ "TRACE";
+				case WARNING -> /* */ "WARN ";
+			};
 		}
 
 	}
@@ -227,6 +259,11 @@ enum NoOpLogger implements Logger {
 
 	@Override
 	public void info(String message) {
+	}
+	
+	@Override
+	public void warn(
+			String message) {
 	}
 
 	@Override
@@ -260,6 +297,14 @@ class SystemLogger implements Logger {
 	@Override
 	public void info(String message) {
 		logger.log(Level.INFO, message);
+	}
+	
+	@Override
+	public void warn(
+			String message) {
+		logger.log(Level.WARNING, message);
+
+		
 	}
 
 }

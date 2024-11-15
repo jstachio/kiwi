@@ -4,10 +4,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import io.jstach.kiwi.kvs.KeyValue.Source;
 
 sealed interface KeyValuesSource permits NamedKeyValues, KeyValuesResource {
 
+	String name();
+	
 	static String validateName(String identifier) {
 		if (identifier == null || !identifier.matches("[a-zA-Z0-9]+")) {
 			throw new IllegalArgumentException(
@@ -25,6 +29,10 @@ interface KeyValuesSourceLoader {
 
 	KeyValues load(List<? extends KeyValuesSource> sources) throws IOException;
 
+}
+
+interface KeyValueReference {
+	public @Nullable KeyValue reference();
 }
 
 record NamedKeyValues(String name, KeyValues keyValues) implements KeyValuesSource {

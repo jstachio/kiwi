@@ -84,6 +84,14 @@ public sealed interface KeyValuesServiceProvider {
 			 * @param consumer the consumer to apply the formatted key-value pairs
 			 */
 			void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer);
+			
+			/**
+			 * Formats a resource parameter key how it is represented as key in the parsed resource.
+			 * @param resource resource to base the full parameter name on.
+			 * @param parameterName the short parameter from {@link KeyValuesResource#parameters()}.
+			 * @return FQ parameter name.
+			 */
+			String formatParameterKey(KeyValuesResource resource, String parameterName);
 
 		}
 
@@ -152,6 +160,13 @@ record DefaultLoaderContext(KeyValuesEnvironment environment, KeyValuesMediaFind
 	@Override
 	public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
 		resourceParser.formatResource(resource, consumer);
+	}
+	
+	@Override
+	public String formatParameterKey(
+			KeyValuesResource resource,
+			String parameterName) {
+		return resourceParser.formatParameterKey(resource, parameterName);
 	}
 
 }

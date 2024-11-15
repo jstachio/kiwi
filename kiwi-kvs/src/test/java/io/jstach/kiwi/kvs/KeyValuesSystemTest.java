@@ -192,6 +192,12 @@ class KeyValuesSystemTest {
 		public void info(String message) {
 			events.add("[INFO ] " + message);
 		}
+		
+		@Override
+		public void warn(
+				String message) {
+			events.add("[WARN ] " + message);
+		}
 
 		@Override
 		public String toString() {

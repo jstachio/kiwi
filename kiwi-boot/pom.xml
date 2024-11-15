@@ -13,5 +13,11 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>kiwi-kvs</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.jstach.rainbowgum</groupId>
+      <artifactId>rainbowgum-jdk</artifactId>
+      <version>0.8.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

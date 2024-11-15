@@ -35,7 +35,7 @@ import io.jstach.kiwi.kvs.Variables.Parameters;
  * @see KeyValuesSource
  * @see LoadFlag
  */
-public sealed interface KeyValuesResource extends KeyValuesSource permits InternalKeyValuesResource {
+public sealed interface KeyValuesResource extends KeyValuesSource, KeyValueReference permits InternalKeyValuesResource {
 
 	/**
 	 * Returns the URI of the resource.
@@ -72,6 +72,11 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 	 * @return a {@code Builder} initialized with the current state
 	 */
 	public Builder toBuilder();
+	
+	
+	default String description() {
+		return "uri='" + uri() + "' name='"+ name() + "'";
+	}
 
 	/**
 	 * Creates a builder for a {@code KeyValuesResource} from the given URI.
@@ -211,6 +216,16 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 		 */
 		public Builder sensitive(boolean flag) {
 			LoadFlag.SENSITIVE.set(flags, flag);
+			return this;
+		}
+
+		/**
+		 * Marks the resource as not required.
+		 * @param flag true make the resource not required.
+		 * @return this
+		 */
+		public Builder noRequire(boolean flag) {
+			LoadFlag.NO_REQUIRE.set(flags, flag);
 			return this;
 		}
 

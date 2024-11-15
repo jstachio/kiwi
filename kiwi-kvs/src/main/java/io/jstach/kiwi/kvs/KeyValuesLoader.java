@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import io.jstach.kiwi.kvs.interpolate.Interpolator.InterpolationException;
 
@@ -37,26 +37,19 @@ public interface KeyValuesLoader {
 	 * A builder class for constructing instances of {@link KeyValuesLoader}. The builder
 	 * allows adding multiple sources from which key-values will be loaded, as well as
 	 * setting variables for interpolation.
+	 * <strong>Note that the order of the "add" methods does matter.</strong>
 	 */
 	public class Builder implements KeyValuesLoader {
 
-		private final Supplier<KeyValuesResource> defaultResource;
 
-		private final Function<Variables, KeyValuesSourceLoader> loaderFactory;
+		final Function<Builder, KeyValuesLoader> loaderFactory;
 
-		private final List<KeyValuesSource> sources = new ArrayList<>();
+		final List<KeyValuesSource> sources = new ArrayList<>();
+		
+		final List<Function<KeyValuesEnvironment, Variables>> variables = new ArrayList<>();
 
-		private Variables variables = Variables.empty();
-
-		/**
-		 * Constructs a new {@code Builder} with a specified loader factory.
-		 * @param defaultResource default resource if add is never called.
-		 * @param loaderFactory a function that creates a {@link KeyValuesSourceLoader}
-		 * based on provided variables
-		 */
-		Builder(Supplier<KeyValuesResource> defaultResource, Function<Variables, KeyValuesSourceLoader> loaderFactory) {
+		Builder(Function<Builder, KeyValuesLoader> loaderFactory) {
 			super();
-			this.defaultResource = defaultResource;
 			this.loaderFactory = loaderFactory;
 		}
 
@@ -68,6 +61,18 @@ public interface KeyValuesLoader {
 		public Builder add(KeyValuesResource resource) {
 			sources.add(resource);
 			return this;
+		}
+		
+		/**
+		 * Add resource using callback on builder.
+		 * @param uri uri of resource
+		 * @param builder builder to add additional properties.
+		 * @return this.
+		 */
+		public Builder add(String uri, Consumer<KeyValuesResource.Builder> builder) {
+			var b = KeyValuesResource.builder(uri);
+			builder.accept(b);
+			return add(b.build());
 		}
 
 		/**
@@ -100,12 +105,28 @@ public interface KeyValuesLoader {
 		}
 
 		/**
-		 * Sets the {@link Variables} used for interpolation when loading key-values.
+		 * Adds {@link Variables} for interpolation when loading key-values.
 		 * @param variables the variables to use for interpolation
 		 * @return this builder instance
 		 */
-		public Builder variables(Variables variables) {
-			this.variables = variables;
+		public Builder add(Variables variables) {
+			this.variables.add(e -> variables);
+			return this;
+		}
+		
+		/**
+		 * Adds variables that will be resolved based on the environment.
+		 * This is useful if you want to use environment things for variables
+		 * that are bound to {@link KeyValuesEnvironment}.
+		 * This is preferred instead of just creating Variables from 
+		 * {@link System#getProperties()} or {@link System#getenv()} directly.
+		 * @param variablesFactory function to create variables from environment.
+		 * @return this
+		 * @see Variables#ofSystemProperties(KeyValuesEnvironment)
+		 * @see Variables#ofSystemEnv(KeyValuesEnvironment)
+		 */
+		public Builder variables(Function<KeyValuesEnvironment, Variables> variablesFactory) {
+			this.variables.add(variablesFactory);
 			return this;
 		}
 
@@ -119,8 +140,7 @@ public interface KeyValuesLoader {
 		 * @return a new {@link KeyValuesLoader} instance
 		 */
 		public KeyValuesLoader build() {
-			var resources = this.sources.isEmpty() ? List.of(defaultResource.get()) : List.copyOf(this.sources);
-			return () -> loaderFactory.apply(variables).load(resources);
+			return loaderFactory.apply(this);
 		}
 
 		/**

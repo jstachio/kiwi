@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,12 +45,12 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 	 */
 	record Node(KeyValuesSource current, @Nullable Node parent) {
 	}
-
-	static KeyValuesSourceLoader of(KeyValuesSystem system, Variables rootVariables) {
-		record ReusableLoader(KeyValuesSystem system, Variables rootVariables) implements KeyValuesSourceLoader {
+	
+	static KeyValuesLoader of(KeyValuesSystem system, Variables rootVariables, List<? extends KeyValuesSource> resources) {
+		record ReusableLoader(KeyValuesSystem system, Variables rootVariables, List<? extends KeyValuesSource> resources) implements KeyValuesLoader {
 
 			@Override
-			public KeyValues load(List<? extends KeyValuesSource> resources) throws IOException {
+			public KeyValues load() throws IOException {
 				try {
 					return new DefaultKeyValuesSourceLoader(system, rootVariables).load(resources);
 				}
@@ -63,7 +64,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 				}
 			}
 		}
-		return new ReusableLoader(system, rootVariables);
+		return new ReusableLoader(system, rootVariables, resources);
 	}
 
 	private DefaultKeyValuesSourceLoader(KeyValuesSystem system, Variables rootVariables) {
@@ -85,6 +86,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		KeyValues keyValues = () -> keyValuesStore.stream();
 		{
 			List<Node> nodes = sources.stream().map(s -> new Node(s, null)).toList();
+			validateNames(nodes);
 			fs.addAll(0, nodes);
 		}
 		for (; !fs.isEmpty();) {
@@ -113,6 +115,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 			}
 			var foundResources = resourceParser.parseResources(kvs);
 			var nodes = foundResources.stream().map(s -> new Node(s, node)).toList();
+			validateNames(nodes);
 			// push
 			fs.addAll(0, nodes);
 			kvs = resourceParser.filterResources(kvs);
@@ -143,6 +146,17 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		}
 		return keyValues.expand(variables).memoize();
 
+	}
+	
+	static List<Node> validateNames(List<Node> nodes) {
+		Set<String> names = new HashSet<>();
+		for (var n : nodes) {
+			String name = n.current.name();
+			if (! names.add(name )) {
+				throw new IllegalStateException("Duplicate name found in grouped resources. name=" + name);
+			}
+		}
+		return nodes;
 	}
 
 	static StringBuilder describe(StringBuilder sb, KeyValuesSource source) {
