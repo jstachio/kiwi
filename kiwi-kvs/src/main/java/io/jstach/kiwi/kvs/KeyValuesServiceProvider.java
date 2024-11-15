@@ -85,6 +85,16 @@ public sealed interface KeyValuesServiceProvider {
 			 */
 			void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer);
 
+			/**
+			 * Formats a resource parameter key how it is represented as key in the parsed
+			 * resource.
+			 * @param resource resource to base the full parameter name on.
+			 * @param parameterName the short parameter from
+			 * {@link KeyValuesResource#parameters()}.
+			 * @return FQ parameter name.
+			 */
+			String formatParameterKey(KeyValuesResource resource, String parameterName);
+
 		}
 
 		/**
@@ -94,7 +104,7 @@ public sealed interface KeyValuesServiceProvider {
 		 * @param resource the resource for which a loader is sought
 		 * @return an {@link Optional} containing the loader if found, or empty if not
 		 */
-		public Optional<KeyValuesLoader> findLoader(LoaderContext context, KeyValuesResource resource);
+		public Optional<? extends KeyValuesLoader> findLoader(LoaderContext context, KeyValuesResource resource);
 
 	}
 
@@ -152,6 +162,11 @@ record DefaultLoaderContext(KeyValuesEnvironment environment, KeyValuesMediaFind
 	@Override
 	public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
 		resourceParser.formatResource(resource, consumer);
+	}
+
+	@Override
+	public String formatParameterKey(KeyValuesResource resource, String parameterName) {
+		return resourceParser.formatParameterKey(resource, parameterName);
 	}
 
 }

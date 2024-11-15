@@ -194,6 +194,11 @@ class KeyValuesSystemTest {
 		}
 
 		@Override
+		public void warn(String message) {
+			events.add("[WARN ] " + message);
+		}
+
+		@Override
 		public String toString() {
 			return events.stream().map(line -> line + "\n").collect(Collectors.joining());
 		}

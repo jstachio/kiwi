@@ -58,6 +58,16 @@ sealed interface KeyValuesResourceParser {
 	 */
 	void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer);
 
+	/**
+	 * Formats a resource parameter key how it is represented as key in the parsed
+	 * resource.
+	 * @param resource resource to base the full parameter name on.
+	 * @param parameterName the short parameter from
+	 * {@link KeyValuesResource#parameters()}.
+	 * @return FQ parameter name.
+	 */
+	String formatParameterKey(KeyValuesResource resource, String parameterName);
+
 }
 
 /*
@@ -124,6 +134,11 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 	@Override
 	public KeyValues filterResources(KeyValues keyValues) {
 		return keyValues.filter(this::filter);
+	}
+
+	@Override
+	public String formatParameterKey(KeyValuesResource resource, String parameterName) {
+		return externalResourceKey2Prefix(ResourceKey.PARAM, resource.name()) + parameterName;
 	}
 
 	private @Nullable KeyValuesResource parseOrNull(KeyValue keyValue, KeyValues keyValues) {

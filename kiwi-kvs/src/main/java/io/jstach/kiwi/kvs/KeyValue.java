@@ -271,7 +271,7 @@ public record KeyValue(String key, String expanded, Meta meta) {
 	 * @param reference an optional key-value pair that this one references.
 	 * @param index an optional index for ordering.
 	 */
-	public record Source(URI uri, @Nullable KeyValue reference, int index) {
+	public record Source(URI uri, @Nullable KeyValue reference, int index) implements KeyValueReference {
 
 		/**
 		 * A constant representing a "null" URI for cases where the source is not

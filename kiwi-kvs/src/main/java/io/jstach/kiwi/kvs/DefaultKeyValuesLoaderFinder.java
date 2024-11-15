@@ -110,10 +110,20 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		String uriString = resource.uri().toString();
 		uriString = uriString.substring(scheme.length() + 1);
 		// var uri = URI.create(uriString);
-		var profile = resource.parameters().getValue("profile");
+		var logger = context.environment().getLogger();
+		var vars = Variables.builder()
+			.add(resource.parameters())
+			.add(context.variables().renameKey(k -> "_" + k))
+			.build();
+		var profile = vars.findEntry("profile", "profile.active", "profile.default")
+			.map(e -> e.getValue())
+			.orElse(null);
 		if (profile == null) {
+			String error = "profile parameter is required. Set it to CSV list of profiles.";
+			logger.info("Profile(s) could not be found for resource. resource: " + resource.description()
+					+ " tried parameter: " + context.formatParameterKey(resource, "profile"));
 			// TODO custom exception for missing parameters ?
-			throw new IOException("profile parameter is required. Set it to CSV list of profiles.");
+			throw new FileNotFoundException(error);
 		}
 		if (!uriString.contains("__PROFILE__")) {
 			throw new IOException(
@@ -121,7 +131,6 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		}
 		List<String> profiles = Stream.of(profile.split(",")).filter(p -> !p.isBlank()).distinct().toList();
 
-		var logger = context.environment().getLogger();
 		logger.info("Found profiles: " + profiles);
 		var builder = KeyValues.builder(resource);
 

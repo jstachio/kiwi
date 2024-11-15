@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
@@ -36,7 +37,7 @@ import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
  * @see KeyValuesEnvironment
  * @see KeyValuesServiceProvider
  */
-public sealed interface KeyValuesSystem {
+public sealed interface KeyValuesSystem extends AutoCloseable {
 
 	/**
 	 * Returns the {@link KeyValuesEnvironment} instance used for system-level
@@ -69,16 +70,33 @@ public sealed interface KeyValuesSystem {
 	 * @return a new {@link KeyValuesLoader.Builder} instance
 	 */
 	default KeyValuesLoader.Builder loader() {
-		return new KeyValuesLoader.Builder(variables -> DefaultKeyValuesSourceLoader.of(this, variables));
+		Function<KeyValuesLoader.Builder, KeyValuesLoader> loaderFactory = b -> {
+			var env = environment();
+			var defaultResource = env.defaultResource();
+			var variables = Variables.copyOf(b.variables.stream().map(vf -> vf.apply(env)).toList());
+			var resources = b.sources.isEmpty() ? List.of(defaultResource) : List.copyOf(b.sources);
+			return DefaultKeyValuesSourceLoader.of(this, variables, resources);
+		};
+		return new KeyValuesLoader.Builder(loaderFactory);
+	}
+
+	/**
+	 * This signals to the logger that this key value system will not be used anymore but
+	 * there is guarantee of this.
+	 */
+	@Override
+	default void close() {
+		environment().getLogger().closed(this);
 	}
 
 	/**
 	 * Returns a default implementation of {@code KeyValuesSystem} configured with
-	 * standard settings.
+	 * standard settings and a ServiceLoader based on {@link KeyValuesServiceProvider} and
+	 * its classloader.
 	 * @return the default {@code KeyValuesSystem} instance
 	 */
 	public static KeyValuesSystem defaults() {
-		return builder().build();
+		return builder().useServiceLoader().build();
 	}
 
 	/**
@@ -162,6 +180,15 @@ public sealed interface KeyValuesSystem {
 		}
 
 		/**
+		 * Uses the default service loader to load extensions.
+		 * @return this.
+		 */
+		public Builder useServiceLoader() {
+			return serviceLoader(ServiceLoader.load(KeyValuesServiceProvider.class,
+					KeyValuesServiceProvider.class.getClassLoader()));
+		}
+
+		/**
 		 * Builds and returns a new {@link KeyValuesSystem} instance configured with the
 		 * provided settings. The composite loader and media finders will include those
 		 * added through this builder and, if specified, those found via the service
@@ -193,7 +220,9 @@ public sealed interface KeyValuesSystem {
 			};
 			KeyValuesMediaFinder mediaFinder = new CompositeMediaFinder(mediaFinders);
 
-			return new DefaultKeyValuesSystem(environment, loadFinder, mediaFinder);
+			var kvs = new DefaultKeyValuesSystem(environment, loadFinder, mediaFinder);
+			kvs.environment().getLogger().init(kvs);
+			return kvs;
 		}
 
 	}

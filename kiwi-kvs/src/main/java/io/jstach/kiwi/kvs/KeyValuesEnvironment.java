@@ -4,8 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.System.Logger.Level;
+import java.net.URI;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -22,6 +24,14 @@ import io.jstach.kiwi.kvs.KeyValuesEnvironment.Logger;
  * environment variables or properties, or integrating custom logging mechanisms.
  */
 public interface KeyValuesEnvironment {
+
+	/**
+	 * If the loader builder is not passed any resources this resource will be used.
+	 * @return default resource is <code>classpath:/boot.properties</code>
+	 */
+	default KeyValuesResource defaultResource() {
+		return KeyValuesResource.builder(URI.create("classpath:/boot.properties")).build();
+	}
 
 	/**
 	 * Retrieves the main method arguments. By default, returns an empty array.
@@ -50,6 +60,15 @@ public interface KeyValuesEnvironment {
 	}
 
 	/**
+	 * Retrieves a random number generator. By default, returns a new {@link Random}
+	 * instance.
+	 * @return random.
+	 */
+	default Random getRandom() {
+		return new Random();
+	}
+
+	/**
 	 * Retrieves the standard input stream. By default, delegates to {@link System#in}.
 	 * @return the standard input stream or an empty input stream if {@code System.in} is
 	 * null
@@ -60,12 +79,12 @@ public interface KeyValuesEnvironment {
 	}
 
 	/**
-	 * Retrieves the logger instance used for logging messages. By default, returns a
-	 * {@link DefaultLogger} that logs to {@code System.getLogger()}.
+	 * Retrieves the logger instance used for logging messages. By default, returns a noop
+	 * logger.
 	 * @return the logger instance
 	 */
 	default Logger getLogger() {
-		return new DefaultLogger(System.getLogger("io.jstach.kiwi.kvs"));
+		return Logger.of();
 	}
 
 	/**
@@ -123,9 +142,38 @@ public interface KeyValuesEnvironment {
 	}
 
 	/**
-	 * Interface for logging messages at various levels.
+	 * Key Values Resource focused logging facade and event capture. Logging level
+	 * condition checking is purposely not supplied as these are more like events and many
+	 * implementations will replay when the actual logging sytem loads.
 	 */
 	public interface Logger {
+
+		/**
+		 * Returns a logger that uses the supplied {@link System.Logger}. <em>Becareful
+		 * using this because something downstream may need to configure the system logger
+		 * based on kiwi config.</em>
+		 * @param logger system logger.
+		 * @return logger.
+		 */
+		public static Logger of(System.Logger logger) {
+			return new SystemLogger(logger);
+		}
+
+		/**
+		 * By default Kiwi does no logging because logging usually needs configuration
+		 * loaded first (kiwi in this case).
+		 * @return noop logger.
+		 */
+		public static Logger of() {
+			return NoOpLogger.NOPLOGGER;
+		}
+
+		/**
+		 * When Key Values System is loaded.
+		 * @param system that was just created.
+		 */
+		default void init(KeyValuesSystem system) {
+		}
 
 		/**
 		 * Logs a debug-level message.
@@ -138,6 +186,12 @@ public interface KeyValuesEnvironment {
 		 * @param message the message to log
 		 */
 		public void info(String message);
+
+		/**
+		 * Logs an warn-level message.
+		 * @param message the message to log
+		 */
+		public void warn(String message);
 
 		/**
 		 * Logs a debug message indicating that a resource is being loaded.
@@ -164,15 +218,82 @@ public interface KeyValuesEnvironment {
 			debug(DefaultKeyValuesResource.describe(new StringBuilder("Missing "), resource, false).toString());
 		}
 
+		/**
+		 * This signals that key values system will no longer be used to load resources
+		 * and that some other system can now take over perhaps the logging system.
+		 * @param system key value system that was closed.
+		 */
+		default void closed(KeyValuesSystem system) {
+		}
+
+		/**
+		 * This is to signal failure that the KeyValueSystem cannot recover from while
+		 * attempting to load.
+		 * @param exception unrecoverable key values exception
+		 */
+		default void fatal(Exception exception) {
+
+		}
+
+		/**
+		 * Turns a Level into a SLF4J like level String that is all upper case and same
+		 * length with right padding. {@link Level#ALL} is "<code>TRACE</code>",
+		 * {@link Level#OFF} is "<code>ERROR</code>" and {@link Level#WARNING} is
+		 * "<code>WARN</code>".
+		 * @param level system logger level.
+		 * @return upper case string of level.
+		 */
+		public static String formatLevel(Level level) {
+			return switch (level) {
+				case DEBUG -> /*   */ "DEBUG";
+				case ALL -> /*     */ "TRACE";
+				case ERROR -> /*   */ "ERROR";
+				case INFO -> /*    */ "INFO ";
+				case OFF -> /*     */ "ERROR";
+				case TRACE -> /*   */ "TRACE";
+				case WARNING -> /* */ "WARN ";
+			};
+		}
+
 	}
 
 }
 
-class DefaultLogger implements Logger {
+enum NoOpLogger implements Logger {
+
+	NOPLOGGER;
+
+	@Override
+	public void debug(String message) {
+	}
+
+	@Override
+	public void info(String message) {
+	}
+
+	@Override
+	public void warn(String message) {
+	}
+
+	@Override
+	public void load(KeyValuesResource resource) {
+	}
+
+	@Override
+	public void loaded(KeyValuesResource resource) {
+	}
+
+	@Override
+	public void missing(KeyValuesResource resource, FileNotFoundException exception) {
+	}
+
+}
+
+class SystemLogger implements Logger {
 
 	private final System.Logger logger;
 
-	DefaultLogger(java.lang.System.Logger logger) {
+	SystemLogger(java.lang.System.Logger logger) {
 		super();
 		this.logger = logger;
 	}
@@ -185,6 +306,12 @@ class DefaultLogger implements Logger {
 	@Override
 	public void info(String message) {
 		logger.log(Level.INFO, message);
+	}
+
+	@Override
+	public void warn(String message) {
+		logger.log(Level.WARNING, message);
+
 	}
 
 }

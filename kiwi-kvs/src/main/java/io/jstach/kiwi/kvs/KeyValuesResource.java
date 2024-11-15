@@ -35,7 +35,7 @@ import io.jstach.kiwi.kvs.Variables.Parameters;
  * @see KeyValuesSource
  * @see LoadFlag
  */
-public sealed interface KeyValuesResource extends KeyValuesSource permits InternalKeyValuesResource {
+public sealed interface KeyValuesResource extends KeyValuesSource, KeyValueReference permits InternalKeyValuesResource {
 
 	/**
 	 * Returns the URI of the resource.
@@ -53,12 +53,14 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 	 * Returns the name of the resource.
 	 * @return the name of the resource
 	 */
+	@Override
 	public String name();
 
 	/**
 	 * Returns the {@link KeyValue} that references this resource, if any.
 	 * @return the reference {@code KeyValue}, or {@code null} if not applicable
 	 */
+	@Override
 	public @Nullable KeyValue reference();
 
 	/**
@@ -72,6 +74,15 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 	 * @return a {@code Builder} initialized with the current state
 	 */
 	public Builder toBuilder();
+
+	// TODO maybe we do not provide this.
+	/**
+	 * Pretty toString of resource.
+	 * @return pretty print resource.
+	 */
+	default String description() {
+		return "uri='" + uri() + "' name='" + name() + "'";
+	}
 
 	/**
 	 * Creates a builder for a {@code KeyValuesResource} from the given URI.
@@ -211,6 +222,16 @@ public sealed interface KeyValuesResource extends KeyValuesSource permits Intern
 		 */
 		public Builder sensitive(boolean flag) {
 			LoadFlag.SENSITIVE.set(flags, flag);
+			return this;
+		}
+
+		/**
+		 * Marks the resource as not required.
+		 * @param flag true make the resource not required.
+		 * @return this
+		 */
+		public Builder noRequire(boolean flag) {
+			LoadFlag.NO_REQUIRE.set(flags, flag);
 			return this;
 		}
 

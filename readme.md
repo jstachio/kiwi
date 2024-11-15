@@ -45,6 +45,7 @@ A simple example using `java.util.Properties` files that could be parsed to `Key
 ```java
 var kvs = KeyValuesSystem.defaults()
   .loader()
+  .variables(Variables::ofSystemProperties) // Use system properties as base variables for interpolation
   .add("classpath:/start.properties")
   .add("system:///") // add system properties to override
   .add("env:///")    // add env variables to override
@@ -123,22 +124,35 @@ _load_cmd=cmd:///-D
 
 (If you don't like the syntax of the special loading keys that is indeed configurable... through key values of course.)
 
-## Kiwi is not a `System.getProperty` or other config framework replacements
+## Kiwi is NOT a `System.getProperty` or other config framework replacement
 
 Most configuration frameworks are focused on *"binding"*, dependency injection, or ergonomics on a
 `Map<String,String>`. They are focused on transforming the flat key values to objects. Kiwi does not do that. 
 **These libraries often have a very opinionated loading scheme**
 and often the only way to configure that is through code. 
 
-Kiwi is lower level than most config libraries but yet allows the configuration to happen in configuration. It is mostly concerned with loading and because of its zero dependency and no logging architecture it can be used very early to provide other early init libraries with a `Map<String,String>`
-(or the complete stream of key values found).
+Kiwi is lower level than most config libraries but yet allows the configuration to happen in configuration. 
+It is mostly concerned with loading and because of its zero dependency and no logging architecture it can be 
+used very early to provide other early init libraries with a `Map<String,String>`
+(or the complete stream of key values found). That is why there is not really a `getProperty(key)`
+like method provided by `kiwi-kvs`. That is for configuration frameworks downstream.
 
 In fact Kiwi rather just fill `System.getProperties` from loaded resources so that
 you do not have to use another library for configuration lookup. That is for retrieval 
 a singleton like `System.getProperties` is often good enough for simple applications. 
 
-Yes Kiwi is very [Simple but simple is good](https://www.infoq.com/presentations/Simple-Made-Easy/).
+Yes Kiwi is very simple but [simple is good](https://www.infoq.com/presentations/Simple-Made-Easy/).
 
+That being said if you need a System.getProperty like replacement Kiwi does provide an
+opinionated module.
+
+### Kiwi Boot 
+
+While the Kiwi KVS core does not provide an opinion on loading Kiwi does provide a separate opinionated
+module (kiwi-boot) that more or less mimics Spring Boot's loading of configuration without requiring Spring Boot.
+
+This module also serves another purpose in that it is example code of using kiwi-kvs you can copy and customize 
+for your own applications/libraries. 
 
 ## Kiwi's advantages:
 
