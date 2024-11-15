@@ -43,7 +43,7 @@ public interface Variables extends Function<String, @Nullable String> {
 	 * @return composed variables instance.
 	 */
 	default Variables renameKey(Function<String, String> keyFunc) {
-		return k -> (this.getValue(keyFunc.apply(k)));
+		return k -> this.getValue(keyFunc.apply(k));
 	}
 
 	@Override

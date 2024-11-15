@@ -53,12 +53,14 @@ public sealed interface KeyValuesResource extends KeyValuesSource, KeyValueRefer
 	 * Returns the name of the resource.
 	 * @return the name of the resource
 	 */
+	@Override
 	public String name();
 
 	/**
 	 * Returns the {@link KeyValue} that references this resource, if any.
 	 * @return the reference {@code KeyValue}, or {@code null} if not applicable
 	 */
+	@Override
 	public @Nullable KeyValue reference();
 
 	/**
