@@ -198,7 +198,7 @@ public interface KeyValuesEnvironment {
 		 * @param resource the resource being loaded
 		 */
 		default void load(KeyValuesResource resource) {
-			debug(DefaultKeyValuesResource.describe(new StringBuilder("Loading "), resource, true).toString());
+			debug(KeyValueReference.describe(new StringBuilder("Loading "), resource, true).toString());
 		}
 
 		/**
@@ -206,7 +206,7 @@ public interface KeyValuesEnvironment {
 		 * @param resource the loaded resource
 		 */
 		default void loaded(KeyValuesResource resource) {
-			info(DefaultKeyValuesResource.describe(new StringBuilder("Loaded  "), resource, false).toString());
+			info(KeyValueReference.describe(new StringBuilder("Loaded  "), resource, false).toString());
 		}
 
 		/**
@@ -215,7 +215,7 @@ public interface KeyValuesEnvironment {
 		 * @param exception the exception that occurred when the resource was not found
 		 */
 		default void missing(KeyValuesResource resource, FileNotFoundException exception) {
-			debug(DefaultKeyValuesResource.describe(new StringBuilder("Missing "), resource, false).toString());
+			debug(KeyValueReference.describe(new StringBuilder("Missing "), resource, false).toString());
 		}
 
 		/**

@@ -271,7 +271,8 @@ public record KeyValue(String key, String expanded, Meta meta) {
 	 * @param reference an optional key-value pair that this one references.
 	 * @param index an optional index for ordering.
 	 */
-	public record Source(URI uri, @Nullable KeyValue reference, int index) implements KeyValueReference {
+	public record Source(URI uri, @Nullable KeyValue reference,
+			int index) implements KeyValueReference, KeyValuesSource {
 
 		/**
 		 * A constant representing a "null" URI for cases where the source is not
@@ -312,11 +313,28 @@ public record KeyValue(String key, String expanded, Meta meta) {
 			return new Source(uri, reference, index);
 		}
 
+		/**
+		 * Redacts the source.
+		 * @return redacted source.
+		 */
+		Source redact() {
+			if (!KeyValueReference.isRedacted(this)) {
+				return this;
+			}
+			var uri = URI.create(KeyValueReference.redactURI(this, KeyValue.REDACTED_MESSAGE));
+			return new Source(uri, reference, index);
+		}
+
+		@Override
+		public String toString() {
+			return toString(redact());
+		}
+
 		private static String toString(Source source) {
 			if (source.isNullResource()) {
-				return "empty";
+				return "Source[empty]";
 			}
-			return source.toString();
+			return "Source[uri=" + source.uri + ", reference=" + source.reference + ", index=" + source.index + "]";
 		}
 
 	}

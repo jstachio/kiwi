@@ -1,6 +1,7 @@
 package io.jstach.kiwi.kvs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -147,6 +148,35 @@ class KeyValuesSystemTest {
 					[DEBUG] Loading uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE] specified with key: '_load_luggage' in uri='classpath:/test-props/testLoader.properties'
 					[INFO ] Loaded  uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE]
 										""";
+			assertEquals(expected, actual);
+		}
+	}
+
+	@Test
+	void testFailure() throws Exception {
+
+		var logger = new TestLogger();
+		var environment = new KeyValuesEnvironment() {
+			@Override
+			public Logger getLogger() {
+				return logger;
+			}
+		};
+
+		try {
+			KeyValuesSystem.builder()
+				.environment(environment)
+				.build() //
+				.loader() //
+				.add("classpath:/test-props/testFailure.properties")
+				.load();
+			fail();
+		}
+		catch (IOException e) {
+			String expected = """
+					Resource not found. resource: uri='classpath:/test-props/testLoader-doesnotexist.properties'
+						<-- specified with key: '_load_noexist' in uri='classpath:/test-props/testFailure.properties'""";
+			String actual = e.getMessage();
 			assertEquals(expected, actual);
 		}
 	}

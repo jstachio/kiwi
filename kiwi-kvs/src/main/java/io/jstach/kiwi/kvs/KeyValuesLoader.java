@@ -43,7 +43,7 @@ public interface KeyValuesLoader {
 
 		final Function<Builder, KeyValuesLoader> loaderFactory;
 
-		final List<KeyValuesSource> sources = new ArrayList<>();
+		final List<NamedKeyValuesSource> sources = new ArrayList<>();
 
 		final List<Function<KeyValuesEnvironment, Variables>> variables = new ArrayList<>();
 

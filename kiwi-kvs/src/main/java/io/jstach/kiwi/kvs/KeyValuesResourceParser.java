@@ -88,7 +88,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 	public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
 		String name = resource.name();
 		var uri = resource.uri();
-		var flags = DefaultKeyValuesResource.loadFlags(resource);
+		var flags = KeyValuesSource.loadFlags(resource);
 		String mediaType = resource.mediaType();
 		for (var rk : ResourceKey.values()) {
 			String key = switch (rk) {

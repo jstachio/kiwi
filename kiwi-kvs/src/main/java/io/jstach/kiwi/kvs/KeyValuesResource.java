@@ -35,7 +35,8 @@ import io.jstach.kiwi.kvs.Variables.Parameters;
  * @see KeyValuesSource
  * @see LoadFlag
  */
-public sealed interface KeyValuesResource extends KeyValuesSource, KeyValueReference permits InternalKeyValuesResource {
+public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValueReference
+		permits InternalKeyValuesResource {
 
 	/**
 	 * Returns the URI of the resource.
@@ -314,57 +315,6 @@ record DefaultKeyValuesResource(URI uri, //
 		return new DefaultKeyValuesResource(uri, name, loadFlags, reference, mediaType, variables);
 	}
 
-	static Set<LoadFlag> loadFlags(KeyValuesResource resource) {
-		var defaultResource = switch (resource) {
-			case DefaultKeyValuesResource d -> d;
-		};
-		return defaultResource.loadFlags();
-	}
-
-	/*
-	 * TODO: The printing of resources is kind of a mess. A builder is probably a better
-	 * solution.
-	 */
-	static StringBuilder describe(StringBuilder sb, KeyValuesResource resource, boolean includeRef) {
-		String uri = redactURI(resource);
-		sb.append("uri='").append(uri).append("'");
-		var flags = loadFlags(resource);
-		if (!flags.isEmpty()) {
-			sb.append(" flags=").append(flags);
-		}
-		if (includeRef) {
-			var ref = resource.reference();
-			if (ref != null) {
-				sb.append(" specified with key: ");
-				sb.append("'").append(ref.key()).append("' in uri='").append(ref.meta().source().uri()).append("'");
-			}
-		}
-		return sb;
-	}
-
-	static StringBuilder fullDescribe(StringBuilder sb, KeyValuesResource resource) {
-		describe(sb, resource, false);
-		var ref = resource.reference();
-		while (ref != null) {
-			sb.append("\n\t<-- ");
-			var source = ref.meta().source();
-			sb.append("uri='").append(source.uri()).append("'");
-			ref = source.reference();
-			if (ref != null) {
-				sb.append(" specified with key: ");
-				sb.append("'").append(ref.key()).append("'");
-			}
-		}
-		return sb;
-	}
-
-	private static String redactURI(KeyValuesResource resource) {
-		var ir = (InternalKeyValuesResource) resource;
-		String uri = ir.isRedacted() ? (resource.uri().getScheme() + ":" + KeyValue.REDACTED_MESSAGE)
-				: resource.uri().toString();
-		return uri;
-	}
-
 	@Override
 	public boolean isRedacted() {
 		// TODO hmm if the resource has sensitive info should its URI be redacated as
@@ -379,7 +329,4 @@ record DefaultKeyValuesResource(URI uri, //
 		return ref.isSensitive();
 	}
 
-	static String describe(KeyValuesResource resource, boolean includeRef) {
-		return describe(new StringBuilder(), resource, includeRef).toString();
-	}
 }
