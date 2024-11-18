@@ -2,9 +2,11 @@ package io.jstach.kiwi.kvs;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -272,6 +274,8 @@ sealed interface InternalKeyValuesResource extends KeyValuesResource {
 
 	boolean isRedacted();
 
+	public List<String> filters();
+
 }
 
 record DefaultKeyValuesResource(URI uri, //
@@ -313,6 +317,17 @@ record DefaultKeyValuesResource(URI uri, //
 		var mediaType = builder.mediaType;
 		Parameters variables = Parameters.of(parameters);
 		return new DefaultKeyValuesResource(uri, name, loadFlags, reference, mediaType, variables);
+	}
+
+	@Override
+	public List<String> filters() {
+		var csv = parameters.getValue("filter");
+		if (csv == null) {
+			return List.of();
+		}
+		List<String> filters = new ArrayList<>();
+		DefaultKeyValuesMedia.parseCSV(csv, filters::add);
+		return List.copyOf(filters);
 	}
 
 	@Override

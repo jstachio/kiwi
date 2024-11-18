@@ -6,6 +6,7 @@ import java.util.function.BiConsumer;
 
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder.LoaderContext;
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
+import io.jstach.kiwi.kvs.Variables.Parameters;
 
 /**
  * A service provider interface (SPI) for extending Kiwi's capabilities to support
@@ -105,6 +106,15 @@ public sealed interface KeyValuesServiceProvider {
 		 * @return an {@link Optional} containing the loader if found, or empty if not
 		 */
 		public Optional<? extends KeyValuesLoader> findLoader(LoaderContext context, KeyValuesResource resource);
+
+	}
+
+	public non-sealed interface KeyValuesFilter extends KeyValuesServiceProvider {
+
+		public record FilterContext(KeyValuesEnvironment environment, Parameters parameters) {
+		}
+
+		KeyValues filter(FilterContext context, KeyValues keyValues, String filter);
 
 	}
 
