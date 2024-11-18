@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.KeyValue.Flag;
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesFilter.FilterContext;
 
 /*
  * This class is not reusable or threadsafe unless
@@ -168,7 +169,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		KeyValuesSource.fullDescribe(sb, node.current);
 	}
 
-	KeyValues load(Node node, KeyValuesResource resource, Set<LoadFlag> flags)
+	KeyValues load(Node node, InternalKeyValuesResource resource, Set<LoadFlag> flags)
 			throws IOException, FileNotFoundException {
 		logger.load(resource);
 		if (LoadFlag.NO_LOAD_CHILDREN.isSet(flags)) {
@@ -181,7 +182,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 				.orElseThrow(() -> new IOException("Resource Loader not found. resource: " + describe(node)))
 				.load();
 			logger.loaded(resource);
-			return kvs;
+			return filter(resource, kvs);
 		}
 		catch (FileNotFoundException e) {
 			logger.missing(resource, e);
@@ -194,6 +195,18 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 			throw new IOException("Resource load fail. resource: " + describe(node), e);
 		}
 
+	}
+
+	KeyValues filter(InternalKeyValuesResource resource, KeyValues keyValues) {
+		var filters = resource.filters();
+		if (filters.isEmpty()) {
+			return keyValues;
+		}
+		FilterContext context = new FilterContext(system.environment(), resource.parameters());
+		for (var f : filters) {
+			keyValues = system.filter().filter(context, keyValues, f);
+		}
+		return keyValues;
 	}
 
 }

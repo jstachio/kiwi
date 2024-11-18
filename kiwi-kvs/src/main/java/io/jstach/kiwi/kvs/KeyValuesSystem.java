@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesFilter;
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
 import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
 
@@ -63,6 +64,14 @@ public sealed interface KeyValuesSystem extends AutoCloseable {
 	 * @return the composite media finder instance
 	 */
 	public KeyValuesMediaFinder mediaFinder();
+
+	/**
+	 * Returns a composite {@link KeyValuesFilter} that aggregates all the filters added
+	 * to the {@link Builder} or found via the {@link ServiceLoader}, if configured. This
+	 * composite allows finding media handlers that can handle specific resources byrs.
+	 * @return the composite filter
+	 */
+	public KeyValuesFilter filter();
 
 	/**
 	 * Creates and returns a {@link KeyValuesLoader.Builder} for constructing loaders that
@@ -126,6 +135,8 @@ public sealed interface KeyValuesSystem extends AutoCloseable {
 
 		private List<KeyValuesMediaFinder> mediaFinders = new ArrayList<>(List.of(DefaultKeyValuesMedia.values()));
 
+		private List<KeyValuesFilter> filters = new ArrayList<>(List.of(DefaultKeyValuesFilter.values()));
+
 		private @Nullable ServiceLoader<KeyValuesServiceProvider> serviceLoader;
 
 		private Builder() {
@@ -159,6 +170,11 @@ public sealed interface KeyValuesSystem extends AutoCloseable {
 		 */
 		public Builder mediaFinder(KeyValuesMediaFinder mediaFinder) {
 			this.mediaFinders.add(mediaFinder);
+			return this;
+		}
+
+		public Builder filter(KeyValuesFilter filter) {
+			this.filters.add(filter);
 			return this;
 		}
 
@@ -212,6 +228,9 @@ public sealed interface KeyValuesSystem extends AutoCloseable {
 					if (s instanceof KeyValuesMediaFinder m) {
 						mediaFinders.add(m);
 					}
+					if (s instanceof KeyValuesFilter f) {
+						filters.add(f);
+					}
 				});
 			}
 
@@ -219,14 +238,26 @@ public sealed interface KeyValuesSystem extends AutoCloseable {
 				return loadFinders.stream().flatMap(rl -> rl.findLoader(context, resource).stream()).findFirst();
 			};
 			KeyValuesMediaFinder mediaFinder = new CompositeMediaFinder(mediaFinders);
+			KeyValuesFilter filter = new CompositeKeyValuesFilter(filters);
 
-			var kvs = new DefaultKeyValuesSystem(environment, loadFinder, mediaFinder);
+			var kvs = new DefaultKeyValuesSystem(environment, loadFinder, mediaFinder, filter);
 			kvs.environment().getLogger().init(kvs);
 			return kvs;
 		}
 
 	}
 
+}
+
+record CompositeKeyValuesFilter(List<KeyValuesFilter> filters) implements KeyValuesFilter {
+
+	@Override
+	public KeyValues filter(FilterContext context, KeyValues keyValues, String filter) {
+		for (var f : filters) {
+			keyValues = f.filter(context, keyValues, filter);
+		}
+		return keyValues;
+	}
 }
 
 /**
@@ -258,5 +289,5 @@ record CompositeMediaFinder(List<KeyValuesMediaFinder> finders) implements KeyVa
  * A default implementation of {@link KeyValuesSystem}.
  */
 record DefaultKeyValuesSystem(KeyValuesEnvironment environment, KeyValuesLoaderFinder loaderFinder,
-		KeyValuesMediaFinder mediaFinder) implements KeyValuesSystem {
+		KeyValuesMediaFinder mediaFinder, KeyValuesFilter filter) implements KeyValuesSystem {
 }
