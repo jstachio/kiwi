@@ -216,48 +216,58 @@ enum LoadFlag {
 	/**
 	 * Makes the resource optional so that if it is not found an error does not happen.
 	 */
-	NO_REQUIRE(List.of("NO_REQUIRE", "OPTIONAL", "NOT_REQUIRED")),
+	NO_REQUIRE(List.of(KeyValuesResource.NO_REQUIRE, KeyValuesResource.OPTIONAL, KeyValuesResource.NOT_REQUIRED)),
+
 	/**
 	 * TODO
 	 */
-	NO_EMPTY,
+	NO_EMPTY(KeyValuesResource.NO_EMPTY),
+
 	/**
 	 * Confusing but this means the resource should not have its properties overriden. Not
 	 * to be confused with {@link #NO_REPLACE} which sounds like what this does.
 	 */
-	LOCK,
+	LOCK(KeyValuesResource.LOCK),
+
 	/**
 	 * This basically says the resource can only add new key values.
 	 */
-	NO_REPLACE,
+	NO_REPLACE(KeyValuesResource.NO_REPLACE),
+
 	/**
 	 * Will add the kvs to variables but not to the final resolved key values.
 	 */
-	NO_ADD,
+	NO_ADD(KeyValuesResource.NO_ADD),
+
 	/**
 	 * Will add key values but are not allowed for interpolation.
 	 */
-	NO_ADD_VARIABLES,
+	NO_ADD_VARIABLES(KeyValuesResource.NO_ADD_VARIABLES),
+
 	/**
 	 * Disables _load calls on child.
 	 */
-	NO_LOAD_CHILDREN,
+	NO_LOAD_CHILDREN(KeyValuesResource.NO_LOAD_CHILDREN),
+
 	/**
 	 * Will not interpolate key values loaded ever.
 	 */
-	NO_INTERPOLATE,
+	NO_INTERPOLATE(KeyValuesResource.NO_INTERPOLATE),
+
 	/**
 	 * Will not toString or print out sensitive
 	 */
-	SENSITIVE, // sensitive
+	SENSITIVE(KeyValuesResource.SENSITIVE),
+
 	/**
 	 * TODO
 	 */
-	NO_RELOAD,
+	NO_RELOAD(KeyValuesResource.NO_RELOAD),
+
 	/**
 	 * TODO
 	 */
-	INHERIT;
+	INHERIT(KeyValuesResource.INHERIT);
 
 	@SuppressWarnings("ImmutableEnumChecker")
 	private final Set<String> names;
