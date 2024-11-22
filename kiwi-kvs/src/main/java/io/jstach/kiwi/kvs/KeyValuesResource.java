@@ -24,7 +24,35 @@ import io.jstach.kiwi.kvs.Variables.Parameters;
  * Resources can be configured with flags and parameters to indicate characteristics such
  * as whether the values are sensitive or should be used for interpolation.
  *
- * <p>
+ * <table>
+ * <caption>Resource loading flags</caption> <thead>
+ * <tr>
+ * <th>Flag Value</th>
+ * <th>Description</th>
+ * </tr>
+ * </thead> <tbody>
+ * <tr>
+ * <td>{@value io.jstach.kiwi.kvs.KeyValuesResource#NO_REQUIRE}</td>
+ * <td>Indicates that the resource is optional and no error should occur if it is not
+ * found. Synonym: {@value io.jstach.kiwi.kvs.KeyValuesResource#OPTIONAL}</td>
+ * </tr>
+ * <tr>
+ * <td>{@value io.jstach.kiwi.kvs.KeyValuesResource#SENSITIVE}</td>
+ * <td>Marks the resource as containing sensitive key-value pairs, which should not be
+ * displayed or included in output such as <code>toString</code>.</td>
+ * </tr>
+ * <tr>
+ * <td>{@value io.jstach.kiwi.kvs.KeyValuesResource#NO_ADD}</td>
+ * <td>Indicates that the key-value pairs from the resource should only be added to
+ * variables and not to the final resolved key-value set.</td>
+ * </tr>
+ * <tr>
+ * <td>{@value io.jstach.kiwi.kvs.KeyValuesResource#NO_INTERPOLATE}</td>
+ * <td>Disables interpolation entirely for key-value pairs loaded from this resource.</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
  * Example usage for building a {@code KeyValuesResource}:
  * {@snippet :
  * var resource = KeyValuesResource.builder("classpath:/config.properties")
@@ -39,6 +67,80 @@ import io.jstach.kiwi.kvs.Variables.Parameters;
  */
 public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValueReference
 		permits InternalKeyValuesResource {
+
+	/**
+	 * Indicates that the resource is optional and no error should occur if it is not
+	 * found.
+	 */
+	public static final String NO_REQUIRE = "NO_REQUIRE";
+
+	/**
+	 * A synonym for {@link #NO_REQUIRE}.
+	 */
+	public static final String OPTIONAL = "OPTIONAL";
+
+	/**
+	 * A synonym for {@link #NO_REQUIRE}.
+	 */
+	public static final String NOT_REQUIRED = "NOT_REQUIRED";
+
+	/**
+	 * Indicates that the resource should not be empty. Typically used to enforce that the
+	 * resource contains at least one key-value pair.
+	 */
+	public static final String NO_EMPTY = "NO_EMPTY";
+
+	/**
+	 * Specifies that the resource is locked and its properties should not be overridden.
+	 * This is distinct from {@link #NO_REPLACE}, which has different semantics.
+	 */
+	public static final String LOCK = "LOCK";
+
+	/**
+	 * Ensures that the resource can only add new key-value pairs and cannot replace
+	 * existing ones.
+	 */
+	public static final String NO_REPLACE = "NO_REPLACE";
+
+	/**
+	 * Indicates that the key-value pairs from the resource should only be added to
+	 * variables and not to the final resolved key-value set.
+	 */
+	public static final String NO_ADD = "NO_ADD";
+
+	/**
+	 * Indicates that key-value pairs added to variables should not be used for
+	 * interpolation purposes.
+	 */
+	public static final String NO_ADD_VARIABLES = "NO_ADD_VARIABLES";
+
+	/**
+	 * Prevents the resource from invoking `_load` calls to load additional child
+	 * resources.
+	 */
+	public static final String NO_LOAD_CHILDREN = "NO_LOAD_CHILDREN";
+
+	/**
+	 * Disables interpolation entirely for key-value pairs loaded from this resource.
+	 */
+	public static final String NO_INTERPOLATE = "NO_INTERPOLATE";
+
+	/**
+	 * Marks the resource as containing sensitive key-value pairs, which should not be
+	 * displayed or included in output such as `toString`.
+	 */
+	public static final String SENSITIVE = "SENSITIVE";
+
+	/**
+	 * Specifies that the resource should not be reloaded once it has been loaded.
+	 */
+	public static final String NO_RELOAD = "NO_RELOAD";
+
+	/**
+	 * Indicates that the resource's properties should inherit from parent or default
+	 * configurations.
+	 */
+	public static final String INHERIT = "INHERIT";
 
 	/**
 	 * Returns the URI of the resource.
@@ -250,7 +352,31 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 			return this;
 		}
 
-		Builder _addFlags(String csv) {
+		/**
+		 * Parses a comma-separated string of resource flags and adds or removes the flags
+		 * from this builder.
+		 *
+		 * <p>
+		 * See the constants on this class for the available flag names. Flags are
+		 * case-insensitive and can be negated or reversed by prefixing them with
+		 * <code>"NO_"</code> or <code>"NOT_"</code>, or by removing these prefixes if
+		 * they are already present. If a flag is specified multiple times in the input
+		 * string, the last occurrence takes precedence.
+		 * </p>
+		 * <p>
+		 * The following demonstrates how to add and reverse resource flags using this
+		 * method:
+		 * </p>
+		 * {@snippet :
+		 * var builder = KeyValuesResource.builder(URI.create("classpath:/config.properties"));
+		 * builder.addFlags("no_require,no_interpolate,sensitive");
+		 *
+		 * // The flags "NO_REQUIRE", "NO_INTERPOLATE", and "SENSITIVE" are added to the builder.
+		 * }
+		 * @param csv a comma-separated, case-insensitive string of flag names
+		 * @return this builder instance for chaining
+		 */
+		public Builder addFlags(String csv) {
 			LoadFlag.parseCSV(this.flags, csv);
 			return this;
 		}

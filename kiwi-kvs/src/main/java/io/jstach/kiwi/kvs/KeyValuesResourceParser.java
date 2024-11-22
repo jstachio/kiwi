@@ -266,7 +266,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 					builder.mediaType(kv.value());
 				}
 				case FLAGS -> {
-					builder._addFlags(kv.value());
+					builder.addFlags(kv.value());
 				}
 				case PARAM -> {
 					String param = uriParseParamName(kv.key());
