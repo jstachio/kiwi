@@ -334,7 +334,9 @@ public record KeyValue(String key, String expanded, Meta meta) {
 			if (source.isNullResource()) {
 				return "Source[empty]";
 			}
-			return "Source[uri=" + source.uri + ", reference=" + source.reference + ", index=" + source.index + "]";
+			return "Source[uri=" + source.uri
+					+ (source.reference == null ? "" : ", reference=" + KeyValueReference.toStringRef(source.reference))
+					+ ", index=" + source.index + "]";
 		}
 
 	}
@@ -443,11 +445,11 @@ public record KeyValue(String key, String expanded, Meta meta) {
 	}
 
 	private static String toString(KeyValue kv) {
-		return "KeyValue[key=" + kv.key //
-				+ ", raw=" + kv.raw() //
-				+ ", expanded=" + kv.expanded //
+		return "KeyValue[key='" + kv.key + "'" //
+				+ ", raw='" + kv.raw() + "'" //
+				+ ", expanded='" + kv.expanded + "'"//
 				+ ", source=" + Source.toString(kv.meta().source())//
-				+ ", flags=" + kv.flags() //
+				+ (kv.flags().isEmpty() ? "" : ", flags=" + kv.flags()) //
 				+ "]";
 	}
 

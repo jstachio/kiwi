@@ -4,9 +4,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
+
+import io.jstach.kiwi.kvs.KeyValuesResource.Builder;
 
 /*
  * The idea here is to keep all the parsing logic separated from the core domain so that
@@ -38,7 +39,9 @@ sealed interface KeyValuesResourceParser {
 
 	/**
 	 * Filters out the key-values that are related to resource loading from a given
-	 * {@link KeyValues} stream.
+	 * {@link KeyValues} stream. This is to remove all the resource meta key value pairs
+	 * that are not needed in the final result as well as avoid collisions in resources
+	 * loaded after.
 	 * @param keyValues the key-values to filter
 	 * @return a {@link KeyValues} instance with resource-related key-values removed
 	 */
@@ -70,82 +73,85 @@ sealed interface KeyValuesResourceParser {
 
 }
 
+record LoadResource(String name, URI uri, KeyValue keyValue) {
+}
+
 /*
  * The idea here is to keep all the parsing logic separated from the core domain so that
  * we can switch the key value scheme of loading.
  */
 enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 
-	DEFAULT;
+	// URI {
+	//
+	// @Override
+	// public List<KeyValuesResource> parseResources(
+	// KeyValues keyValues) {
+	// // TODO Auto-generated method stub
+	// return null;
+	// }
+	// },
 
-	private final Pattern pattern = Pattern.compile("_" + ResourceKey.LOAD.key + "_([a-zA-Z0-9]+)");
+	DEFAULT {
 
-	public static DefaultKeyValuesResourceParser of() {
-		return DEFAULT;
-	}
+		// Formatting resource
 
-	@Override
-	public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
-		String name = resource.name();
-		var uri = resource.uri();
-		var flags = KeyValuesSource.loadFlags(resource);
-		String mediaType = resource.mediaType();
-		for (var rk : ResourceKey.values()) {
-			String key = switch (rk) {
-				case LOAD, FLAGS, MEDIA_TYPE -> externalResourceKey1(rk, name);
-				case PARAM -> externalResourceKey2Prefix(rk, name);
-			};
-			switch (rk) {
-				case LOAD -> {
-					consumer.accept(key, uri.toString());
-				}
-				case FLAGS -> {
-					if (!flags.isEmpty()) {
-						var flagsCsv = LoadFlag.toCSV(flags.stream());
-						consumer.accept(key, flagsCsv);
+		@Override
+		public void formatResource(KeyValuesResource resource, BiConsumer<String, String> consumer) {
+
+			for (var rk : ResourceKey.values()) {
+				String resourceName = resource.name();
+				var uri = resource.uri();
+				switch (rk) {
+					case LOAD -> {
+						var key = externalResourceKey1(rk, resourceName);
+						consumer.accept(key, uri.toString());
 					}
-				}
-				case MEDIA_TYPE -> {
-					if (mediaType != null) {
-						consumer.accept(key, mediaType);
+					case FLAGS -> {
+						var flags = KeyValuesSource.loadFlags(resource);
+						var key = externalResourceKey1(rk, resourceName);
+						if (!flags.isEmpty()) {
+							var flagsCsv = LoadFlag.toCSV(flags.stream());
+							consumer.accept(key, flagsCsv);
+						}
 					}
-				}
-				case PARAM -> {
-					resource.parameters().forKeyValues((k, v) -> {
-						consumer.accept(key + k, v);
-					});
+					case MEDIA_TYPE -> {
+						var key = externalResourceKey1(rk, resourceName);
+						String mediaType = resource.mediaType();
+						if (mediaType != null) {
+							consumer.accept(key, mediaType);
+						}
+					}
+					case PARAM -> {
+						// var key = externalResourceKey2Prefix(rk, resourceName);
+						resource.parameters().forKeyValues((k, v) -> {
+							var key = formatParameterKey(resource, k);
+							consumer.accept(key + k, v);
+						});
+					}
 				}
 			}
 		}
-	}
 
-	@Override
-	public List<KeyValuesResource> parseResources(KeyValues keyValues) {
-		List<KeyValuesResource> resources = new ArrayList<>();
-		for (var kv : keyValues) {
-			var r = parseOrNull(kv, keyValues);
-			if (r != null) {
-				resources.add(r);
+		@Override
+		public String formatParameterKey(KeyValuesResource resource, String parameterName) {
+			return externalResourceKey2Prefix(ResourceKey.PARAM, resource.name()) + parameterName;
+		}
+
+		// Parsing Resource
+
+		public void parseKeyValues(Builder builder, LoadResource resource, KeyValues keyValues) {
+			for (var kv : keyValues) {
+				for (var rk : ResourceKey.values()) {
+					parseResourceKey(builder, resource, rk, kv);
+				}
 			}
 		}
-		return List.copyOf(resources);
-	}
 
-	@Override
-	public KeyValues filterResources(KeyValues keyValues) {
-		return keyValues.filter(this::filter);
-	}
-
-	@Override
-	public String formatParameterKey(KeyValuesResource resource, String parameterName) {
-		return externalResourceKey2Prefix(ResourceKey.PARAM, resource.name()) + parameterName;
-	}
-
-	private @Nullable KeyValuesResource parseOrNull(KeyValue keyValue, KeyValues keyValues) {
-		var builder = builderOrNull(keyValue);
-		if (builder == null)
-			return null;
-		parseKeyValues(keyValues, builder.name, (rk, kv) -> {
+		protected void parseResourceKey(Builder builder, LoadResource resource, ResourceKey rk, KeyValue kv) {
+			if (!isResourceKey(rk, kv, resource.name())) {
+				return;
+			}
 			switch (rk) {
 				case LOAD -> {
 				}
@@ -156,60 +162,165 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 					builder._flags(LoadFlag.parseCSV(kv.expanded()));
 				}
 				case PARAM -> {
-					String name = paramName(builder.name, kv.key());
+					String name = parseParamName(resource.name(), kv.key());
 					builder.parameter(name, kv.expanded());
 				}
 			}
-		});
+		}
+
+		private boolean isResourceKey(ResourceKey rk, KeyValue kv, String resourceName) {
+			String key = kv.key();
+			return switch (rk) {
+				case PARAM -> key.startsWith(externalResourceKey2Prefix(rk, resourceName));
+				case LOAD, FLAGS, MEDIA_TYPE -> externalResourceKey1(rk, resourceName).equals(key);
+			};
+		}
+
+		@Override
+		public KeyValues filterResources(KeyValues keyValues) {
+			return keyValues.filter(this::filter);
+		}
+
+		private boolean filter(KeyValue kv) {
+			return resourceKeyOrNull(kv) == null;
+		}
+
+		private String parseParamName(String resourceName, String key) {
+			String prefix = externalResourceKey2Prefix(ResourceKey.PARAM, resourceName);
+			if (!key.startsWith(prefix)) {
+				throw new IllegalArgumentException("Parameter prefix is incorrect. " + key);
+			}
+			String name = key.substring(prefix.length());
+			if (name.isBlank()) {
+				throw new IllegalArgumentException("Resource Parameter is bad. " + key);
+			}
+			return name;
+		}
+
+	};
+
+	// Parsing Resource
+
+	@Override
+	public List<KeyValuesResource> parseResources(KeyValues keyValues) {
+		List<KeyValuesResource> resources = new ArrayList<>();
+		for (var kv : keyValues) {
+			var r = parseResourceOrNull(kv, keyValues);
+			if (r != null) {
+				resources.add(r);
+			}
+		}
+		return List.copyOf(resources);
+	}
+
+	@Nullable
+	KeyValuesResource parseResourceOrNull(KeyValue keyValue, KeyValues keyValues) {
+		var resource = parseLoadOrNull(keyValue);
+		if (resource == null) {
+			return null;
+		}
+		var builder = new KeyValuesResource.Builder(resource.uri(), resource.name());
+		parseURI(builder, resource);
+		parseKeyValues(builder, resource, keyValues);
 		builder.reference = keyValue;
 		return builder.build();
 	}
 
-	private KeyValuesResource.@Nullable Builder builderOrNull(KeyValue reference) {
-		var resource = parseOrNull(reference);
-		if (resource == null) {
+	protected @Nullable LoadResource parseLoadOrNull(KeyValue keyValue) {
+		String key = keyValue.key();
+		String prefix = prefix(ResourceKey.LOAD);
+		if (!key.startsWith(prefix)) {
 			return null;
 		}
-		return new KeyValuesResource.Builder(resource.uri(), resource.resourceName());
-	}
+		String name = key.substring(prefix.length());
 
-	private boolean filter(KeyValue kv) {
-		return resourceKeyOrNull(kv) == null;
-	}
-
-	private @Nullable Resource parseOrNull(KeyValue keyValue) {
-		String key = keyValue.key();
-		var matcher = this.pattern.matcher(key);
-		if (matcher.find()) {
-			String name = matcher.group(1);
-			if (name == null) {
-				throw new NullPointerException("Pattern did not have group 1. pattern=" + this.pattern);
-			}
-			var uri = URI.create(keyValue.expanded());
-			return new Resource(name, uri);
+		try {
+			name = KeyValuesSource.validateName(name);
 		}
-		return null;
+		catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("Key Value has a malformed name for load resource. keyValue=" + keyValue,
+					e);
+		}
+		var uri = URI.create(keyValue.expanded());
+		return new LoadResource(name, uri, keyValue);
 	}
 
-	private @Nullable ResourceKey resourceKeyOrNull(KeyValue kv) {
-		for (var key : ResourceKey.values()) {
-			if (kv.key().startsWith(key.prefix)) {
-				return key;
+	protected abstract void parseKeyValues(Builder builder, LoadResource resource, KeyValues keyValues);
+
+	protected void parseURI(Builder builder, LoadResource resource) {
+		var uri = resource.uri();
+		if (uri.getQuery() == null) {
+			return;
+		}
+		var uriParameters = DefaultKeyValuesMedia.parseURI(uri);
+		List<KeyValue> filtered = new ArrayList<>();
+		boolean hasParameter = false;
+		for (var kv : uriParameters) {
+			var rk = uriResourceKeyOrNull(kv);
+			if (rk != null)
+				hasParameter = true;
+			switch (rk) {
+				case LOAD -> {
+				}
+				case MEDIA_TYPE -> {
+					builder.mediaType(kv.value());
+				}
+				case FLAGS -> {
+					builder._addFlags(kv.value());
+				}
+				case PARAM -> {
+					String param = uriParseParamName(kv.key());
+					String value = kv.value();
+					builder.parameter(param, value);
+				}
+				case null -> {
+					filtered.add(kv);
+				}
 			}
 		}
-		return null;
+		if (hasParameter) {
+			String uriNoQuery = uriWithoutQuery(uri);
+			if (filtered.isEmpty()) {
+				builder.uri = URI.create(uriNoQuery);
+			}
+			else {
+				KeyValues queryKvs = () -> filtered.stream();
+				builder.uri = URI.create(uriNoQuery + "?" + KeyValuesMedia.ofUrlEncoded().formatter().format(queryKvs));
+			}
+		}
+
 	}
 
-	private String externalResourceKey1(ResourceKey key, String resourceName) {
-		return key.prefix + resourceName;
+	private static String uriWithoutQuery(URI uri) {
+		String s = uri.toString();
+		if (uri.getQuery() == null) {
+			return s;
+		}
+		int index = s.indexOf('?');
+		return s.substring(0, index);
 	}
 
-	private String externalResourceKey2Prefix(ResourceKey key, String resourceName) {
-		return key.prefix + resourceName + "_";
+	protected String prefix() {
+		return sep();
 	}
 
-	private String paramName(String resourceName, String key) {
-		String prefix = externalResourceKey2Prefix(ResourceKey.PARAM, resourceName);
+	protected String sep() {
+		return "_";
+	}
+
+	protected String uriParameterPrefix(ResourceKey key) {
+		return switch (key) {
+			case LOAD, MEDIA_TYPE, FLAGS -> prefix() + key.key;
+			case PARAM -> prefix() + key.key + sep();
+		};
+	}
+
+	protected String prefix(ResourceKey key) {
+		return prefix() + key.key + sep();
+	}
+
+	private String uriParseParamName(String key) {
+		String prefix = uriParameterPrefix(ResourceKey.PARAM);
 		if (!key.startsWith(prefix)) {
 			throw new IllegalArgumentException("Parameter prefix is incorrect. " + key);
 		}
@@ -220,26 +331,39 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		return name;
 	}
 
-	private boolean keyValueMatches(ResourceKey rk, KeyValue kv, String resourceName) {
-		String key = kv.key();
-		return switch (rk) {
-			case PARAM -> key.startsWith(externalResourceKey2Prefix(rk, resourceName));
-			case LOAD, FLAGS, MEDIA_TYPE -> externalResourceKey1(rk, resourceName).equals(key);
+	protected String externalResourceKey1(ResourceKey key, String resourceName) {
+		String prefix = switch (key) {
+			case LOAD, FLAGS, MEDIA_TYPE -> prefix(key);
+			default -> throw new IllegalArgumentException("key: " + key);
+
 		};
+		return prefix + resourceName;
 	}
 
-	private void parseKeyValues(KeyValues kvs, String resourceName, BiConsumer<ResourceKey, KeyValue> consumer) {
-		// DefaultKeyValuesResource.validateResourceName(resourceName);
-		for (var kv : kvs) {
-			for (var rk : ResourceKey.values()) {
-				if (keyValueMatches(rk, kv, resourceName)) {
-					consumer.accept(rk, kv);
-				}
+	protected String externalResourceKey2Prefix(ResourceKey key, String resourceName) {
+		return prefix(key) + resourceName + sep();
+	}
+
+	protected @Nullable ResourceKey uriResourceKeyOrNull(KeyValue kv) {
+		for (var key : ResourceKey.values()) {
+			if (kv.key().equals(uriParameterPrefix(key))) {
+				return key;
 			}
 		}
+		return null;
 	}
 
-	private record Resource(String resourceName, URI uri) {
+	protected @Nullable ResourceKey resourceKeyOrNull(KeyValue kv) {
+		for (var key : ResourceKey.values()) {
+			if (kv.key().startsWith(prefix(key))) {
+				return key;
+			}
+		}
+		return null;
+	}
+
+	public static DefaultKeyValuesResourceParser of() {
+		return DEFAULT;
 	}
 
 	private enum ResourceKey {
@@ -251,11 +375,8 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 
 		final String key;
 
-		final String prefix;
-
 		private ResourceKey(String key) {
 			this.key = key;
-			this.prefix = "_" + key + "_";
 		}
 
 	}

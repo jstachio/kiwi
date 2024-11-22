@@ -84,7 +84,8 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	 * @return pretty print resource.
 	 */
 	default String description() {
-		return "uri='" + uri() + "' name='" + name() + "'";
+		return "uri='" + uri() + "' name='" + name() + "'" + ", reference="
+				+ KeyValueReference.toStringRef(this.reference());
 	}
 
 	/**
@@ -246,6 +247,11 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 
 		Builder _addFlag(LoadFlag flag) {
 			flags.add(flag);
+			return this;
+		}
+
+		Builder _addFlags(String csv) {
+			LoadFlag.parseCSV(this.flags, csv);
 			return this;
 		}
 

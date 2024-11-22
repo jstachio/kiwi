@@ -21,6 +21,17 @@ sealed interface KeyValuesSource permits NamedKeyValuesSource, KeyValue.Source {
 		return identifier;
 	}
 
+	// static String toString(KeyValuesSource source) {
+	// return switch(source) {
+	// case KeyValuesResource r -> "uri=" + r.uri() + ", name=" + r.name() + ", ref=" +
+	// KeyValueReference.toStringRef(r.reference());
+	// case KeyValue.Source s -> "uri=" + s.uri() + ", ref=" +
+	// KeyValueReference.toStringRef(s.reference());
+	// case NamedKeyValues nkvs -> "name=" + nkvs.name();
+	//
+	// };
+	// }
+
 	static StringBuilder describe(StringBuilder sb, KeyValuesSource source) {
 		return switch (source) {
 			case KeyValuesResource r -> KeyValueReference.describe(sb, r, true);
@@ -100,6 +111,12 @@ sealed interface KeyValueReference permits KeyValuesResource, KeyValue.Source {
 			}
 		}
 		return sb;
+	}
+
+	static String toStringRef(KeyValue ref) {
+		if (ref == null)
+			return "null";
+		return "[key='" + ref.key() + "', in='" + ref.meta().source().uri() + "']";
 	}
 
 	static StringBuilder describeReference(StringBuilder sb, KeyValue ref) {

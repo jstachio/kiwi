@@ -173,6 +173,12 @@ public sealed interface KeyValuesSystem extends AutoCloseable {
 			return this;
 		}
 
+		/**
+		 * Adds a filter to the filter chain.
+		 * @param filter the filter to add
+		 * @return this
+		 * @see KeyValuesFilter
+		 */
 		public Builder filter(KeyValuesFilter filter) {
 			this.filters.add(filter);
 			return this;

@@ -1,8 +1,10 @@
 package io.jstach.kiwi.kvs;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
@@ -166,4 +168,70 @@ final class FlagSet<E extends Enum<E>> implements Set<E> {
 		return set.parallelStream();
 	}
 
+}
+
+record FlagNames(List<String> names, List<String> reverseNames) {
+
+	private static final List<String> NEGATION_PREFIXES = List.of("NO_", "NOT_");
+
+	FlagNames {
+		List<String> normalizedNames = new ArrayList<>();
+		List<String> normalizedReverseNames = new ArrayList<>();
+
+		// Process both lists
+		processList(names, normalizedNames, normalizedReverseNames);
+		processList(reverseNames, normalizedReverseNames, normalizedNames);
+
+		// Remove duplicates using stream().distinct() and return the filled FlagNames
+		// record
+		names = normalizedNames.stream().distinct().toList();
+		reverseNames = normalizedReverseNames.stream().distinct().toList();
+	}
+
+	/**
+	 * Processes a list of names, normalizing and generating their counterparts in the
+	 * reverse list.
+	 * @param inputList the input list to process
+	 * @param normalizedList the list where normalized input is added
+	 * @param counterpartList the list where the counterparts are added
+	 */
+	private static void processList(List<String> inputList, List<String> normalizedList, List<String> counterpartList) {
+		for (String originalName : inputList) {
+			String normalized = originalName.toUpperCase();
+			normalizedList.add(normalized);
+
+			boolean isNegated = false;
+			String baseName = normalized;
+
+			for (String prefix : NEGATION_PREFIXES) {
+				String stripped = removePrefix(normalized, prefix);
+				if (stripped != null) {
+					isNegated = true;
+					baseName = stripped;
+					break;
+				}
+			}
+
+			var negatedList = isNegated ? normalizedList : counterpartList;
+			var nonNegatedList = isNegated ? counterpartList : normalizedList;
+
+			for (String prefix : NEGATION_PREFIXES) {
+				negatedList.add(prefix + baseName);
+			}
+			nonNegatedList.add(baseName);
+		}
+	}
+
+	/**
+	 * Removes the specified prefix from a string if it exists.
+	 * @param key the string to process
+	 * @param prefix the prefix to remove
+	 * @return the string without the prefix, or {@code null} if the prefix is not present
+	 */
+	private static String removePrefix(String key, String prefix) {
+		if (!key.startsWith(prefix)) {
+			return null;
+		}
+		return key.substring(prefix.length());
+	}
 }
