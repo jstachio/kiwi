@@ -1,5 +1,6 @@
 package io.jstach.kiwi.kvs;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,10 +121,6 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 		}
 
 	}
-	//
-	// public static InputStream stringToInputStream(String s) {
-	// return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
-	// }
 
 	/**
 	 * A parser for reading key-value pairs from an input source.
@@ -152,20 +149,34 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 			return b.build();
 		}
 
-		// default void parse(String input, BiConsumer<String, String> consumer) {
-		// try {
-		// parse(stringToInputStream(input), consumer);
-		// }
-		// catch (IOException e) {
-		// throw new UncheckedIOException(e);
-		// }
-		// }
-		//
-		// default KeyValues parse(String input) {
-		// var b = KeyValues.builder();
-		// parse(input, b::add);
-		// return b.build();
-		// }
+		/**
+		 * Parses key-value pairs from a string and applies them to a consumer.
+		 * @param input the string to parse
+		 * @param consumer the consumer to apply the parsed key-value pairs
+		 */
+		default void parse(String input, BiConsumer<String, String> consumer) {
+			try {
+				parse(stringToInputStream(input), consumer);
+			}
+			catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		}
+
+		/**
+		 * Parses key-value pairs from a string and returns a {@code KeyValues} instance.
+		 * @param input the string to parse
+		 * @return a {@code KeyValues} instance containing the parsed key-value pairs
+		 */
+		default KeyValues parse(String input) {
+			var b = KeyValues.builder();
+			parse(input, b::add);
+			return b.build();
+		}
+
+		private static InputStream stringToInputStream(String s) {
+			return new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
+		}
 
 	}
 

@@ -216,7 +216,7 @@ enum LoadFlag {
 	/**
 	 * Makes the resource optional so that if it is not found an error does not happen.
 	 */
-	NO_REQUIRE,
+	NO_REQUIRE(List.of("NO_REQUIRE", "OPTIONAL", "NOT_REQUIRED")),
 	/**
 	 * TODO
 	 */
@@ -265,32 +265,26 @@ enum LoadFlag {
 	@SuppressWarnings("ImmutableEnumChecker")
 	private final Set<String> reverseNames;
 
+	private LoadFlag(List<String> names, List<String> reverseNames) {
+		if (names.isEmpty()) {
+			names = List.of(name());
+		}
+		FlagNames fn = new FlagNames(names, reverseNames);
+		this.names = Set.copyOf(fn.names());
+		this.reverseNames = Set.copyOf(fn.reverseNames());
+	}
+
+	private LoadFlag(List<String> names) {
+		this(names, List.of());
+
+	}
+
+	private LoadFlag(String name) {
+		this(List.of(name));
+	}
+
 	private LoadFlag() {
-		List<String> names = new ArrayList<>();
-		List<String> reverseNames = new ArrayList<>();
-		String originalName = this.name();
-
-		String name = originalName;
-		boolean no = false;
-		for (String negate : List.of("NO_", "NOT_")) {
-			String n = remove(originalName, negate);
-			if (n != null) {
-				no = true;
-				name = n;
-				break;
-			}
-		}
-		var nos = no ? names : reverseNames;
-		var yeses = no ? reverseNames : names;
-
-		for (String negate : List.of("NO_", "NOT_")) {
-			nos.add(negate + name);
-		}
-		yeses.add(name);
-
-		this.names = Set.copyOf(names);
-		this.reverseNames = Set.copyOf(reverseNames);
-
+		this(List.of(), List.of());
 	}
 
 	private static @Nullable String remove(String key, String prefix) {
@@ -342,9 +336,13 @@ enum LoadFlag {
 		throw new IllegalArgumentException("bad load flag: " + key);
 	}
 
+	public static void parseCSV(EnumSet<LoadFlag> flags, String csv) {
+		DefaultKeyValuesMedia.parseCSV(csv, k -> LoadFlag.parse(flags, k));
+	}
+
 	public static EnumSet<LoadFlag> parseCSV(String csv) {
 		EnumSet<LoadFlag> flags = EnumSet.noneOf(LoadFlag.class);
-		DefaultKeyValuesMedia.parseCSV(csv, k -> LoadFlag.parse(flags, k));
+		parseCSV(flags, csv);
 		return flags;
 	}
 

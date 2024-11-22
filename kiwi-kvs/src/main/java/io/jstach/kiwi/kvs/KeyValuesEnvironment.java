@@ -318,4 +318,14 @@ class SystemLogger implements Logger {
 
 class DefaultKeyValuesEnvironment implements KeyValuesEnvironment {
 
+	// private static final ThreadLocal<Logger> threadLocal = new
+	// ThreadLocal<>();
+	//
+	// static Logger localLogger() {
+	// var logger = threadLocal.get();
+	// if (logger == null) {
+	// return NoOpLogger.NOPLOGGER;
+	// }
+	// }
+
 }

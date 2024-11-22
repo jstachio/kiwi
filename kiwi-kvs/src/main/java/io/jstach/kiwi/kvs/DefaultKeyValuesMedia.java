@@ -9,6 +9,7 @@ import java.io.LineNumberReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -72,6 +73,11 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 			}
 
 		}
+
+		@Override
+		public void parse(String input, BiConsumer<String, String> consumer) {
+			parseUriQuery(input, true, consumer);
+		}
 	}
 
 	;
@@ -133,6 +139,14 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 			}
 			consumer.accept(key, value);
 		}
+	}
+
+	static KeyValues parseURI(URI uri) {
+		String query = uri.getRawQuery();
+		if (query == null || query.isBlank()) {
+			return KeyValues.empty();
+		}
+		return URLENCODED.parse(query);
 	}
 
 	static void parseCSV(String csv, Consumer<String> consumer) {

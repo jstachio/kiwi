@@ -109,11 +109,71 @@ public sealed interface KeyValuesServiceProvider {
 
 	}
 
+	/**
+	 * A service provider interface (SPI) for filtering key values after a resource is
+	 * loaded.
+	 *
+	 * <p>
+	 * Filters are applied to modify, rename, or remove key-value pairs without altering
+	 * the original resource. This can be useful for transforming keys to a desired format
+	 * or eliminating unnecessary entries before the key values are processed further.
+	 *
+	 * <h2>Usage</h2>
+	 * <p>
+	 * A {@code KeyValuesFilter} is invoked after a {@link KeyValuesResource} is loaded
+	 * but before the resulting {@link KeyValues} are passed to the next stage of
+	 * processing. The filter uses a filter name and optional parameters to determine how
+	 * the key values should be modified.
+	 * </p>
+	 *
+	 * <h2>Extensibility</h2>
+	 * <p>
+	 * Implementations of {@code KeyValuesFilter} can be registered using the
+	 * {@code provides} directive in {@code module-info.java} or the
+	 * {@code META-INF/services} mechanism with the fully qualified name of
+	 * {@link KeyValuesServiceProvider}. <strong>Ideally the filter only applies filtering
+	 * based on the passed in filter name.</strong> Otherwise it should just return the
+	 * passed in key values.
+	 * </p>
+	 *
+	 * <p>
+	 * For example, to provide a custom implementation:
+	 * </p>
+	 * <pre>{@code
+	 * module my.module {
+	 *     provides io.jstach.kiwi.kvs.KeyValuesServiceProvider with my.module.MyKeyValuesFilter;
+	 * }
+	 * }</pre>
+	 *
+	 * <h2>Method Details</h2>
+	 *
+	 * <p>
+	 * The {@link #filter(FilterContext, KeyValues, String)} method performs the filtering
+	 * operation.
+	 * </p>
+	 */
 	public non-sealed interface KeyValuesFilter extends KeyValuesServiceProvider {
 
+		/**
+		 * Provides contextual information to a filter, including the environment and any
+		 * parameters specified for the filtering operation.
+		 *
+		 * @param environment the environment used to access system-level properties and
+		 * resources
+		 * @param parameters the parameters associated with the filtering operation
+		 */
 		public record FilterContext(KeyValuesEnvironment environment, Parameters parameters) {
 		}
 
+		/**
+		 * Applies a filter to the given key-value pairs. The filter should ideally only
+		 * be applied if the passed filter parameter matches (filter name) otherwise the
+		 * filter just return the passed in key values.
+		 * @param context the filter context providing the environment and parameters
+		 * @param keyValues the key-value pairs to be filtered
+		 * @param filter the name of the filter to apply
+		 * @return a new {@link KeyValues} instance with the filtered key-value pairs
+		 */
 		KeyValues filter(FilterContext context, KeyValues keyValues, String filter);
 
 	}
