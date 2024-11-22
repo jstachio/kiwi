@@ -216,58 +216,59 @@ enum LoadFlag {
 	/**
 	 * Makes the resource optional so that if it is not found an error does not happen.
 	 */
-	NO_REQUIRE(List.of(KeyValuesResource.NO_REQUIRE, KeyValuesResource.OPTIONAL, KeyValuesResource.NOT_REQUIRED)),
+	NO_REQUIRE(List.of(KeyValuesResource.FLAG_NO_REQUIRE, KeyValuesResource.FLAG_OPTIONAL,
+			KeyValuesResource.FLAG_NOT_REQUIRED)),
 
 	/**
 	 * TODO
 	 */
-	NO_EMPTY(KeyValuesResource.NO_EMPTY),
+	NO_EMPTY(KeyValuesResource.FLAG_NO_EMPTY),
 
 	/**
 	 * Confusing but this means the resource should not have its properties overriden. Not
 	 * to be confused with {@link #NO_REPLACE} which sounds like what this does.
 	 */
-	LOCK(KeyValuesResource.LOCK),
+	LOCK(KeyValuesResource.FLAG_LOCK),
 
 	/**
 	 * This basically says the resource can only add new key values.
 	 */
-	NO_REPLACE(KeyValuesResource.NO_REPLACE),
+	NO_REPLACE(KeyValuesResource.FLAG_NO_REPLACE),
 
 	/**
 	 * Will add the kvs to variables but not to the final resolved key values.
 	 */
-	NO_ADD(KeyValuesResource.NO_ADD),
+	NO_ADD(KeyValuesResource.FLAG_NO_ADD),
 
 	/**
 	 * Will add key values but are not allowed for interpolation.
 	 */
-	NO_ADD_VARIABLES(KeyValuesResource.NO_ADD_VARIABLES),
+	NO_ADD_VARIABLES(KeyValuesResource.FLAG_NO_ADD_VARIABLES),
 
 	/**
 	 * Disables _load calls on child.
 	 */
-	NO_LOAD_CHILDREN(KeyValuesResource.NO_LOAD_CHILDREN),
+	NO_LOAD_CHILDREN(KeyValuesResource.FLAG_NO_LOAD_CHILDREN),
 
 	/**
 	 * Will not interpolate key values loaded ever.
 	 */
-	NO_INTERPOLATE(KeyValuesResource.NO_INTERPOLATE),
+	NO_INTERPOLATE(KeyValuesResource.FLAG_NO_INTERPOLATE),
 
 	/**
 	 * Will not toString or print out sensitive
 	 */
-	SENSITIVE(KeyValuesResource.SENSITIVE),
+	SENSITIVE(KeyValuesResource.FLAG_SENSITIVE),
 
 	/**
 	 * TODO
 	 */
-	NO_RELOAD(KeyValuesResource.NO_RELOAD),
+	NO_RELOAD(KeyValuesResource.FLAG_NO_RELOAD),
 
 	/**
 	 * TODO
 	 */
-	INHERIT(KeyValuesResource.INHERIT);
+	INHERIT(KeyValuesResource.FLAG_INHERIT);
 
 	@SuppressWarnings("ImmutableEnumChecker")
 	private final Set<String> names;
