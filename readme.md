@@ -36,6 +36,16 @@ and some prefix removed.
 * **[Latest SNAPSHOT Kiwi doc](https://jstach.io/kiwi/)**
 * **[Current released Kiwi doc](https://jstach.io/doc/kiwi/current/apidocs)**
 
+## Why and Use Case
+
+Kiwi allows **"users"** to decide where their configuration comes from instead of developers. 
+
+A simple command line application use case might be like [ripgrep](https://github.com/BurntSushi/ripgrep) where a single
+environment variable dictates the location of configuration. Kiwi easily supports
+this style as well as allow the user to then load additional configuration from
+other places using key values in the configuration file. Kiwi can even allow configuration to come from other environment variables which is something not really possible with ripgrep or other similar tools.
+
+Another use case might be to simulate Spring Boot's configuration loading but without all of Spring Boot. Kiwi can do that declaratively through key values. In fact a user could make the previously mentioned ripgrep environment variable do a Spring Boot like load of configuration.
 
 ## Example
 
