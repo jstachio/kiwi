@@ -113,7 +113,7 @@ sealed interface KeyValueReference permits KeyValuesResource, KeyValue.Source {
 		return sb;
 	}
 
-	static String toStringRef(KeyValue ref) {
+	static String toStringRef(@Nullable KeyValue ref) {
 		if (ref == null)
 			return "null";
 		return "[key='" + ref.key() + "', in='" + ref.meta().source().uri() + "']";

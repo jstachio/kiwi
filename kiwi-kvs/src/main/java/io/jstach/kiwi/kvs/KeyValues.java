@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SequencedCollection;
+import java.util.SequencedMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -110,6 +111,15 @@ public interface KeyValues extends Iterable<KeyValue> {
 	 */
 	public static KeyValues copyOf(SequencedCollection<KeyValue> kvs) {
 		return new ListKeyValues(List.copyOf(kvs));
+	}
+
+	/**
+	 * Creates a single key values instance.
+	 * @param keyValue single key value.
+	 * @return keyvalues of one key value.
+	 */
+	public static KeyValues of(KeyValue keyValue) {
+		return new ListKeyValues(List.of(keyValue));
 	}
 
 	/**
@@ -242,7 +252,7 @@ public interface KeyValues extends Iterable<KeyValue> {
 		 */
 		public KeyValue build(String key, String value) {
 			var s = noSource ? KeyValue.Source.EMPTY : new KeyValue.Source(source, reference, index.incrementAndGet());
-			var m = KeyValue.Meta.of(value, s, flags);
+			var m = KeyValue.Meta.of(key, value, s, flags);
 			return new KeyValue(key, value, m);
 		}
 
@@ -361,11 +371,12 @@ public interface KeyValues extends Iterable<KeyValue> {
 	}
 
 	/**
-	 * Converts the key-values to a map where each key maps to its expanded value.
+	 * Converts the key-values to a map where each key maps to its expanded value. The
+	 * returned Map is sequenced based on the order of the key-values.
 	 * @return a {@link Map} of key-value pairs.
 	 */
-	default Map<String, String> toMap() {
-		Map<String, String> m = new LinkedHashMap<>();
+	default SequencedMap<String, String> toMap() {
+		SequencedMap<String, String> m = new LinkedHashMap<>();
 		stream().forEach(kv -> m.put(kv.key(), kv.expanded()));
 		return m;
 	}

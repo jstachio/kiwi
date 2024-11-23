@@ -146,6 +146,7 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	 * Returns the URI of the resource.
 	 * @return the URI of the resource
 	 */
+	@Override
 	public URI uri();
 
 	/**
