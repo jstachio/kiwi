@@ -298,13 +298,6 @@ enum LoadFlag {
 		this(List.of(), List.of());
 	}
 
-	private static @Nullable String remove(String key, String prefix) {
-		if (!key.startsWith(prefix)) {
-			return null;
-		}
-		return key.substring(prefix.length());
-	}
-
 	boolean isSet(Set<LoadFlag> flags) {
 		return flags.contains(this);
 	}

@@ -11,6 +11,7 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 		@Override
 		protected KeyValues doFilter(FilterContext context, KeyValues keyValues) {
 			String grep = context.parameters().getValue("grep");
+			// TODO error handling.
 			if (grep == null) {
 				return keyValues;
 			}
@@ -19,6 +20,29 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 				return pattern.matcher(kv.key()).find();
 			});
 		}
+	},
+	SED {
+
+		@Override
+		protected KeyValues doFilter(FilterContext context, KeyValues keyValues) {
+			String sed = context.parameters().getValue("sed");
+			// TODO error handling.
+			if (sed == null) {
+				return keyValues;
+			}
+			var command = DefaultSedParser.parse(sed);
+			return keyValues.flatMap(kv -> {
+				String key = command.execute(kv.key());
+				if (key == null) {
+					return KeyValues.empty();
+				}
+				if (kv.key().equals(key)) {
+					return KeyValues.of(kv);
+				}
+				return KeyValues.of(kv.withKey(key));
+			});
+		}
+
 	};
 
 	@Override

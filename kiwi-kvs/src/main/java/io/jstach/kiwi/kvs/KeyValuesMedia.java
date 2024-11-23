@@ -8,6 +8,7 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
@@ -20,7 +21,9 @@ import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
  * types and can be searched based on file extensions or media types.
  *
  * <p>
- * Out-of-the-box implementations include properties and URL-encoded formats.
+ * Out-of-the-box implementations include properties and URL-encoded formats. <strong>The
+ * properties and URL encoded formats do maintain order of the key values parsed (unlike
+ * regular java.util {@link Properties})! </strong>
  *
  * <p>
  * Example usage for parsing an {@code InputStream}:
@@ -65,7 +68,9 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 	}
 
 	/**
-	 * Returns a {@code KeyValuesMedia} instance for the properties format.
+	 * Returns a {@code KeyValuesMedia} instance for the {@link Properties} format however
+	 * unlike normal {@link Properties} order of the properties key values is maintained
+	 * based on the order parsed.
 	 * @return a properties format media type
 	 */
 	public static KeyValuesMedia ofProperties() {

@@ -70,7 +70,7 @@ public record KeyValue(String key, String expanded, Meta meta) {
 	 * @param raw the raw (unexpanded) value associated with this key.
 	 */
 	public KeyValue(String key, String raw) {
-		this(key, raw, Meta.of(raw, Source.EMPTY, Set.of()));
+		this(key, raw, Meta.of(key, raw, Source.EMPTY, Set.of()));
 	}
 
 	public final static String REDACTED_MESSAGE = "REDACTED";
@@ -106,6 +106,15 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		}
 		var source = original.withURI(uri);
 		var meta = this.meta.withSource(source);
+		return new KeyValue(key, expanded, meta);
+	}
+
+	/**
+	 * Creates a new KeyValue with an updated key.
+	 * @param key the new key.
+	 * @return new key value.
+	 */
+	public KeyValue withKey(String key) {
 		return new KeyValue(key, expanded, meta);
 	}
 
@@ -173,6 +182,12 @@ public record KeyValue(String key, String expanded, Meta meta) {
 	public sealed interface Meta {
 
 		/**
+		 * The original key that was collected on the source.
+		 * @return the original key.
+		 */
+		String originalKey();
+
+		/**
 		 * Retrieves the raw, unexpanded value associated with the {@link KeyValue}.
 		 * @return the original raw value as a {@link String}.
 		 */
@@ -208,18 +223,19 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		/**
 		 * Factory method to create a new {@code Meta} instance with the specified raw
 		 * value, source, and flags.
+		 * @param originalKey original key.
 		 * @param raw the raw value associated with the key-value.
 		 * @param source the source from which the key-value was loaded.
 		 * @param flags the flags associated with the key-value.
 		 * @return a new {@code Meta} instance.
 		 */
-		static Meta of(String raw, Source source, Set<Flag> flags) {
-			return new DefaultMeta(raw, source, flags);
+		static Meta of(String originalKey, String raw, Source source, Set<Flag> flags) {
+			return new DefaultMeta(originalKey, raw, source, flags);
 		}
 
 	}
 
-	record DefaultMeta(String raw, Source source, Set<Flag> flags) implements Meta {
+	record DefaultMeta(String originalKey, String raw, Source source, Set<Flag> flags) implements Meta {
 		public DefaultMeta {
 			flags = FlagSet.copyOf(flags, Flag.class);
 		}
@@ -227,12 +243,12 @@ public record KeyValue(String key, String expanded, Meta meta) {
 		@Override
 		public Meta withFlags(Collection<Flag> flags) {
 			var flagsCopy = FlagSet.copyOf(flags, Flag.class);
-			return new DefaultMeta(raw, source, flagsCopy);
+			return new DefaultMeta(originalKey, raw, source, flagsCopy);
 		}
 
 		@Override
 		public Meta withSource(Source source) {
-			return new DefaultMeta(raw, source, flags);
+			return new DefaultMeta(originalKey, raw, source, flags);
 		}
 
 		@Override
@@ -433,10 +449,15 @@ public record KeyValue(String key, String expanded, Meta meta) {
 			var flags = EnumSet.copyOf(this.meta.flags());
 			flags.remove(Flag.SENSITIVE);
 			var source = meta.source();
-			Meta meta = new DefaultMeta(raw, source, flags);
+			var originalKey = meta.originalKey();
+			Meta meta = new DefaultMeta(originalKey, raw, source, flags);
 			return new KeyValue(key, expanded, meta);
 		}
 		return this;
+	}
+
+	boolean isOriginalKey() {
+		return key.equals(meta.originalKey());
 	}
 
 	@Override
@@ -446,6 +467,7 @@ public record KeyValue(String key, String expanded, Meta meta) {
 
 	private static String toString(KeyValue kv) {
 		return "KeyValue[key='" + kv.key + "'" //
+				+ (kv.isOriginalKey() ? "" : ", originalKey='" + kv.meta().originalKey() + "'") //
 				+ ", raw='" + kv.raw() + "'" //
 				+ ", expanded='" + kv.expanded + "'"//
 				+ ", source=" + Source.toString(kv.meta().source())//

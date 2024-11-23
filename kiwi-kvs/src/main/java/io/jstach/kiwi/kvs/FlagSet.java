@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
@@ -197,7 +198,7 @@ record FlagNames(List<String> names, List<String> reverseNames) {
 	 */
 	private static void processList(List<String> inputList, List<String> normalizedList, List<String> counterpartList) {
 		for (String originalName : inputList) {
-			String normalized = originalName.toUpperCase();
+			String normalized = originalName.toUpperCase(Locale.ROOT);
 			normalizedList.add(normalized);
 
 			boolean isNegated = false;
@@ -228,7 +229,7 @@ record FlagNames(List<String> names, List<String> reverseNames) {
 	 * @param prefix the prefix to remove
 	 * @return the string without the prefix, or {@code null} if the prefix is not present
 	 */
-	private static String removePrefix(String key, String prefix) {
+	private static @Nullable String removePrefix(String key, String prefix) {
 		if (!key.startsWith(prefix)) {
 			return null;
 		}

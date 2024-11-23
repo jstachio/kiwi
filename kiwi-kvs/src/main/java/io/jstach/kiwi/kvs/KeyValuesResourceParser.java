@@ -7,8 +7,6 @@ import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.kiwi.kvs.KeyValuesResource.Builder;
-
 /*
  * The idea here is to keep all the parsing logic separated from the core domain so that
  * we can switch the key value patterns of loading.
@@ -140,7 +138,8 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 
 		// Parsing Resource
 
-		public void parseKeyValues(Builder builder, LoadResource resource, KeyValues keyValues) {
+		@Override
+		public void parseKeyValues(KeyValuesResource.Builder builder, LoadResource resource, KeyValues keyValues) {
 			for (var kv : keyValues) {
 				for (var rk : ResourceKey.values()) {
 					parseResourceKey(builder, resource, rk, kv);
@@ -148,7 +147,8 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 			}
 		}
 
-		protected void parseResourceKey(Builder builder, LoadResource resource, ResourceKey rk, KeyValue kv) {
+		private void parseResourceKey(KeyValuesResource.Builder builder, LoadResource resource, ResourceKey rk,
+				KeyValue kv) {
 			if (!isResourceKey(rk, kv, resource.name())) {
 				return;
 			}
@@ -245,9 +245,10 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		return new LoadResource(name, uri, keyValue);
 	}
 
-	protected abstract void parseKeyValues(Builder builder, LoadResource resource, KeyValues keyValues);
+	protected abstract void parseKeyValues(KeyValuesResource.Builder builder, LoadResource resource,
+			KeyValues keyValues);
 
-	protected void parseURI(Builder builder, LoadResource resource) {
+	protected void parseURI(KeyValuesResource.Builder builder, LoadResource resource) {
 		var uri = resource.uri();
 		if (uri.getQuery() == null) {
 			return;
