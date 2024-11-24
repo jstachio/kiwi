@@ -1,7 +1,6 @@
 package io.jstach.kiwi.kvs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Objects;
 import java.util.stream.Stream;
