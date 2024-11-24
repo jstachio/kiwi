@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.SequencedCollection;
 import java.util.SequencedMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -320,6 +321,19 @@ public interface KeyValues extends Iterable<KeyValue> {
 	}
 
 	/**
+	 * This method gets the last element of the key values stream. This ergonomic is
+	 * provided because later keys override earlier keys of the same name.
+	 * @return optional of the last key value if there is one.
+	 */
+	default Optional<KeyValue> last() {
+		KeyValue last = null;
+		for (var kv : this) {
+			last = kv;
+		}
+		return Optional.ofNullable(last);
+	}
+
+	/**
 	 * Flattens the key-values by applying a mapping function that returns another
 	 * {@code KeyValues}.
 	 * @param func a function that transforms a {@link KeyValue} into another
@@ -439,6 +453,14 @@ record ListKeyValues(List<KeyValue> keyValues) implements ToStringableKeyValues,
 	@Override
 	public KeyValues memoize() {
 		return this;
+	}
+
+	@Override
+	public Optional<KeyValue> last() {
+		if (keyValues.isEmpty()) {
+			return Optional.empty();
+		}
+		return Optional.of(keyValues.getLast());
 	}
 
 	@Override

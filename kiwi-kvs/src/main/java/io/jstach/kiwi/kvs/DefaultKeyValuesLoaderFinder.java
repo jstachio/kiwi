@@ -7,9 +7,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
@@ -77,7 +79,41 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			throw new RuntimeException("null resource not allowed. " + resource);
 		}
 
-	};
+	},
+	CMD {
+		@Override
+		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
+			var b = KeyValues.builder(resource);
+			List<String> args = Arrays.asList(context.environment().getMainArgs());
+			propertiesFromCommandLine(args, b::add);
+			var kvs = b.build();
+			return maybeUseKeyFromUri(context, resource, kvs);
+
+		}
+
+		static void propertiesFromCommandLine(Iterable<String> args, BiConsumer<String, String> consumer) {
+			for (String arg : args) {
+				String[] kv = arg.split("=", 2);
+				if (kv.length < 2)
+					continue;
+				String key = kv[0];
+				String value = kv[1];
+				consumer.accept(key, value);
+			}
+		}
+	},
+	ENV {
+		@Override
+		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
+			var b = KeyValues.builder(resource);
+			var env = context.environment().getSystemEnv();
+			env.entrySet().forEach(b::add);
+			var kvs = b.build();
+			return maybeUseKeyFromUri(context, resource, kvs);
+		}
+	},
+
+	;
 
 	@Override
 	public Optional<KeyValuesLoader> findLoader(LoaderContext context, KeyValuesResource resource) {
@@ -157,6 +193,17 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		return null;
 	}
 
+	static String normalizePath(URI u) {
+		String p = u.getPath();
+		if (p == null || p.equals("/")) {
+			p = "";
+		}
+		else if (p.startsWith("/")) {
+			p = p.substring(1);
+		}
+		return p;
+	}
+
 	static InputStream openURI(URI u, ResourceStreamLoader loader) throws IOException {
 		if ("classpath".equals(u.getScheme())) {
 			String path = u.getPath();
@@ -179,6 +226,92 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			return Files.newInputStream(path);
 		}
 		throw new FileNotFoundException("URI is not classpath or file. URI: " + u);
+	}
+
+	private static KeyValues maybeUseKeyFromUri(LoaderContext context, KeyValuesResource resource, KeyValues kvs)
+			throws FileNotFoundException {
+		String path = normalizePath(resource.uri());
+		if (path.isBlank()) {
+			return kvs;
+		}
+		/*
+		 * If the path is not blank then a specific key is being requested that contains
+		 * encoded key values.
+		 *
+		 * A use case might be some key value that contains JSON.
+		 */
+		var logger = context.environment().getLogger();
+		logger.debug("Using key specified in URI path. key: " + path + " resource: " + resource);
+
+		var kvResource = kvs.filter(kv -> kv.key().equals(path)).last().orElse(null);
+		if (kvResource == null) {
+			throw new FileNotFoundException(
+					"Key not found specified in URI path. key: '" + path + "' resource: " + resource);
+		}
+		var parser = context.requireParser(resource);
+		return parser.parse(kvResource.value());
+	}
+
+	record FilterParameters(String prefix, String prefixReplacement) {
+		private static final FilterParameters NONE = new FilterParameters("", "");
+
+		static FilterParameters none() {
+			return NONE;
+		}
+
+		static FilterParameters parse(URI uri) {
+			List<String> paths = pathArgs(uri.getPath());
+
+			String prefix = "";
+			String prefixReplacement = "";
+			if (paths.size() > 0) {
+				prefix = paths.get(0);
+			}
+			if (paths.size() > 1) {
+				prefixReplacement = paths.get(1);
+			}
+			return new FilterParameters(prefix, prefixReplacement);
+		}
+
+		boolean isNone() {
+			return none().equals(this);
+		}
+
+		@Nullable
+		String transformOrNull(String key) {
+			if (!key.startsWith(prefix)) {
+				return null;
+			}
+			return prefixReplacement + removeStart(key, prefix);
+		}
+
+		private static String removeStart(final String str, final String remove) {
+			if (str.startsWith(remove)) {
+				return str.substring(remove.length());
+			}
+			return str;
+		}
+
+		static List<String> pathArgs(@Nullable String p) {
+			if (p == null || p.equals("/")) {
+				p = "";
+			}
+			else if (p.startsWith("/")) {
+				p = p.substring(1);
+			}
+			String[] paths = p.split("/");
+			return List.of(paths);
+		}
+
+		// @Override
+		public KeyValues apply(KeyValue keyValue) {
+			String newKey = transformOrNull(keyValue.key());
+			if (newKey == null) {
+				return KeyValues.empty();
+			}
+			return KeyValues.of(keyValue.withKey(newKey));
+		}
+
 	}
 
 }
