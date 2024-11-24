@@ -347,8 +347,18 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 
 	protected @Nullable ResourceKey uriResourceKeyOrNull(KeyValue kv) {
 		for (var key : ResourceKey.values()) {
-			if (kv.key().equals(uriParameterPrefix(key))) {
-				return key;
+			switch (key) {
+				case LOAD, MEDIA_TYPE, FLAGS -> {
+					if (kv.key().equals(uriParameterPrefix(key))) {
+						return key;
+					}
+				}
+				case PARAM -> {
+					if (kv.key().startsWith(uriParameterPrefix(key))) {
+						return key;
+					}
+				}
+
 			}
 		}
 		return null;
