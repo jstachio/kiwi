@@ -200,7 +200,7 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 		/**
 		 * Adds a key-value pair to the builder from a map entry.
-		 * @param e a {@link Map.Entry} representing the key and value.
+		 * @param e a {@link java.util.Map.Entry} representing the key and value.
 		 * @return this builder, for method chaining.
 		 */
 		public Builder add(Entry<String, String> e) {
@@ -278,8 +278,8 @@ public interface KeyValues extends Iterable<KeyValue> {
 	}
 
 	/**
-	 * Collects a stream of {@link Map.Entry} into a {@code KeyValues} using the provided
-	 * builder.
+	 * Collects a stream of {@link java.util.Map.Entry} into a {@code KeyValues} using the
+	 * provided builder.
 	 * @param builder the {@link Builder} to use for constructing the key-values.
 	 * @return a {@link Collector} that accumulates entries into a {@code KeyValues}
 	 * object.

@@ -41,9 +41,9 @@
  * var kvs = KeyValuesSystem.defaults()
  *     .loader()
  *     .add("classpath:/start.properties")
- *     .add("system:///") // add system properties to override
- *     .add("env:///")    // add environment variables to override
- *     .add("cmd:///-D")  // add command line arguments with the -D prefix
+ *     .add("system:///")                   // add system properties to override
+ *     .add("env:///")                      // add environment variables to override
+ *     .add("cmd:///?_filter_sed=s/^-D//")  // add command line arguments with the -D prefix
  *     .load();
  *
  * // Convert to a map and use it with other frameworks:
@@ -54,14 +54,14 @@
  *
  * <h2>Example Properties Files</h2>
  * <h3>start.properties</h3>
- * {@snippet language="properties" :
+ * {@snippet lang = properties :
  * message=Hello ${user.name}
  * _load_foo=classpath:/foo.properties
  * port.prefix=1
  * }
  *
  * <h3>foo.properties</h3>
- * {@snippet language="properties" :
+ * {@snippet lang = properties :
  * user.name=Barf
  * message=Merchandising
  * db.port=${port.prefix}5672
@@ -70,7 +70,7 @@
  * }
  *
  * <h3>user.properties</h3>
- * {@snippet language="properties" :
+ * {@snippet lang = properties :
  * secret=12345 # my luggage combination
  * port.prefix=3
  * }

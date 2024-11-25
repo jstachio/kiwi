@@ -149,9 +149,9 @@ public interface KeyValuesEnvironment {
 	public interface Logger {
 
 		/**
-		 * Returns a logger that uses the supplied {@link System.Logger}. <em>Becareful
-		 * using this because something downstream may need to configure the system logger
-		 * based on kiwi config.</em>
+		 * Returns a logger that uses the supplied {@link java.lang.System.Logger}.
+		 * <em>Becareful using this because something downstream may need to configure the
+		 * system logger based on kiwi config.</em>
 		 * @param logger system logger.
 		 * @return logger.
 		 */

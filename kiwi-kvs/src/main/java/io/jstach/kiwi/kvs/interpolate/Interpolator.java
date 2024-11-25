@@ -9,15 +9,41 @@ import org.jspecify.annotations.Nullable;
 
 import io.jstach.kiwi.kvs.interpolate.StrSubstitutor.StrLookup;
 
+/**
+ * Provides functionality for interpolating values within a string using keys and raw
+ * data.
+ * <p>
+ * An {@code Interpolator} replaces placeholders in a raw string with values derived from
+ * a mapping function. It supports custom logic for determining how placeholders are
+ * resolved and handles errors when required variables are missing.
+ * </p>
+ */
 public interface Interpolator {
 
-	public static Interpolator create(@SuppressWarnings("exports") Function<String, @Nullable String> f) {
+	/**
+	 * Creates a new {@code Interpolator} instance using the provided mapping function.
+	 * @param f a function that maps keys to their corresponding values, or {@code null}
+	 * if the key does not have a mapping
+	 * @return a new {@code Interpolator} instance
+	 */
+	static Interpolator create(Function<String, @Nullable String> f) {
 		return new InternalInterpolator(f);
 	}
 
-	public String interpolate(String key, String raw) throws InterpolationException;
+	/**
+	 * Interpolates placeholders in the given raw string using the associated key.
+	 * @param key the key for which interpolation is being performed
+	 * @param raw the raw string containing placeholders to interpolate
+	 * @return the interpolated string
+	 * @throws InterpolationException if interpolation fails, such as when a required
+	 * placeholder cannot be resolved
+	 */
+	String interpolate(String key, String raw) throws InterpolationException;
 
-	public static class InterpolationException extends NoSuchElementException {
+	/**
+	 * Exception thrown when an interpolation operation fails.
+	 */
+	static class InterpolationException extends NoSuchElementException {
 
 		private static final long serialVersionUID = 4135719008465817465L;
 
@@ -25,33 +51,61 @@ public interface Interpolator {
 
 		private final String raw;
 
+		/**
+		 * Constructs a new {@code InterpolationException}.
+		 * @param message the error message
+		 * @param key the key involved in the interpolation failure
+		 * @param raw the raw string being interpolated
+		 */
 		public InterpolationException(String message, String key, String raw) {
 			super(message);
 			this.key = key;
 			this.raw = raw;
 		}
 
+		/**
+		 * Returns the key involved in the interpolation failure.
+		 * @return the key
+		 */
 		public String getKey() {
 			return key;
 		}
 
+		/**
+		 * Returns the raw string that was being interpolated.
+		 * @return the raw string
+		 */
 		public String getRaw() {
 			return raw;
 		}
 
 	}
 
-	public static class MissingVariableInterpolationException extends InterpolationException {
+	/**
+	 * Exception thrown when a required variable is missing during interpolation.
+	 */
+	static class MissingVariableInterpolationException extends InterpolationException {
 
 		private static final long serialVersionUID = 4135719008465817465L;
 
 		private final String variable;
 
+		/**
+		 * Constructs a new {@code MissingVariableInterpolationException}.
+		 * @param message the error message
+		 * @param key the key involved in the interpolation failure
+		 * @param raw the raw string being interpolated
+		 * @param variable the missing variable name
+		 */
 		public MissingVariableInterpolationException(String message, String key, String raw, String variable) {
 			super(message, key, raw);
 			this.variable = variable;
 		}
 
+		/**
+		 * Returns the name of the missing variable.
+		 * @return the missing variable name
+		 */
 		public String getVariable() {
 			return variable;
 		}

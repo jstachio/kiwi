@@ -125,7 +125,7 @@ class KeyValuesSystemTest {
 					KeyValue[key='mypassword', raw='REDACTED', expanded='REDACTED', source=Source[uri=classpath:/test-props/testLoader-sensitive.properties, reference=[key='_load_luggage', in='classpath:/test-props/testLoader.properties'], index=1]]
 					KeyValue[key='fromMap1', raw='1', expanded='1', source=Source[uri=null:///extra, index=0]]
 					KeyValue[key='fromMap2', raw='2', expanded='2', source=Source[uri=null:///extra, index=0]]
-																								""";
+					""";
 			assertEquals(expected, actual);
 		}
 
@@ -152,7 +152,7 @@ class KeyValuesSystemTest {
 					[DEBUG] Missing uri='classpath:/test-props/testLoader-doesnotexist.properties' flags=[NO_REQUIRE]
 					[DEBUG] Loading uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE] specified with key: '_load_luggage' in uri='classpath:/test-props/testLoader.properties'
 					[INFO ] Loaded  uri='classpath:/test-props/testLoader-sensitive.properties' flags=[SENSITIVE]
-															""";
+					""";
 			assertEquals(expected, actual);
 		}
 	}
@@ -188,16 +188,17 @@ class KeyValuesSystemTest {
 
 	@Test
 	void testKeyValuesResourceToString() {
-		var system = KeyValuesResource.builder(URI.create("system:///"))
+		var r = KeyValuesResource.builder(URI.create("system:///?_filter_sed=s/a/b/"))
 			.name("system")
 			.noInterpolation(true)
 			.noAddKeyValues(true)
 			.sensitive(true)
 			.parameter("custom", "something")
-			.build();
-		String actual = system.toString();
+			.build(DefaultKeyValuesResourceParser.DEFAULT);
+		String actual = r.toString();
 		String expected = """
-				DefaultKeyValuesResource[uri=system:///, name=system, loadFlags=[NO_ADD, NO_INTERPOLATE, SENSITIVE], reference=null, mediaType=null, parameters=MapParameters[map={custom=something}]]"""
+				DefaultKeyValuesResource[uri=system:///, name=system, loadFlags=[NO_ADD, NO_INTERPOLATE, SENSITIVE], reference=null, mediaType=null, parameters=MapParameters[map={custom=something}], filters=[Filter[filter=sed, expression=s/a/b/, name=]], normalized=true]
+						"""
 			.trim();
 		assertEquals(expected, actual);
 	}

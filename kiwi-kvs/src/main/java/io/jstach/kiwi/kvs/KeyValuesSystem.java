@@ -34,6 +34,7 @@ import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
  * 	.load();
  * }
  *
+ * @see KeyValuesResource
  * @see KeyValuesLoader
  * @see KeyValuesEnvironment
  * @see KeyValuesServiceProvider
@@ -258,7 +259,7 @@ public sealed interface KeyValuesSystem extends AutoCloseable {
 record CompositeKeyValuesFilter(List<KeyValuesFilter> filters) implements KeyValuesFilter {
 
 	@Override
-	public KeyValues filter(FilterContext context, KeyValues keyValues, String filter) {
+	public KeyValues filter(FilterContext context, KeyValues keyValues, Filter filter) {
 		for (var f : filters) {
 			keyValues = f.filter(context, keyValues, filter);
 		}

@@ -9,8 +9,8 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 	GREP {
 
 		@Override
-		protected KeyValues doFilter(FilterContext context, KeyValues keyValues) {
-			String grep = context.parameters().getValue("grep");
+		protected KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression) {
+			String grep = expression;
 			// TODO error handling.
 			if (grep == null) {
 				return keyValues;
@@ -24,8 +24,8 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 	SED {
 
 		@Override
-		protected KeyValues doFilter(FilterContext context, KeyValues keyValues) {
-			String sed = context.parameters().getValue("sed");
+		protected KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression) {
+			String sed = expression;
 			// TODO error handling.
 			if (sed == null) {
 				return keyValues;
@@ -46,13 +46,14 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 	};
 
 	@Override
-	public KeyValues filter(FilterContext context, KeyValues keyValues, String filter) {
-		if (name().equalsIgnoreCase(filter)) {
-			return doFilter(context, keyValues);
+	public KeyValues filter(FilterContext context, KeyValues keyValues, Filter filter) {
+		String filterName = filter.filter();
+		if (name().equalsIgnoreCase(filterName)) {
+			return doFilter(context, keyValues, filter.expression());
 		}
 		return keyValues;
 	}
 
-	protected abstract KeyValues doFilter(FilterContext context, KeyValues keyValues);
+	protected abstract KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression);
 
 }

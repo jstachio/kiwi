@@ -126,6 +126,36 @@ public sealed interface KeyValuesServiceProvider {
 	 * the key values should be modified.
 	 * </p>
 	 *
+	 * Filters are enabled by using the {@link KeyValuesResource#KEY_FILTER} key where the
+	 * default syntax is <code>_filter_[resourceName]_[filterId]=expression</code>.
+	 *
+	 * <h2>Builtin Filters</h2>
+	 *
+	 * <h3><code>grep</code></h3>
+	 *
+	 * Grep will filter keys by a regular expression. If the expression matches any part
+	 * of the key the key value is included.
+	 *
+	 * {@snippet lang = properties :
+	 *
+	 * _load_resource=...
+	 * _filter_resource_grep=someregex
+	 *
+	 * }
+	 *
+	 * <h3><code>sed</code></h3>
+	 *
+	 * Sed can change the keys name with subsitution or drop keys altogether. It follows a
+	 * subset of the UNIX sed command where "<code>s</code>" and "<code>d</code>" are
+	 * supported commands.
+	 *
+	 * {@snippet lang = properties :
+	 *
+	 * _load_resource=...
+	 * _filter_resource_sed=/match/ s/replace/withme/g
+	 *
+	 * }
+	 *
 	 * <h2>Extensibility</h2>
 	 * <p>
 	 * Implementations of {@code KeyValuesFilter} can be registered using the
@@ -148,7 +178,7 @@ public sealed interface KeyValuesServiceProvider {
 	 * <h2>Method Details</h2>
 	 *
 	 * <p>
-	 * The {@link #filter(FilterContext, KeyValues, String)} method performs the filtering
+	 * The {@link #filter(FilterContext, KeyValues, Filter)} method performs the filtering
 	 * operation.
 	 * </p>
 	 */
@@ -166,15 +196,28 @@ public sealed interface KeyValuesServiceProvider {
 		}
 
 		/**
+		 * A filter description with filter identifier and expression which is the DSL
+		 * code that the filter will parse use to do filtering.
+		 *
+		 * @param filter filter identifier.
+		 * @param expression string code used by the filter to determine filtering.
+		 * @param name used to differentiate multiple calls to the same filter type when
+		 * looking up parameters. Defaults to empty string.
+		 */
+		public record Filter(String filter, String expression, String name) {
+
+		}
+
+		/**
 		 * Applies a filter to the given key-value pairs. The filter should ideally only
 		 * be applied if the passed filter parameter matches (filter name) otherwise the
 		 * filter just return the passed in key values.
 		 * @param context the filter context providing the environment and parameters
 		 * @param keyValues the key-value pairs to be filtered
-		 * @param filter the name of the filter to apply
+		 * @param filter filter description
 		 * @return a new {@link KeyValues} instance with the filtered key-value pairs
 		 */
-		KeyValues filter(FilterContext context, KeyValues keyValues, String filter);
+		KeyValues filter(FilterContext context, KeyValues keyValues, Filter filter);
 
 	}
 

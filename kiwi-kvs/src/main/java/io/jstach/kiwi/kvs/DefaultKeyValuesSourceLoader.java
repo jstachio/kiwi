@@ -99,7 +99,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 			Set<LoadFlag> flags = KeyValuesSource.loadFlags(resource);
 
 			var kvs = switch (resource) {
-				case InternalKeyValuesResource ir -> load(node, ir, flags);
+				case KeyValuesResource r -> load(node, resourceParser.normalizeResource(r), flags);
 				case NamedKeyValues _kvs -> _kvs.keyValues();
 			};
 
@@ -171,6 +171,9 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 
 	KeyValues load(Node node, InternalKeyValuesResource resource, Set<LoadFlag> flags)
 			throws IOException, FileNotFoundException {
+		if (!resource.normalized()) {
+			throw new IllegalStateException("bug");
+		}
 		logger.load(resource);
 		if (LoadFlag.NO_LOAD_CHILDREN.isSet(flags)) {
 			throw new IOException("Resource not allowed to chain. resource: " + describe(node));

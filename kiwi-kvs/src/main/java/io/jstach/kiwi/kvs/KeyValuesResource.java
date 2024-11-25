@@ -13,19 +13,83 @@ import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
+import io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesFilter.Filter;
 import io.jstach.kiwi.kvs.Variables.Parameters;
 
 /**
  * Represents a resource that contains key-value pairs to be loaded and processed. A
  * {@code KeyValuesResource} includes a URI, optional parameters, and metadata flags that
  * determine its behavior during loading.
- *
  * <p>
- * Resources can be configured with flags and parameters to indicate characteristics such
- * as whether the values are sensitive or should be used for interpolation.
+ * Resources can have special keys associated with them. The most important key is the
+ * load key ({@link #KEY_LOAD}), which assigns a name to the resource. The resource name
+ * is the text following the load key prefix, and the value of the key should be a URI.
+ * </p>
+ * <p>
+ * Other keys can be specified in two ways:
+ * </p>
+ * <ol>
+ * <li>As query parameters in the resource's URI (these keys will be removed before the
+ * resource is loaded).</li>
+ * <li>As additional key-value pairs within the same resource, using the resource name as
+ * part of the key (they keys will be removed from the final result).</li>
+ * </ol>
  *
- * <table>
- * <caption>Resource loading flags</caption> <thead>
+ * <em>The parameters are combined from both the URI and key value pairs but the key value
+ * pairs take prededence on collision.</em> One advantage that URI query keys have is that
+ * they do not need the resource name as that can be deduced.
+ *
+ * <table class="table">
+ * <caption><strong>Resource Keys using default syntax</strong></caption> <thead>
+ * <tr>
+ * <th>Constant</th>
+ * <th>Resource Key</th>
+ * <th>URI Query Key</th>
+ * <th>Description</th>
+ * </tr>
+ * </thead> <tbody>
+ * <tr>
+ * <td>{@link io.jstach.kiwi.kvs.KeyValuesResource#KEY_LOAD}</td>
+ * <td><code>_load_[resource]</code></td>
+ * <td><strong>N/A</strong></td>
+ * <td>Specifies a resource to load. The resource name is defined as the content following
+ * <code>_load_</code>. It should be alphanumeric with no spaces.</td>
+ * </tr>
+ * <tr>
+ * <td>{@link io.jstach.kiwi.kvs.KeyValuesResource#KEY_FLAGS}</td>
+ * <td><code>_flags_[resource]</code></td>
+ * <td><code>_flags</code></td>
+ * <td>Defines flags associated with a resource. Replace <code>[resource]</code> with the
+ * actual resource name.</td>
+ * </tr>
+ * <tr>
+ * <td>{@link io.jstach.kiwi.kvs.KeyValuesResource#KEY_MEDIA_TYPE}</td>
+ * <td><code>_mediaType_[resource]</code></td>
+ * <td><code>_mediaType</code></td>
+ * <td>Specifies the media type of a resource. Replace <code>[resource]</code> with the
+ * actual resource name.</td>
+ * </tr>
+ * <tr>
+ * <td>{@link io.jstach.kiwi.kvs.KeyValuesResource#KEY_PARAM}</td>
+ * <td><code>_param_[resource]_[name]</code></td>
+ * <td><code>_param_[name]</code></td>
+ * <td>Defines parameters associated with a resource. Replace <code>[resource]</code> with
+ * the actual resource name, and <code>[name]</code> with the parameter name, which should
+ * be alphanumeric with no spaces.</td>
+ * </tr>
+ * <tr>
+ * <td>{@link io.jstach.kiwi.kvs.KeyValuesResource#KEY_FILTER}</td>
+ * <td><code>_filter_[resource]_[filter]</code></td>
+ * <td><code>_filter_[filter]</code></td>
+ * <td>Specifies filters to apply to a resource. Replace <code>[resource]</code> with the
+ * actual resource name, and <code>[filter]</code> with the filter identifier, both of
+ * which should be alphanumeric with no spaces.</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * <table class="table">
+ * <caption><strong>Resource loading flags</strong></caption> <thead>
  * <tr>
  * <th>Flag Value</th>
  * <th>Description</th>
@@ -52,6 +116,9 @@ import io.jstach.kiwi.kvs.Variables.Parameters;
  * </tr>
  * </tbody>
  * </table>
+ *
+ * <em>Note: flags can be negated textual by appending <code>NO_</code> or removing
+ * <code>NO_</code></em>
  *
  * Example usage for building a {@code KeyValuesResource}:
  * {@snippet :
@@ -143,6 +210,31 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	public static final String FLAG_INHERIT = "INHERIT";
 
 	/**
+	 * Represents the key for specifying resources to load.
+	 */
+	public static final String KEY_LOAD = "load";
+
+	/**
+	 * Represents the key for specifying flags associated with a resource.
+	 */
+	public static final String KEY_FLAGS = "flags";
+
+	/**
+	 * Represents the key for specifying the media type of a resource.
+	 */
+	public static final String KEY_MEDIA_TYPE = "mediaType";
+
+	/**
+	 * Represents the key for specifying parameters associated with a resource.
+	 */
+	public static final String KEY_PARAM = "param";
+
+	/**
+	 * Represents the key for specifying filters to apply to the resource.
+	 */
+	public static final String KEY_FILTER = "filter";
+
+	/**
 	 * Returns the URI of the resource.
 	 * @return the URI of the resource
 	 */
@@ -228,6 +320,8 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 
 		final EnumSet<LoadFlag> flags;
 
+		final List<Filter> filters;
+
 		@Nullable
 		KeyValue reference;
 
@@ -239,10 +333,11 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 			this.name = DefaultKeyValuesResource.validateResourceName(name);
 			this.parameters = new LinkedHashMap<>();
 			this.flags = EnumSet.noneOf(LoadFlag.class);
+			this.filters = new ArrayList<>();
 		}
 
 		Builder(URI uri, String name, Map<String, String> parameters, EnumSet<LoadFlag> flags,
-				@Nullable KeyValue reference, @Nullable String mediaType) {
+				@Nullable KeyValue reference, @Nullable String mediaType, List<Filter> filters) {
 			super();
 			this.uri = uri;
 			this.name = name;
@@ -250,6 +345,7 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 			this.flags = flags;
 			this.reference = reference;
 			this.mediaType = mediaType;
+			this.filters = filters;
 		}
 
 		/**
@@ -353,6 +449,11 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 			return this;
 		}
 
+		Builder _addFilter(Filter filter) {
+			filters.add(filter);
+			return this;
+		}
+
 		/**
 		 * Parses a comma-separated string of resource flags and adds or removes the flags
 		 * from this builder.
@@ -388,7 +489,16 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		 * @return a new {@code KeyValuesResource} instance
 		 */
 		public KeyValuesResource build() {
-			return DefaultKeyValuesResource.of(this);
+			return DefaultKeyValuesResource.of(this, false);
+		}
+
+		InternalKeyValuesResource buildNormalized() {
+			return DefaultKeyValuesResource.of(this, true);
+		}
+
+		// For unit test
+		InternalKeyValuesResource build(KeyValuesResourceParser parser) {
+			return parser.normalizeResource(this.build());
 		}
 
 		@Override
@@ -407,7 +517,9 @@ sealed interface InternalKeyValuesResource extends KeyValuesResource {
 
 	boolean isRedacted();
 
-	public List<String> filters();
+	public List<Filter> filters();
+
+	boolean normalized();
 
 }
 
@@ -416,11 +528,12 @@ record DefaultKeyValuesResource(URI uri, //
 		Set<LoadFlag> loadFlags, //
 		@Nullable KeyValue reference, //
 		@Nullable String mediaType, //
-		Parameters parameters) implements InternalKeyValuesResource {
+		Parameters parameters, List<Filter> filters, boolean normalized) implements InternalKeyValuesResource {
 
 	DefaultKeyValuesResource {
 		validateResourceName(name);
 		loadFlags = FlagSet.copyOf(loadFlags, LoadFlag.class);
+		filters = List.copyOf(filters);
 	}
 
 	public static String validateResourceName(String identifier) {
@@ -437,11 +550,12 @@ record DefaultKeyValuesResource(URI uri, //
 		var flags = FlagSet.enumSetOf(LoadFlag.class, resource.loadFlags());
 		var ref = resource.reference();
 		var mediaType = resource.mediaType();
-		var b = new KeyValuesResource.Builder(uri, name, parameters, flags, ref, mediaType);
+		var filters = resource.filters();
+		var b = new KeyValuesResource.Builder(uri, name, parameters, flags, ref, mediaType, filters);
 		return b;
 	}
 
-	static KeyValuesResource of(KeyValuesResource.Builder builder) {
+	static InternalKeyValuesResource of(KeyValuesResource.Builder builder, boolean normalized) {
 		Map<String, String> parameters = new LinkedHashMap<>(builder.parameters);
 		URI uri = builder.uri;
 		String name = builder.name;
@@ -449,19 +563,20 @@ record DefaultKeyValuesResource(URI uri, //
 		var loadFlags = builder.flags;
 		var mediaType = builder.mediaType;
 		Parameters variables = Parameters.of(parameters);
-		return new DefaultKeyValuesResource(uri, name, loadFlags, reference, mediaType, variables);
+		var filters = builder.filters;
+		return new DefaultKeyValuesResource(uri, name, loadFlags, reference, mediaType, variables, filters, normalized);
 	}
 
-	@Override
-	public List<String> filters() {
-		var csv = parameters.getValue("filter");
-		if (csv == null) {
-			return List.of();
-		}
-		List<String> filters = new ArrayList<>();
-		DefaultKeyValuesMedia.parseCSV(csv, filters::add);
-		return List.copyOf(filters);
-	}
+	// @Override
+	// public List<Filter> filters() {
+	// var csv = parameters.getValue("filter");
+	// if (csv == null) {
+	// return List.of();
+	// }
+	// List<String> filters = new ArrayList<>();
+	// DefaultKeyValuesMedia.parseCSV(csv, filters::add);
+	// return List.copyOf(filters);
+	// }
 
 	@Override
 	public boolean isRedacted() {
