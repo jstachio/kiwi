@@ -187,7 +187,7 @@ class KeyValuesSystemTest {
 	}
 
 	@Test
-	void testKeyValuesResourceToString() {
+	void testKeyValuesResourceToString() throws KeyValuesResourceParserException {
 		var r = KeyValuesResource.builder(URI.create("system:///?_filter_sed=s/a/b/"))
 			.name("system")
 			.noInterpolation(true)

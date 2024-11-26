@@ -168,8 +168,7 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.13.0</version>
           <configuration>
-            <source>${java.version}</source>
-            <target>${java.version}</target>
+            <release>${java.version}</release>
             <encoding>${project.build.sourceEncoding}</encoding>
             <showWarnings>true</showWarnings>
             <failOnWarning>true</failOnWarning>

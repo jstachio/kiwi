@@ -99,7 +99,10 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 			Set<LoadFlag> flags = KeyValuesSource.loadFlags(resource);
 
 			var kvs = switch (resource) {
-				case KeyValuesResource r -> load(node, resourceParser.normalizeResource(r), flags);
+				case KeyValuesResource r -> {
+					InternalKeyValuesResource normalizedResource = normalizeResource(r, node);
+					yield load(node, normalizedResource, flags);
+				}
 				case NamedKeyValues _kvs -> _kvs.keyValues();
 			};
 
@@ -113,7 +116,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 				// no interpolate flag.
 				kvs = kvs.expand(variables);
 			}
-			var foundResources = resourceParser.parseResources(kvs);
+			List<? extends InternalKeyValuesResource> foundResources = parseResources(kvs, node);
 			var nodes = foundResources.stream().map(s -> new Node(s, node)).toList();
 			validateNames(nodes);
 			// push
@@ -146,6 +149,28 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		}
 		return keyValues.expand(variables).memoize();
 
+	}
+
+	private List<? extends InternalKeyValuesResource> parseResources(KeyValues kvs, Node node) throws IOException {
+		List<? extends InternalKeyValuesResource> foundResources;
+		try {
+			foundResources = resourceParser.parseResources(kvs);
+		}
+		catch (KeyValuesResourceParserException e) {
+			throw new IOException("Resource has an invalid resource key.  resource: " + describe(node), e);
+		}
+		return foundResources;
+	}
+
+	private InternalKeyValuesResource normalizeResource(KeyValuesResource r, Node node) throws IOException {
+		InternalKeyValuesResource normalizedResource;
+		try {
+			normalizedResource = resourceParser.normalizeResource(r);
+		}
+		catch (KeyValuesResourceParserException e) {
+			throw new IOException("Resource has invalid resource key in URI. resource: " + describe(node), e);
+		}
+		return normalizedResource;
 	}
 
 	static List<Node> validateNames(List<Node> nodes) {

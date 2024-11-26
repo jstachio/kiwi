@@ -235,6 +235,26 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	public static final String KEY_FILTER = "filter";
 
 	/**
+	 * A synonym for {@link #KEY_FLAGS}.
+	 */
+	public static final String KEY_FLAG = "flag";
+
+	/**
+	 * A synonym for {@link #KEY_MEDIA_TYPE}.
+	 */
+	public static final String KEY_MIME = "mime";
+
+	/**
+	 * A synonym for {@link #KEY_PARAM}.
+	 */
+	public static final String KEY_PARM = "parm";
+
+	/**
+	 * A synonym for {@link #KEY_FILTER}.
+	 */
+	public static final String KEY_FILT = "filt";
+
+	/**
 	 * Returns the URI of the resource.
 	 * @return the URI of the resource
 	 */
@@ -497,7 +517,7 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		}
 
 		// For unit test
-		InternalKeyValuesResource build(KeyValuesResourceParser parser) {
+		InternalKeyValuesResource build(KeyValuesResourceParser parser) throws KeyValuesResourceParserException {
 			return parser.normalizeResource(this.build());
 		}
 
