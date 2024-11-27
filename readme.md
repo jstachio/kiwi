@@ -234,7 +234,7 @@ This mini DSL syntax in the future will be configurable so that you can pick dif
 
 ### Interpolation
 
-Kiwi can do Bash like interpolation on a stream of `KeyValues`. It does this by using
+Kiwi can do Bash like interpolation on a stream of `KeyValues` (e.g. `${somevar:-${othervar}}`). It does this by using
 the key values themselves and `Variables`. `Variables` are simply `Function<String,String>`.
 This allows you to interpolate on key values with things you do not want in the final
 result (`KeyValues`). For example a common practice is to use `System.getProperties()` as variables
@@ -249,8 +249,11 @@ with the resource flag `no_add`.
 # first loaded properties
 _load_system=system:///
 _flags_system=no_add
-_load_app=classpath:/app.properties
+_load_app=classpath:/${app.name:-app}.properties
 ```
+
+If `app.name` was defined in system properties it would use it in the `_load_app` URI otherwise `app.properties` 
+will be used.
 
 Often interpolation will create a new stream of KeyValues where the value
 part of the key is replaced with the interpolated results however the original value
@@ -356,7 +359,10 @@ _load_env=env:///?_filter_grep=^MY_APP_&_filter_sed=s/^MY_APP/myapp./
 ```
 
 The above will only load environment variables prefixed with `MY_APP_` and will replace
-`MY_APP_` with `myapp.` 
+`MY_APP_` with `myapp.`
+
+The original key name is always preserved for key word tracking so regardless
+of how you rename people can still find where the key value originally came from.
 
 
 ### KeyValuesLoader
@@ -376,11 +382,45 @@ Out of the box Kiwi supports by schema:
 * `system` - System properties
 * `env` - Environment variables
 * `cmd` - Command line argument pairs separated by `=`.
+* `stdin` - Allows unix piping of key values often useful for passwords
 * `profile.[schema]` - Will load multiple resources based on a CSV of profiles where the profile name replaces part of the URI.
 
 Other URI schemas will be added soon usually as separate modules like dotenv, HOCON, Terraform/Tofu `tfvars.json` format etc.
 
-#### Profiles URI
+**Note that if no schema is provided kiwi will assume it is a file path which is a URI.**
+
+We won't cover `file` and `classpath` as they are pretty self explanatory.
+
+#### URI schemas: `env`, `system` and `cmd` URI schemas 
+
+`env:///`, `system:///` and `cmd:///` resources have a few features that are different than file or classpath.
+
+Each one of the URI schemas above can take a path which will be used to fetch a key value where the value is used as
+the source of the key values. Otherwise all the key values of the resource will be loaded.
+
+For example let us assume we have an env variable whose value is JSON we can load it like:
+
+```properties
+_load_springJson=env:///SPRING_APPLICATION_JSON?_mediaType=json
+```
+
+#### URI schemas: `stdin`
+
+`stdin:///` without a path will assume the entire contents of the stdin is in `java.util.Properties` key values format.
+Thus it is a good idea to specify `_mediaType=` with stdin if that is not the case.
+
+`stdin:///` can also bind the contents of the input parsed as UTF-8 string to the key provided in the path of the URI.
+
+```properties
+_load_stdin=stdin:///db.password?_flag=sensitive,optional
+```
+
+As you can see the above is particularly useful for passwords similar to [how docker takes passwords from stdin](https://docs.docker.com/reference/cli/docker/login/#password-stdin).
+
+
+#### URI schemas: `profile.`
+
+(TODO we will probably rename profile to profiles soon)
 
 Probably the more confusing KeyValuesLoader is the `profile` which deserves an example:
 
@@ -429,6 +469,14 @@ Out of the box Kiwi supports:
 
 Other formats will be added soon usually as separate modules like dotenv, HOCON, Terraform/Tofu `tfvars.json` format etc.
 
+### KeyValuesEnvironment
+
+Kiwi provides a facade to access system properties, environment variables, class resource loaders, stdin,
+command line arguments and logging. This can be useful for unit testing but the most useful is the logger.
+
+The logger in Kiwi by default does nothing but users may want to plug their own implementations to keep
+track of resource loading.
+
 ### KeyValuesSystem
 
 This is the entrypoint into Kiwi and used to load the initial part of the chain of resources.
@@ -442,7 +490,7 @@ has been evolving for over 14 years.
 
 Many libraries and frameworks have come and gone with differing opinions on configuration. 
 While our backing frameworks have changed over the years our configuration style, format
-and behavior because of the library has largely not thanks to the flexibility.
+and behavior because of this library has largely not thanks to the flexibility.
 
 *Opinionated maybe vogue but **not** opinionated goes the distance.*
 
