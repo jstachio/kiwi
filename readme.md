@@ -418,7 +418,7 @@ _load_stdin=stdin:///db.password?_flag=sensitive,optional
 As you can see the above is particularly useful for passwords similar to [how docker takes passwords from stdin](https://docs.docker.com/reference/cli/docker/login/#password-stdin).
 
 
-#### URI schemas: `profile.`
+#### URI schema: `profile.`
 
 (TODO we will probably rename profile to profiles soon)
 
@@ -471,6 +471,8 @@ Other formats will be added soon usually as separate modules like dotenv, HOCON,
 
 ### KeyValuesEnvironment
 
+`KeyValuesEnvironment`
+
 Kiwi provides a facade to access system properties, environment variables, class resource loaders, stdin,
 command line arguments and logging. This can be useful for unit testing but the most useful is the logger.
 
@@ -479,8 +481,10 @@ track of resource loading.
 
 ### KeyValuesSystem
 
+`KeyValuesSystem`
+
 This is the entrypoint into Kiwi and used to load the initial part of the chain of resources.
-The bootstrapping part of your application will call it first and will often and of the
+The bootstrapping part of your application will call it first and will often convert or pass
 the loaded key values to something else.
 
 ## History

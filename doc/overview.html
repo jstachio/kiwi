@@ -64,84 +64,280 @@ ConfigurableEnvironment env = applicationContext.getEnvironment();
 env.getPropertySources().addFirst(new MapPropertySource("start", map));
 </code></pre>
 
-<h3 id="example-properties-files">Example Properties Files</h3>
-
-<strong>start.properties (first loaded)</strong>
-
-<pre><code>message=Hello ${user.name}
-_load_foo=classpath:/foo.properties
-port.prefix=1
-</code></pre>
-
-<p>(take note of the <code>_load_foo</code> key)</p>
-
-<strong>foo.properties (second loaded resource)</strong>
-
-<pre><code>user.name=Barf
-message=Merchandising
-db.port=${port.prefix}5672
-_load_user=file:/${user.home}/.config/myapp/user.properties
-_flags_user=sensitive,no_require
-</code></pre>
-
-<p>(take note of the <code>_load_user</code> and <code>_flags_user</code> keys)</p>
-
-<strong>user.properties (third loaded resource treated as sensitive)</strong>
-
-<pre><code>secret=12345 # my luggage combination
-port.prefix=3
-</code></pre>
-
-<p>After that, system properties, then environment variables, and then command line key values are added. Ignoring environment variables and system properties, our effective key values printed out will be:</p>
-
-<pre><code>message=Merchandising
-user.name=Barf
-port.prefix=3
-db.port=35672
-secret=REDACTED
-</code></pre>
-
 <h2 id="architecture">Architecture</h2>
-
 <p>Kiwi's two major concepts are:</p>
 <ol>
-    <li>KeyValues - a stream of key values</li>
-    <li>Resources - a URI with associated key value metadata</li>
+    <li>{@link io.jstach.kiwi.kvs.KeyValues} - a stream of key values</li>
+    <li>{@link io.jstach.kiwi.kvs.KeyValuesResource} - a URI with associated key-value metadata</li>
 </ol>
-
 <p>Resources are used to load key values, and key values can be used to specify and find more resources (to load more key values). Kiwi is recursive.</p>
+<p>For the rest of the explanation of architecture, we will go bottom-up.</p>
 
 <h3 id="keyvalue">KeyValue</h3>
-
-<p>A <code>KeyValue</code> object in Kiwi, unlike a <code>Map.Entry&lt;String, String&gt;</code>, has more information than just the simple tuple of <code>key</code> and <code>value</code>. <code>KeyValue</code> objects are:</p>
+<p>A {@link io.jstach.kiwi.kvs.KeyValue} object in Kiwi, unlike a <code>Map.Entry&lt;String, String&gt;</code>, has more information than just the simple tuple of <code>key</code> and <code>value</code>.</p>
 <ul>
     <li>Immutable</li>
-    <li>Have interpolated values as well as the original pre-interpolated value</li>
-    <li>Contain source information</li>
-    <li>Indicate whether or not they should be used for interpolation</li>
-    <li>Indicate whether or not they should be printed (e.g., marking as sensitive information)</li>
+    <li>Have interpolated value as well as the original pre-interpolated value</li>
+    <li>Have source information</li>
+    <li>Whether or not it should be used for interpolation</li>
+    <li>Whether or not it should be printed out ever (e.g., a password or other sensitive information)</li>
 </ul>
-
-<p><strong>Note:</strong> A <code>KeyValue</code> can be a special key that references another resource to load, typically prefixed with an underscore (e.g., <code>_load_name</code>).</p>
+<p>Kiwi provides ergonomics for working with streams of key values to filter, collect, parse, and format them.</p>
+<p><strong>Notice that Kiwi is like a list of key values and thus:</strong></p>
+<ul>
+    <li>Order can be important</li>
+    <li>There can be duplicate "keys" (that may or may not override in the final result)</li>
+</ul>
+<p>Finally, a {@link io.jstach.kiwi.kvs.KeyValue} can be a special key that can reference another resource to load.</p>
+<p>These keys are usually prefixed with <code>_</code> to avoid collision and maximize compatibility. The most important one is <code>_load_name</code>, where <code>name</code> is the name you assign to the resource and the value is a URI. This mini DSL syntax will be configurable in the future, so you can pick different key name patterns.</p>
 
 <h3 id="interpolation">Interpolation</h3>
+<p>Kiwi can perform Bash-like interpolation on a stream of {@link io.jstach.kiwi.kvs.KeyValues} (e.g., <code>${somevar:-${othervar}}</code>). It does this by using the key values themselves and {@link io.jstach.kiwi.kvs.Variables}. {@link io.jstach.kiwi.kvs.Variables} are simply <code>Function&lt;String, String&gt;</code>.</p>
+<p>This allows you to interpolate on key values with data you do not want in the final result ({@link io.jstach.kiwi.kvs.KeyValues}). For example, it is common to use <code>System.getProperties()</code> as variables, but often you do not want all the system properties to end up in the {@link io.jstach.kiwi.kvs.KeyValues}.</p>
+<p>Interpolation can be disabled with the resource flag <code>no_interpolation</code>.</p>
+<p>Furthermore, you can load a resource as variables instead of {@link io.jstach.kiwi.kvs.KeyValues} with the resource flag <code>no_add</code>.</p>
 
-<p>Kiwi can perform Bash-like interpolation on a stream of <code>KeyValues</code>, using the key values themselves and <code>Variables</code>, which are <code>Function&lt;String, String&gt;</code>. Interpolation can be disabled for specific resources using a resource flag.</p>
+{@snippet lang="properties":
+# first loaded properties
+_load_system=system:///
+_flags_system=no_add
+_load_app=classpath:/${app.name:-app}.properties
+}
 
-<h2 id="key-advantages-of-kiwi">Key Advantages of Kiwi</h2>
+<p>If <code>app.name</code> is defined in system properties, it will be used in the <code>_load_app</code> URI. Otherwise, <code>app.properties</code> will be used.</p>
+<p>Often, interpolation will create a new stream of {@link io.jstach.kiwi.kvs.KeyValues} where the value part of the key is replaced with the interpolated result; however, the original value is always retained.</p>
+
+<h3 id="keyvaluesresource">KeyValuesResource</h3>
+<p>A {@link io.jstach.kiwi.kvs.KeyValuesResource} has a {@link java.net.URI} and a symbolic name (used to find configuration). 
+It is backed by a key value with additional metadata on how to load that resource. 
+URIs are designed to point at resources, and the additional metadata in a {@link io.jstach.kiwi.kvs.KeyValuesResource} is, 
+as you might guess, more {@link io.jstach.kiwi.kvs.KeyValues}.</p>
+
+<p>The additional metadata is used to determine how to load the key values and what metadata should be associated with each key value.</p>
+
+<p>Some examples of metadata use cases include:</p>
 <ul>
-    <li><strong>Zero opinions</strong> - It does not assume default resource names or loading order; you have full control.</li>
-    <li>Zero dependencies</li>
-    <li>Zero reflection</li>
-    <li>Zero auto-loading - You choose the resources and order.</li>
-    <li>Zero logging (unless you choose to add it)</li>
-    <li>Fast initialization and highly configurable</li>
-    <li>Framework agnostic</li>
+    <li>The key values from the resource are sensitive and should not be easily printed out.</li>
+    <li>The key values should not be interpolated because the data is raw.</li>
+    <li>The loaded key values should or should not load other key values.</li>
+    <li>The key values need their names transformed or some key values ignored.</li>
 </ul>
 
-<h2 id="extensibility">Extensibility</h2>
+<p>This is all configurable through key values (and URIs), particularly using the <code>_flags_name</code> key.</p>
 
-<p>Kiwi supports extensibility through the {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider} interface, allowing custom loaders and media handlers to be integrated and discovered via the {@link java.util.ServiceLoader} mechanism.</p>
+<h4 id="resource-key-value-configuration">Resource Key Value Configuration</h4>
+<p>Resource loading configuration can be done with special key values. 
+These can either be specified in the URI of the resource or as key values within the resource where the <code>_load_[name]</code> is specified.</p>
+
+<h5 id="resource-configuration-in-resource">Resource Configuration in Resource</h5>
+<p>The default key-value pattern to specify resources is:</p>
+
+{@snippet lang=properties :
+_load_[name]=URI
+_mediaType_[name]=Content Type or file extension to resolve format of resource for parsing
+_flags_[name]=CSV of flag names
+_param_[name]_[key]=String
+_filter_[name]=String expression for filter
+}
+
+<p>The <code>[name]</code> part should be replaced with a name of your choosing, where only case-sensitive alphanumeric characters are allowed. 
+This becomes the symbolic name of the resource. Don't worry—those special keys will be filtered out.</p>
+
+<p>The <code>_load_[name]</code> is the most important key as it dictates the name of the resource and the URI of the resource.</p>
+
+<h5 id="resource-configuration-in-uri">Resource Configuration in URI</h5>
+<p>The URI of the <code>_load_[name]</code> can also contribute to resource keys using the following format:</p>
+
+{@snippet lang=properties :
+_load_custom=file://./something?_mediaType=properties&_flags=optional&_filter_sed=s/myapp_//&_param_custom=something
+}
+
+<p><strong>Notice:</strong> The resource name does not need to be specified with URI parameters, as it is deduced.</p>
+
+<h4 id="resource-flags">Resource Flags</h4>
+<p>Resource flags can be set with <code>_flags_[name]</code> in the resource or on the URI with <code>_flags</code>. 
+These can be repeatable parameters, and their values are combined.</p>
+
+<p>This is currently a subset of the flags:</p>
+<ul>
+    <li>{@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_NO_REQUIRE} / {@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_OPTIONAL} - 
+    Resources are usually required to exist; otherwise, an error occurs. This flag makes them not required.</li>
+    <li>{@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_SENSITIVE} - 
+    The key values loaded from the resource will be marked as sensitive and will not be output in <code>toString</code> or similar methods.</li>
+    <li>{@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_NO_ADD} - 
+    The key values will not be added to the final result but will instead be used as <code>variables</code>.</li>
+    <li>{@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_NO_LOAD_CHILDREN} - 
+    The resource is not allowed to chain additional resources (e.g., it cannot use <code>_load_</code> keys).</li>
+</ul>
+
+<h4 id="resource-media-type">Resource Media Type</h4>
+<p>Kiwi will try to automatically determine the media type of a resource based on the URI file extension. 
+However, in some cases, that is not sufficient. The key <code>_mediaType_[name]</code> allows you to explicitly specify the media type.</p>
+
+<p>This is particularly useful for URIs that can load a key containing key-value data. 
+A real-world example of this is the <a href="https://docs.spring.io/spring-boot/reference/features/external-config.html" target="_blank">
+Spring Boot</a> environment variable <code>SPRING_APPLICATION_JSON</code>.</p>
+
+<p>An example of emulating that behavior in Kiwi:</p>
+
+{@snippet lang=properties :
+_load_springJson=env:///SPRING_APPLICATION_JSON?_mediaType=json
+}
+
+<p><strong>Note:</strong> JSON support is not provided out-of-the-box (OOB) and will be available as a separate module.</p>
+
+<h4 id="resource-filters">Resource Filters</h4>
+<p>Filters can be applied to a resource to alter the key values after they are loaded but before being added to the final results. 
+The ordering of filters matters, so it is generally recommended to use the URI notation, as the order is guaranteed.</p>
+
+<p>The current filters provided out-of-the-box (OOB) are:</p>
+<ul>
+    <li><code>sed</code> - Similar to the Unix <code>sed</code> utility but only supporting the <code>s</code> (substitute) and <code>d</code> (delete) commands.</li>
+    <li><code>grep</code> - Filters keys matching a regular expression.</li>
+</ul>
+
+<p>Here is an example of using both filters:</p>
+
+{@snippet lang=properties :
+_load_env=env:///?_filter_grep=^MY_APP_&_filter_sed=s/^MY_APP/myapp./
+}
+
+<p>The above configuration will only load environment variables prefixed with <code>MY_APP_</code> and will replace 
+<code>MY_APP_</code> with <code>myapp.</code>.</p>
+
+<p>The original key name is always preserved for key tracking, so regardless of how keys are renamed, 
+users can still identify where the key-value originally came from.</p>
+
+<p><strong>Note:</strong> 
+    To add new filters, implement {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesFilter}. 
+    This interface allows you to provide custom filters.
+</p>
+
+<h3 id="keyvaluesloader">KeyValuesLoader</h3>
+<p>A {@link io.jstach.kiwi.kvs.KeyValuesLoader} usually takes a {@link io.jstach.kiwi.kvs.KeyValuesResource} and turns it into {@link io.jstach.kiwi.kvs.KeyValues}.</p>
+
+<p>It is an extension point that, in simple terms, takes a URI and loads {@link io.jstach.kiwi.kvs.KeyValues}, usually 
+based on the schema of the URI. For example:</p>
+<ul>
+    <li><code>classpath</code> - Uses the JDK classloader mechanism.</li>
+    <li><code>file</code> - Uses <code>java.io</code>/<code>java.nio</code> file loading.</li>
+</ul>
+
+<p>This part of the library is extendable, and custom loaders can be manually wired or the service loader can be used.</p>
+
+<p>Out of the box, Kiwi supports the following URI schemas:</p>
+<ul>
+    <li><code>classpath</code></li>
+    <li><code>file</code></li>
+    <li><code>system</code> - System properties</li>
+    <li><code>env</code> - Environment variables</li>
+    <li><code>cmd</code> - Command line argument pairs separated by <code>=</code></li>
+    <li><code>stdin</code> - Allows Unix piping of key values, often useful for passwords</li>
+    <li><code>profile.[schema]</code> - Loads multiple resources based on a CSV of profiles where the profile name replaces part of the URI</li>
+</ul>
+
+<p>Other URI schemas will be added in the future, usually as separate modules, such as dotenv, HOCON, Terraform/Tofu <code>tfvars.json</code> format, etc.</p>
+
+<p><strong>Note:</strong> If no schema is provided, Kiwi assumes it is a file path, which is treated as a URI.</p>
+
+<p>We won’t cover <code>file</code> and <code>classpath</code> here, as they are straightforward and self-explanatory.</p>
+
+<h4 id="uri-schemas-env-system-cmd">URI schema: <code>env</code>, <code>system</code>, <code>cmd</code></h4>
+
+<p><code>env:///</code>, <code>system:///</code>, and <code>cmd:///</code> resources have features that differ from <code>file</code> or <code>classpath</code>.</p>
+
+<p>Each of these URI schemas can take a path that fetches a key value, where the value is used as the source of the key values. 
+If no path is provided, all key values of the resource will be loaded.</p>
+
+<p>For example, if we have an environment variable whose value is JSON, we can load it like this:</p>
+
+{@snippet lang=properties :
+_load_springJson=env:///SPRING_APPLICATION_JSON?_mediaType=json
+}
+
+<h4 id="uri-schemas-stdin">URI schema: <code>stdin</code></h4>
+<p><code>stdin:///</code> without a path assumes that the entire contents of stdin are in <code>java.util.Properties</code> key-value format. 
+If this is not the case, it is advisable to specify <code>_mediaType=</code> explicitly with stdin.</p>
+
+<p><code>stdin:///</code> can also bind the input content, parsed as a UTF-8 string, to the key provided in the URI path.</p>
+
+{@snippet lang=properties :
+_load_stdin=stdin:///db.password?_flag=sensitive,optional
+}
+
+<p>The above example is particularly useful for passwords, similar to 
+<a href="https://docs.docker.com/reference/cli/docker/login/#password-stdin" target="_blank">how Docker handles passwords from stdin</a>.</p>
+
+<h4 id="uri-schema-profile">URI schema: <code>profile.</code></h4>
+<p><strong>Note:</strong> This schema may be renamed to <code>profiles</code> in the future.</p>
+
+<p>The <code>profile</code> schema is one of the more complex {@link io.jstach.kiwi.kvs.KeyValuesLoader} implementations. 
+It allows loading multiple resources based on a CSV list of profile names. Here's an example:</p>
+
+{@snippet lang=properties :
+PROFILES=profile1,profile2 # this could come from an environment variable
+
+_load_profiles=profile.classpath:/app-__PROFILE__.properties
+_param_profiles_profile=${PROFILES}
+_flags_profiles=no_require
+}
+
+<p>The above configuration will attempt to load the following resources:</p>
+<ul>
+    <li><code>classpath:/app-profile1.properties</code></li>
+    <li><code>classpath:/app-profile2.properties</code></li>
+</ul>
+
+<p>It will not fail if those resources are not found, as the flag <code>no_require</code> is set.</p>
+
+<p>The logic behind this schema is not special or internal. The <code>profile</code> loader simply generates the following key values:</p>
+
+{@snippet lang=properties :
+_load_profiles1=classpath:/app-profile1.properties
+_flags_profiles1=no_require
+_load_profiles2=classpath:/app-profile2.properties
+_flags_profiles2=no_require
+}
+
+<p>This means users can create a similar implementation themselves if desired.</p>
+
+
+<h3 id="keyvaluesmedia">KeyValuesMedia</h3>
+<p>Some {@link io.jstach.kiwi.kvs.KeyValuesLoader} implementations can directly parse the {@link java.net.URI} into {@link io.jstach.kiwi.kvs.KeyValues}. 
+However, many will rely on a parser to handle the data.</p>
+
+<p>Kiwi provides a framework to parse and format key values from or to byte streams or strings, 
+based on <a href="https://en.wikipedia.org/wiki/Media_type" target="_blank">media type</a> 
+(also known as "Content Type" or MIME) or file extension.</p>
+
+<p>This part of the library is extendable. Custom media types can be manually wired or loaded using the Java <code>ServiceLoader</code>.</p>
+
+<p>Out of the box, Kiwi supports:</p>
+<ul>
+    <li><code>java.util.Properties</code> format</li>
+    <li>URL Query percent encoding format</li>
+</ul>
+
+<p>Additional formats will be added as separate modules, such as dotenv, HOCON, and Terraform/Tofu <code>tfvars.json</code> format.</p>
+
+<p><strong>Note:</strong> To add new media types, implement {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder}. 
+This interface allows you to provide custom parsing logic for new formats.</p>
+
+<h3 id="keyvaluesenvironment">KeyValuesEnvironment</h3>
+
+<p>{@link io.jstach.kiwi.kvs.KeyValuesEnvironment}</p>
+<p>Kiwi provides a facade to access system properties, environment variables, class resource loaders, stdin, 
+command-line arguments, and logging. This is particularly useful for unit testing, but the most valuable feature is the logger.</p>
+
+<p>The logger in Kiwi does nothing by default, but users can plug in their own implementations to track resource loading.</p>
+
+<h3 id="keyvaluessystem">KeyValuesSystem</h3>
+
+<p>{@link io.jstach.kiwi.kvs.KeyValuesSystem}</p>
+<p>This is the entry point into Kiwi and is used to load the initial part of the chain of resources. 
+The bootstrapping part of your application will call it first and will often convert or pass the loaded key values to another system.</p>
+
+
 </div>
 </body>
 </html>
