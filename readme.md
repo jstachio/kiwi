@@ -22,7 +22,7 @@ To do this Kiwi loads streams of key values (KeyValue) from resources.
 What is unique about it is that certain key values will load more key values to the current
 stream which is what we call chaining.
 
-    URI -> KeyValues\* -> URI\* -> KeyValues -> ...
+    URI -> KeyValues* -> URI* -> KeyValues -> ...
 
 Streams are useful because they can be filtered and transformed
 which matters because keys and values from various sources often need transformation. 
@@ -59,7 +59,7 @@ var kvs = KeyValuesSystem.defaults()
   .add("classpath:/start.properties")
   .add("system:///") // add system properties to override
   .add("env:///")    // add env variables to override
-  .add("cmd:///-D")  // add command line for final override using the prefix of -D
+  .add("cmd:///?_filter_sed=s/^-D//")  // add command line for final override using the prefix of -D
   .load();
 
 // give the key values to some other config framework like Spring:
@@ -162,7 +162,15 @@ While the Kiwi KVS core does not provide an opinion on loading Kiwi does provide
 module (kiwi-boot) that more or less mimics Spring Boot's loading of configuration without requiring Spring Boot.
 
 This module also serves another purpose in that it is example code of using kiwi-kvs you can copy and customize 
-for your own applications/libraries. 
+for your own applications/libraries.
+
+### Kiwi Maven plugin
+
+(Coming soon. My company has an internal implementation that I just need to port).
+
+The kiwi maven plugin is a far more capable replacement of the [Codehaus Properties Maven plugin](https://www.mojohaus.org/properties-maven-plugin/).
+This allows you to use much of the same configuration you would use in your application during the build process.
+This is particularly useful for database code generator plugins like [jOOQ](https://www.jooq.org/doc/latest/manual/code-generation/codegen-maven/) or Flyways Maven plugins.
 
 ## Kiwi's advantages:
 
@@ -263,27 +271,93 @@ Some examples are:
 * The key values from the resource are sensitive and should not be easily printed out
 * The key values should not be interpolated because the data is raw
 * The loaded key values should or should not load other key values
+* The key values need their names transformed or some key values ignored
 
 This is all configurable again through key values (and URIs) particularly
 the `_flags_name` key.
+
+#### Resource Key Value Configuration
+
+Resource loading configuration can be done with special key values.
+It can be either specified in the URI of the resource or as key values in
+the resource where the `_load_[name]` is specified.
+
+##### Resource configuration in resource
 
 The default key value pattern to specify resources is:
 
 ```properties
 _load_[name]=URI
+_mediaType_[name]=Content Type or file extension to resolve format of resource for parsing
 _flags_[name]=CSV of flag names
 _param_[name]_[key]=String
+_filter_[name]=String expression for filter
 ```
-The `[name]` part should be replaced with a name of ones choosing where only case sensitive alphanumeric characters are allowed. 
+
+The `[name]` part should be replaced with a name of ones choosing where only case sensitive alphanumeric characters are allowed.
+It becomes the symbolic name of the resource. Don't worry those special keys will be filtered out. 
+
+The `_load_[name]` is the most important key as it dictates the name of the resource and the URI of the resource.
+
+##### Resource configuration in URI
+
+The URI of the `_load_[name]` can also contribute to resource keys with the following format
+
+```properties
+_load_custom=file://./something?_mediaType=properties&_flags=optional&_filter_sed=s/myapp_//&_param_custom=something
+```
+
+**Notice how the resource name does not need to be specified with URI parameters as that is deduced.**
 
 #### Resource Flags
 
+Resource flags can be set with `_flags_[name]` in the resource or on the URI with `_flags`
+which can be a repeatable parameter and is combined.
+
 This is currently a subset of the flags:
 
-* `no_require` - Resources are usually required to exist otherwise failure. This flag makes them not required.
+* `no_require` / `optional` - Resources are usually required to exist otherwise failure. This flag makes them not required.
 * `sensitive` - The key values loaded from the resource will be marked as sensitive and thus will not be outputted on `toString` etc.
 * `no_add` - The key values will not be added to the final result but will be used as `variables`.
 * `no_load_children` - The resource is not allowed to chain additional resources (not allowed to use `_load_`).
+
+#### Resource Media Type
+
+Kiwi will try to automatically determine the media type of a resource based on the URI file extension but
+in some cases that is not enough. The key `_mediaType_[name]` allows you to provide that explicitly.
+
+This is especially useful on URIs that can load a key that has key values in it.
+A real world example of that is in [Spring Boot](https://docs.spring.io/spring-boot/reference/features/external-config.html)
+`SPRING_APPLICATION_JSON` environment variable.
+
+An example of emulating that behavior is:
+
+```properties
+_load_springJson=env:///SPRING_APPLICATION_JSON?_mediaType=json
+```
+
+(A caveat with the above is example is that JSON support will be a separate module and is not provided OOB).
+
+#### Resource Filters
+
+Filters can be applied to a resource that will alter the key values after loaded but before being
+added to the final results. The ordering of filters does matter so it is generally
+recommend to use the URI notation as order is guaranteed.
+
+The current filters provided OOB are:
+
+* sed - just like the unix sed utility but only supporting the `s` and `d` commands
+* grep - filter keys matching regular expression
+
+Here is an example of using both:
+
+```properties
+_load_env=env:///?_filter_grep=^MY_APP_&_filter_sed=s/^MY_APP/myapp./
+```
+
+The above will only load environment variables prefixed with `MY_APP_` and will replace
+`MY_APP_` with `myapp.` 
+
 
 ### KeyValuesLoader
 
