@@ -4,7 +4,7 @@
   <artifactId>kiwi-maven-parent</artifactId>
   <name>kiwi-maven-parent</name>
   <packaging>pom</packaging>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <url>https://github.com/jstachio/kiwi</url>
   <description>
     A non-opinionated Java bootstrapping configuration library that allows
@@ -18,7 +18,7 @@
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <metainf-services.version>1.11</metainf-services.version>
-    <project.build.outputTimestamp>1724545675</project.build.outputTimestamp>
+    <project.build.outputTimestamp>1732734221</project.build.outputTimestamp>
     <doc.resources>../</doc.resources>
     <doc.snippets>kiwi/src/test/java</doc.snippets>
     <deploy>snapshot</deploy>

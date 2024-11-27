@@ -3,7 +3,7 @@
   <parent>
     <groupId>io.jstach.kiwi</groupId>
     <artifactId>kiwi-maven-parent</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
   </parent>
   <artifactId>kiwi-bin</artifactId>
   <name>kiwi-bin</name>
