@@ -129,7 +129,7 @@ port.prefix=1
 _load_foo=classpath:/foo.properties
 _load_system=system:///
 _load_env=env:///
-_load_cmd=cmd:///-D
+_load_cmd=cmd:///?_filter_sed=s/^-D//
 ```
 
 (If you don't like the syntax of the special loading keys that is indeed configurable... through key values of course.)

@@ -5,7 +5,17 @@
 </head>
 <body>
 
-<h1 id="kiwi">Kiwi</h1>
+<h1 class="overview">User Guide</h1>
+
+<strong>
+Kiwi: JDK 21+ micro configuration framework 
+</strong>
+<p>
+<em>
+A non-opinionated Java bootstrapping configuration library that allows recursive chain loading of configuration from key values.
+</em>
+</p>
+
 
 <h2 class="toc-title">Contents</h2>
 
@@ -30,39 +40,105 @@
 
 <p><strong>In short, it is a micro configuration framework that itself can be configured with key values.</strong></p>
 
+<h2 id="why-and-use-case">Why and Use Case</h2>
+<p>Kiwi allows <strong>"users"</strong> to decide where their configuration comes from, instead of developers.</p>
+
+<p>A simple command-line application use case might be like <a href="https://github.com/BurntSushi/ripgrep" target="_blank">ripgrep</a>, 
+where a single environment variable dictates the location of configuration. Kiwi easily supports this style and also allows the user to load additional configuration 
+from other places using key values in the configuration file. Kiwi can even enable configuration to come from other environment variables, 
+which is something not typically possible with tools like ripgrep or similar utilities.</p>
+
+<p>Another use case might be to simulate Spring Boot's configuration loading but without the rest of Spring Boot. Kiwi can achieve this declaratively through key values. 
+In fact, a user could configure the previously mentioned ripgrep environment variable to perform a Spring Boot-like load of configuration.</p>
+
+
 <h2 id="adding-kiwi">Adding Kiwi to Your Project</h2>
 
 <p>To use Kiwi in your project, add the following dependency to your build configuration:</p>
 
 <h3 id="maven">Maven</h3>
-<pre><code>&lt;dependency&gt;
-    &lt;groupId&gt;io.jstach.kiwi&lt;/groupId&gt;
-    &lt;artifactId&gt;kiwi-kvs&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0&lt;/version&gt;
-&lt;/dependency&gt;
-</code></pre>
+
+{@snippet lang=xml : 
+    <dependency>
+        <groupId>io.jstach.kiwi</groupId>
+        <artifactId>kiwi-kvs</artifactId>
+        <version>_VERSION_</version>
+    </dependency>
+}
 
 <h3 id="gradle">Gradle</h3>
-<pre><code>implementation 'io.jstach.kiwi:kiwi-kvs:1.0.0'
-</code></pre>
+
+{@snippet lang=kotlin :
+implementation 'io.jstach.kiwi:kiwi-kvs:_VERSION_'
+}
 
 <h2 id="example-usage">Example Usage</h2>
 
 <p>A simple example using <code>java.util.Properties</code> files that could be parsed to <code>KeyValues</code>:</p>
 
-<pre><code>var kvs = KeyValuesSystem.defaults()
+{@snippet :
+var kvs = KeyValuesSystem.defaults()
     .loader()
+    .variables(Variables::ofSystemProperties) // Use system properties as base variables for interpolation
     .add("classpath:/start.properties")
-    .add("system:///") // add system properties to override
-    .add("env:///")    // add environment variables to override
-    .add("cmd:///-D")  // add command line for final override using the prefix of -D
+    .add("system:///")                        // add system properties to override
+    .add("env:///")                           // add environment variables to override
+    .add("cmd:///?_filter_sed=s/^-D//")       // add command line for final override using the prefix of -D
     .load();
 
 // Give the key values to some other config framework like Spring:
 var map = kvs.toMap();
 ConfigurableEnvironment env = applicationContext.getEnvironment();
 env.getPropertySources().addFirst(new MapPropertySource("start", map));
-</code></pre>
+}
+
+Now in  **start.properties** I can load more resources with special keys:
+
+{@snippet lang=properties :
+_load_foo=file:/./myapp.properties?_flag=optional
+}
+
+
+<h2 id="project_information">Project Information</h2>
+
+<dl class="notes">
+  <dt>Source Control</dt>
+  <dd><a href="https://github.com/jstachio/kiwi">https://github.com/jstachio/kiwi</a></dd>
+  <dt>Team</dt>
+  <dd>
+    <ul>
+      <li><a href="https://github.com/agentgt">Adam Gent (agentgt)</a> - lead</li>
+    </ul>
+  </dd>
+  <dt>Issues</dt>
+  <dd><a href="https://github.com/jstachio/kiwi/issues">https://github.com/jstachio/kiwi/issues</a></dd>
+  <dt>Community</dt>
+  <dd><a href="https://github.com/jstachio/kiwi/discussions">https://github.com/jstachio/kiwi/discussions</a></dd>
+  <dt>User Guide</dt>
+  <dd>
+    <a href="index.html">This document</a>
+  </dd>
+  <dt>Javadoc</dt>
+  <dd>
+    <a href="#all-modules-table">This document (modules listing at bottom)</a>
+  </dd>
+</dl>
+
+The project follows the <a href="https://openjdk.org/jeps/14">JDK Tip and Tail</a> 
+and <a href="https://semver.org/">semantic versioning</a>.
+
+<h3 id="requirements">Requirements</h3>
+
+<ol>
+  <li><a href="https://docs.oracle.com/en/java/javase/21/">Java 21 or greater</a></li>
+  <li>A build system that supports running the Java compiler annotation processor</li>
+</ol>
+
+The only module needed during runtime is  
+<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/module-summary.html">
+  <code>java.base</code>
+</a>
+
 
 <h2 id="architecture">Architecture</h2>
 <p>Kiwi's two major concepts are:</p>
@@ -213,10 +289,11 @@ users can still identify where the key-value originally came from.</p>
     This interface allows you to provide custom filters.
 </p>
 
-<h3 id="keyvaluesloader">KeyValuesLoader</h3>
+<h3 id="keyvaluesloader">Resource Loading</h3>
+
 <p>A {@link io.jstach.kiwi.kvs.KeyValuesLoader} usually takes a {@link io.jstach.kiwi.kvs.KeyValuesResource} and turns it into {@link io.jstach.kiwi.kvs.KeyValues}.</p>
 
-<p>It is an extension point that, in simple terms, takes a URI and loads {@link io.jstach.kiwi.kvs.KeyValues}, usually 
+<p>It is an {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder extension point} that, in simple terms, takes a URI and loads {@link io.jstach.kiwi.kvs.KeyValues}, usually 
 based on the schema of the URI. For example:</p>
 <ul>
     <li><code>classpath</code> - Uses the JDK classloader mechanism.</li>
@@ -303,6 +380,9 @@ _flags_profiles2=no_require
 
 
 <h3 id="keyvaluesmedia">KeyValuesMedia</h3>
+
+<p>{@link io.jstach.kiwi.kvs.KeyValuesMedia}</p>
+
 <p>Some {@link io.jstach.kiwi.kvs.KeyValuesLoader} implementations can directly parse the {@link java.net.URI} into {@link io.jstach.kiwi.kvs.KeyValues}. 
 However, many will rely on a parser to handle the data.</p>
 
