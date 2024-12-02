@@ -6,12 +6,12 @@
  */
 
 /**
- * The {@code io.jstach.kiwi.kvs} module provides the core library for Kiwi, a non-opinionated
+ * The {@code io.jstach.ezkv.kvs} module provides the core library for Kiwi, a non-opinionated
  * Java configuration system that supports recursive chain loading of configuration from key-value
  * pairs. This module is designed for use cases where early-stage configuration is needed, even
  * before application logging is set up.
  *
- * <p>Kiwi focuses on loading streams of key-value pairs (represented as {@link io.jstach.kiwi.kvs.KeyValues})
+ * <p>Kiwi focuses on loading streams of key-value pairs (represented as {@link io.jstach.ezkv.kvs.KeyValues})
  * from various URI-based resources, such as classpath resources, files, system properties, and environment
  * variables. The system is highly configurable and can be extended to support additional media types and
  * URI patterns using the {@link java.util.ServiceLoader} mechanism.
@@ -84,18 +84,18 @@
  * </ul>
  *
  * <h2>Extensibility</h2>
- * The module supports extension through {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider},
+ * The module supports extension through {@link io.jstach.ezkv.kvs.KeyValuesServiceProvider},
  * which can be implemented to add custom media types and URI loaders. Implementations can
  * be discovered and loaded using the {@link java.util.ServiceLoader} mechanism.
  *
- * @uses io.jstach.kiwi.kvs.KeyValuesServiceProvider
+ * @uses io.jstach.ezkv.kvs.KeyValuesServiceProvider
  * @since 1.0
  * @author agentgt
  */
 module io.jstach.kiwi.kvs {
-	exports io.jstach.kiwi.kvs;
+	exports io.jstach.ezkv.kvs;
 	
 	requires org.jspecify;
 	
-	uses io.jstach.kiwi.kvs.KeyValuesServiceProvider;
+	uses io.jstach.ezkv.kvs.KeyValuesServiceProvider;
 }
