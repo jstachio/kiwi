@@ -1,10 +1,12 @@
 [![Github](https://github.com/jstachio/ezkv/actions/workflows/maven.yml/badge.svg)](https://github.com/jstachio/ezkv/actions)
 
+
 # Ezkv
 
 A non-opinionated Java *bootstrapping configuration* library
 that allows recursive chain loading of configuration from key values.
 
+<img src="ezkv_lemon.png" alt="ezkv logo">
 
 *"Ezkv lemon squeezy!"*
 
