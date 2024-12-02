@@ -13,10 +13,10 @@
  * <li>Resource <code>profile.classpath:/application__PROFILE__.properties</code> is loaded (but not required)
  * </li>
  * </ol>
- * @see io.jstach.kiwi.boot.KiwiConfig
+ * @see io.jstach.ezkv.boot.KiwiConfig
  */
 module io.jstach.kiwi.boot {
-	exports io.jstach.kiwi.boot;
+	exports io.jstach.ezkv.boot;
 	requires io.jstach.kiwi.kvs;
 	requires static org.jspecify;
 	/*
