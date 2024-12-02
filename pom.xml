@@ -965,7 +965,7 @@
     </profile>
   </profiles>
   <modules>
-    <module>kiwi-kvs</module>
-    <module>kiwi-boot</module>
+    <module>ezkv-kvs</module>
+    <module>ezkv-boot</module>
   </modules>
 </project>
