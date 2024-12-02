@@ -151,7 +151,7 @@ public interface KeyValuesEnvironment {
 		/**
 		 * Returns a logger that uses the supplied {@link java.lang.System.Logger}.
 		 * <em>Becareful using this because something downstream may need to configure the
-		 * system logger based on kiwi config.</em>
+		 * system logger based on Ezkv config.</em>
 		 * @param logger system logger.
 		 * @return logger.
 		 */
@@ -160,8 +160,8 @@ public interface KeyValuesEnvironment {
 		}
 
 		/**
-		 * By default Kiwi does no logging because logging usually needs configuration
-		 * loaded first (kiwi in this case).
+		 * By default Ezkv does no logging because logging usually needs configuration
+		 * loaded first (Ezkv in this case).
 		 * @return noop logger.
 		 */
 		public static Logger of() {

@@ -15,7 +15,7 @@ import java.util.function.BiConsumer;
  *
  * <p>
  * The `KeyValuesResourceParser` processes `KeyValues` streams to extract and format
- * resource references, supporting the recursive loading mechanism in Kiwi.
+ * resource references, supporting the recursive loading mechanism in ezkv.
  *
  * <p>
  * Example usage might include parsing key-values to find resource URIs or formatting a
