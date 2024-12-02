@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kiwi Overview</title>
+    <title>Ezkv Overview</title>
 </head>
 <body>
 
 <h1 class="overview">User Guide</h1>
 
 <strong>
-Kiwi: JDK 21+ micro configuration framework 
+Ezkv: JDK 21+ micro configuration framework 
 </strong>
+<p>
+ <strong><em>"Ezkv lemon squeezy!"</em></strong>
+</p>
 <p>
 <em>
 A non-opinionated Java bootstrapping configuration library that allows recursive chain loading of configuration from key values.
@@ -31,7 +34,7 @@ A non-opinionated Java bootstrapping configuration library that allows recursive
 
 <p>Thus, it is the perfect common denominator for providing applications with initial configuration. We call this <em>"bootstrapping configuration"</em> and it is usually gathered even before logging.</p>
 
-<p>To do this, Kiwi loads streams of key values (<code>KeyValue</code>) from resources. What is unique about it is that certain key values will load more key values to the current stream, which is what we call chaining.</p>
+<p>To do this, Ezkv loads streams of key values (<code>KeyValue</code>) from resources. What is unique about it is that certain key values will load more key values to the current stream, which is what we call chaining.</p>
 
 <pre><code>URI -&gt; KeyValues* -&gt; URI* -&gt; KeyValues -&gt; ...
 </code></pre>
@@ -41,27 +44,27 @@ A non-opinionated Java bootstrapping configuration library that allows recursive
 <p><strong>In short, it is a micro configuration framework that itself can be configured with key values.</strong></p>
 
 <h2 id="why-and-use-case">Why and Use Case</h2>
-<p>Kiwi allows <strong>"users"</strong> to decide where their configuration comes from, instead of developers.</p>
+<p>Ezkv allows <strong>"users"</strong> to decide where their configuration comes from, instead of developers.</p>
 
 <p>A simple command-line application use case might be like <a href="https://github.com/BurntSushi/ripgrep" target="_blank">ripgrep</a>, 
-where a single environment variable dictates the location of configuration. Kiwi easily supports this style and also allows the user to load additional configuration 
-from other places using key values in the configuration file. Kiwi can even enable configuration to come from other environment variables, 
+where a single environment variable dictates the location of configuration. Ezkv easily supports this style and also allows the user to load additional configuration 
+from other places using key values in the configuration file. Ezkv can even enable configuration to come from other environment variables, 
 which is something not typically possible with tools like ripgrep or similar utilities.</p>
 
-<p>Another use case might be to simulate Spring Boot's configuration loading but without the rest of Spring Boot. Kiwi can achieve this declaratively through key values. 
+<p>Another use case might be to simulate Spring Boot's configuration loading but without the rest of Spring Boot. Ezkv can achieve this declaratively through key values. 
 In fact, a user could configure the previously mentioned ripgrep environment variable to perform a Spring Boot-like load of configuration.</p>
 
 
-<h2 id="adding-kiwi">Adding Kiwi to Your Project</h2>
+<h2 id="adding-ezkv">Adding Ezkv to Your Project</h2>
 
-<p>To use Kiwi in your project, add the following dependency to your build configuration:</p>
+<p>To use Ezkv in your project, add the following dependency to your build configuration:</p>
 
 <h3 id="maven">Maven</h3>
 
 {@snippet lang=xml : 
     <dependency>
-        <groupId>io.jstach.kiwi</groupId>
-        <artifactId>kiwi-kvs</artifactId>
+        <groupId>io.jstach.ezkv</groupId>
+        <artifactId>ezkv-kvs</artifactId>
         <version>_VERSION_</version>
     </dependency>
 }
@@ -69,7 +72,7 @@ In fact, a user could configure the previously mentioned ripgrep environment var
 <h3 id="gradle">Gradle</h3>
 
 {@snippet lang=kotlin :
-implementation 'io.jstach.kiwi:kiwi-kvs:_VERSION_'
+implementation 'io.jstach.ezkv:ezkv-kvs:_VERSION_'
 }
 
 <h2 id="example-usage">Example Usage</h2>
@@ -103,7 +106,7 @@ _load_foo=file:/./myapp.properties?_flag=optional
 
 <dl class="notes">
   <dt>Source Control</dt>
-  <dd><a href="https://github.com/jstachio/kiwi">https://github.com/jstachio/kiwi</a></dd>
+  <dd><a href="https://github.com/jstachio/ezkv">https://github.com/jstachio/ezkv</a></dd>
   <dt>Team</dt>
   <dd>
     <ul>
@@ -111,9 +114,9 @@ _load_foo=file:/./myapp.properties?_flag=optional
     </ul>
   </dd>
   <dt>Issues</dt>
-  <dd><a href="https://github.com/jstachio/kiwi/issues">https://github.com/jstachio/kiwi/issues</a></dd>
+  <dd><a href="https://github.com/jstachio/ezkv/issues">https://github.com/jstachio/ezkv/issues</a></dd>
   <dt>Community</dt>
-  <dd><a href="https://github.com/jstachio/kiwi/discussions">https://github.com/jstachio/kiwi/discussions</a></dd>
+  <dd><a href="https://github.com/jstachio/ezkv/discussions">https://github.com/jstachio/ezkv/discussions</a></dd>
   <dt>User Guide</dt>
   <dd>
     <a href="index.html">This document</a>
@@ -141,16 +144,16 @@ The only module needed during runtime is
 
 
 <h2 id="architecture">Architecture</h2>
-<p>Kiwi's two major concepts are:</p>
+<p>Ezkv's two major concepts are:</p>
 <ol>
-    <li>{@link io.jstach.kiwi.kvs.KeyValues} - a stream of key values</li>
-    <li>{@link io.jstach.kiwi.kvs.KeyValuesResource} - a URI with associated key-value metadata</li>
+    <li>{@link io.jstach.ezkv.kvs.KeyValues} - a stream of key values</li>
+    <li>{@link io.jstach.ezkv.kvs.KeyValuesResource} - a URI with associated key-value metadata</li>
 </ol>
-<p>Resources are used to load key values, and key values can be used to specify and find more resources (to load more key values). Kiwi is recursive.</p>
+<p>Resources are used to load key values, and key values can be used to specify and find more resources (to load more key values). Ezkv is recursive.</p>
 <p>For the rest of the explanation of architecture, we will go bottom-up.</p>
 
 <h3 id="keyvalue">KeyValue</h3>
-<p>A {@link io.jstach.kiwi.kvs.KeyValue} object in Kiwi, unlike a <code>Map.Entry&lt;String, String&gt;</code>, has more information than just the simple tuple of <code>key</code> and <code>value</code>.</p>
+<p>A {@link io.jstach.ezkv.kvs.KeyValue} object in ezkv, unlike a <code>Map.Entry&lt;String, String&gt;</code>, has more information than just the simple tuple of <code>key</code> and <code>value</code>.</p>
 <ul>
     <li>Immutable</li>
     <li>Have interpolated value as well as the original pre-interpolated value</li>
@@ -158,20 +161,20 @@ The only module needed during runtime is
     <li>Whether or not it should be used for interpolation</li>
     <li>Whether or not it should be printed out ever (e.g., a password or other sensitive information)</li>
 </ul>
-<p>Kiwi provides ergonomics for working with streams of key values to filter, collect, parse, and format them.</p>
-<p><strong>Notice that Kiwi is like a list of key values and thus:</strong></p>
+<p>Ezkv provides ergonomics for working with streams of key values to filter, collect, parse, and format them.</p>
+<p><strong>Notice that Ezkv is like a list of key values and thus:</strong></p>
 <ul>
     <li>Order can be important</li>
     <li>There can be duplicate "keys" (that may or may not override in the final result)</li>
 </ul>
-<p>Finally, a {@link io.jstach.kiwi.kvs.KeyValue} can be a special key that can reference another resource to load.</p>
+<p>Finally, a {@link io.jstach.ezkv.kvs.KeyValue} can be a special key that can reference another resource to load.</p>
 <p>These keys are usually prefixed with <code>_</code> to avoid collision and maximize compatibility. The most important one is <code>_load_name</code>, where <code>name</code> is the name you assign to the resource and the value is a URI. This mini DSL syntax will be configurable in the future, so you can pick different key name patterns.</p>
 
 <h3 id="interpolation">Interpolation</h3>
-<p>Kiwi can perform Bash-like interpolation on a stream of {@link io.jstach.kiwi.kvs.KeyValues} (e.g., <code>${somevar:-${othervar}}</code>). It does this by using the key values themselves and {@link io.jstach.kiwi.kvs.Variables}. {@link io.jstach.kiwi.kvs.Variables} are simply <code>Function&lt;String, String&gt;</code>.</p>
-<p>This allows you to interpolate on key values with data you do not want in the final result ({@link io.jstach.kiwi.kvs.KeyValues}). For example, it is common to use <code>System.getProperties()</code> as variables, but often you do not want all the system properties to end up in the {@link io.jstach.kiwi.kvs.KeyValues}.</p>
+<p>Ezkv can perform Bash-like interpolation on a stream of {@link io.jstach.ezkv.kvs.KeyValues} (e.g., <code>${somevar:-${othervar}}</code>). It does this by using the key values themselves and {@link io.jstach.ezkv.kvs.Variables}. {@link io.jstach.ezkv.kvs.Variables} are simply <code>Function&lt;String, String&gt;</code>.</p>
+<p>This allows you to interpolate on key values with data you do not want in the final result ({@link io.jstach.ezkv.kvs.KeyValues}). For example, it is common to use <code>System.getProperties()</code> as variables, but often you do not want all the system properties to end up in the {@link io.jstach.ezkv.kvs.KeyValues}.</p>
 <p>Interpolation can be disabled with the resource flag <code>no_interpolation</code>.</p>
-<p>Furthermore, you can load a resource as variables instead of {@link io.jstach.kiwi.kvs.KeyValues} with the resource flag <code>no_add</code>.</p>
+<p>Furthermore, you can load a resource as variables instead of {@link io.jstach.ezkv.kvs.KeyValues} with the resource flag <code>no_add</code>.</p>
 
 {@snippet lang="properties":
 # first loaded properties
@@ -181,13 +184,13 @@ _load_app=classpath:/${app.name:-app}.properties
 }
 
 <p>If <code>app.name</code> is defined in system properties, it will be used in the <code>_load_app</code> URI. Otherwise, <code>app.properties</code> will be used.</p>
-<p>Often, interpolation will create a new stream of {@link io.jstach.kiwi.kvs.KeyValues} where the value part of the key is replaced with the interpolated result; however, the original value is always retained.</p>
+<p>Often, interpolation will create a new stream of {@link io.jstach.ezkv.kvs.KeyValues} where the value part of the key is replaced with the interpolated result; however, the original value is always retained.</p>
 
 <h3 id="keyvaluesresource">KeyValuesResource</h3>
-<p>A {@link io.jstach.kiwi.kvs.KeyValuesResource} has a {@link java.net.URI} and a symbolic name (used to find configuration). 
+<p>A {@link io.jstach.ezkv.kvs.KeyValuesResource} has a {@link java.net.URI} and a symbolic name (used to find configuration). 
 It is backed by a key value with additional metadata on how to load that resource. 
-URIs are designed to point at resources, and the additional metadata in a {@link io.jstach.kiwi.kvs.KeyValuesResource} is, 
-as you might guess, more {@link io.jstach.kiwi.kvs.KeyValues}.</p>
+URIs are designed to point at resources, and the additional metadata in a {@link io.jstach.ezkv.kvs.KeyValuesResource} is, 
+as you might guess, more {@link io.jstach.ezkv.kvs.KeyValues}.</p>
 
 <p>The additional metadata is used to determine how to load the key values and what metadata should be associated with each key value.</p>
 
@@ -236,25 +239,25 @@ These can be repeatable parameters, and their values are combined.</p>
 
 <p>This is currently a subset of the flags:</p>
 <ul>
-    <li>{@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_NO_REQUIRE} / {@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_OPTIONAL} - 
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#FLAG_NO_REQUIRE} / {@value io.jstach.ezkv.kvs.KeyValuesResource#FLAG_OPTIONAL} - 
     Resources are usually required to exist; otherwise, an error occurs. This flag makes them not required.</li>
-    <li>{@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_SENSITIVE} - 
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#FLAG_SENSITIVE} - 
     The key values loaded from the resource will be marked as sensitive and will not be output in <code>toString</code> or similar methods.</li>
-    <li>{@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_NO_ADD} - 
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#FLAG_NO_ADD} - 
     The key values will not be added to the final result but will instead be used as <code>variables</code>.</li>
-    <li>{@value io.jstach.kiwi.kvs.KeyValuesResource#FLAG_NO_LOAD_CHILDREN} - 
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#FLAG_NO_LOAD_CHILDREN} - 
     The resource is not allowed to chain additional resources (e.g., it cannot use <code>_load_</code> keys).</li>
 </ul>
 
 <h4 id="resource-media-type">Resource Media Type</h4>
-<p>Kiwi will try to automatically determine the media type of a resource based on the URI file extension. 
+<p>Ezkv will try to automatically determine the media type of a resource based on the URI file extension. 
 However, in some cases, that is not sufficient. The key <code>_mediaType_[name]</code> allows you to explicitly specify the media type.</p>
 
 <p>This is particularly useful for URIs that can load a key containing key-value data. 
 A real-world example of this is the <a href="https://docs.spring.io/spring-boot/reference/features/external-config.html" target="_blank">
 Spring Boot</a> environment variable <code>SPRING_APPLICATION_JSON</code>.</p>
 
-<p>An example of emulating that behavior in Kiwi:</p>
+<p>An example of emulating that behavior in ezkv:</p>
 
 {@snippet lang=properties :
 _load_springJson=env:///SPRING_APPLICATION_JSON?_mediaType=json
@@ -285,15 +288,15 @@ _load_env=env:///?_filter_grep=^MY_APP_&_filter_sed=s/^MY_APP/myapp./
 users can still identify where the key-value originally came from.</p>
 
 <p><strong>Note:</strong> 
-    To add new filters, implement {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesFilter}. 
+    To add new filters, implement {@link io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesFilter}. 
     This interface allows you to provide custom filters.
 </p>
 
 <h3 id="keyvaluesloader">Resource Loading</h3>
 
-<p>A {@link io.jstach.kiwi.kvs.KeyValuesLoader} usually takes a {@link io.jstach.kiwi.kvs.KeyValuesResource} and turns it into {@link io.jstach.kiwi.kvs.KeyValues}.</p>
+<p>A {@link io.jstach.ezkv.kvs.KeyValuesLoader} usually takes a {@link io.jstach.ezkv.kvs.KeyValuesResource} and turns it into {@link io.jstach.ezkv.kvs.KeyValues}.</p>
 
-<p>It is an {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder extension point} that, in simple terms, takes a URI and loads {@link io.jstach.kiwi.kvs.KeyValues}, usually 
+<p>It is an {@link io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder extension point} that, in simple terms, takes a URI and loads {@link io.jstach.ezkv.kvs.KeyValues}, usually 
 based on the schema of the URI. For example:</p>
 <ul>
     <li><code>classpath</code> - Uses the JDK classloader mechanism.</li>
@@ -302,7 +305,7 @@ based on the schema of the URI. For example:</p>
 
 <p>This part of the library is extendable, and custom loaders can be manually wired or the service loader can be used.</p>
 
-<p>Out of the box, Kiwi supports the following URI schemas:</p>
+<p>Out of the box, Ezkv supports the following URI schemas:</p>
 <ul>
     <li><code>classpath</code></li>
     <li><code>file</code></li>
@@ -315,7 +318,7 @@ based on the schema of the URI. For example:</p>
 
 <p>Other URI schemas will be added in the future, usually as separate modules, such as dotenv, HOCON, Terraform/Tofu <code>tfvars.json</code> format, etc.</p>
 
-<p><strong>Note:</strong> If no schema is provided, Kiwi assumes it is a file path, which is treated as a URI.</p>
+<p><strong>Note:</strong> If no schema is provided, Ezkv assumes it is a file path, which is treated as a URI.</p>
 
 <p>We won’t cover <code>file</code> and <code>classpath</code> here, as they are straightforward and self-explanatory.</p>
 
@@ -348,7 +351,7 @@ _load_stdin=stdin:///db.password?_flag=sensitive,optional
 <h4 id="uri-schema-profile">URI schema: <code>profile.</code></h4>
 <p><strong>Note:</strong> This schema may be renamed to <code>profiles</code> in the future.</p>
 
-<p>The <code>profile</code> schema is one of the more complex {@link io.jstach.kiwi.kvs.KeyValuesLoader} implementations. 
+<p>The <code>profile</code> schema is one of the more complex {@link io.jstach.ezkv.kvs.KeyValuesLoader} implementations. 
 It allows loading multiple resources based on a CSV list of profile names. Here's an example:</p>
 
 {@snippet lang=properties :
@@ -381,18 +384,18 @@ _flags_profiles2=no_require
 
 <h3 id="keyvaluesmedia">KeyValuesMedia</h3>
 
-<p>{@link io.jstach.kiwi.kvs.KeyValuesMedia}</p>
+<p>{@link io.jstach.ezkv.kvs.KeyValuesMedia}</p>
 
-<p>Some {@link io.jstach.kiwi.kvs.KeyValuesLoader} implementations can directly parse the {@link java.net.URI} into {@link io.jstach.kiwi.kvs.KeyValues}. 
+<p>Some {@link io.jstach.ezkv.kvs.KeyValuesLoader} implementations can directly parse the {@link java.net.URI} into {@link io.jstach.ezkv.kvs.KeyValues}. 
 However, many will rely on a parser to handle the data.</p>
 
-<p>Kiwi provides a framework to parse and format key values from or to byte streams or strings, 
+<p>Ezkv provides a framework to parse and format key values from or to byte streams or strings, 
 based on <a href="https://en.wikipedia.org/wiki/Media_type" target="_blank">media type</a> 
 (also known as "Content Type" or MIME) or file extension.</p>
 
 <p>This part of the library is extendable. Custom media types can be manually wired or loaded using the Java <code>ServiceLoader</code>.</p>
 
-<p>Out of the box, Kiwi supports:</p>
+<p>Out of the box, Ezkv supports:</p>
 <ul>
     <li><code>java.util.Properties</code> format</li>
     <li>URL Query percent encoding format</li>
@@ -400,21 +403,21 @@ based on <a href="https://en.wikipedia.org/wiki/Media_type" target="_blank">medi
 
 <p>Additional formats will be added as separate modules, such as dotenv, HOCON, and Terraform/Tofu <code>tfvars.json</code> format.</p>
 
-<p><strong>Note:</strong> To add new media types, implement {@link io.jstach.kiwi.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder}. 
+<p><strong>Note:</strong> To add new media types, implement {@link io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder}. 
 This interface allows you to provide custom parsing logic for new formats.</p>
 
 <h3 id="keyvaluesenvironment">KeyValuesEnvironment</h3>
 
-<p>{@link io.jstach.kiwi.kvs.KeyValuesEnvironment}</p>
-<p>Kiwi provides a facade to access system properties, environment variables, class resource loaders, stdin, 
+<p>{@link io.jstach.ezkv.kvs.KeyValuesEnvironment}</p>
+<p>Ezkv provides a facade to access system properties, environment variables, class resource loaders, stdin, 
 command-line arguments, and logging. This is particularly useful for unit testing, but the most valuable feature is the logger.</p>
 
-<p>The logger in Kiwi does nothing by default, but users can plug in their own implementations to track resource loading.</p>
+<p>The logger in Ezkv does nothing by default, but users can plug in their own implementations to track resource loading.</p>
 
 <h3 id="keyvaluessystem">KeyValuesSystem</h3>
 
-<p>{@link io.jstach.kiwi.kvs.KeyValuesSystem}</p>
-<p>This is the entry point into Kiwi and is used to load the initial part of the chain of resources. 
+<p>{@link io.jstach.ezkv.kvs.KeyValuesSystem}</p>
+<p>This is the entry point into Ezkv and is used to load the initial part of the chain of resources. 
 The bootstrapping part of your application will call it first and will often convert or pass the loaded key values to another system.</p>
 
 

@@ -1,9 +1,9 @@
 /**
- * Kiwi Key Value loading system that allows loading of key values from URI-based
+ * Ezkv Key Value loading system that allows loading of key values from URI-based
  * resources.
  *
  * <p>
- * Kiwi's core domain is {@link io.jstach.ezkv.kvs.KeyValues}, which can be loaded using
+ * Ezkv's core domain is {@link io.jstach.ezkv.kvs.KeyValues}, which can be loaded using
  * the {@link io.jstach.ezkv.kvs.KeyValuesSystem}. This package provides the necessary
  * interfaces and classes for loading, parsing, and managing key-value pairs from a
  * variety of sources including classpath resources, files, and system properties.
@@ -24,7 +24,7 @@
  * The package also supports extension through the
  * {@link io.jstach.ezkv.kvs.KeyValuesServiceProvider} interface, which allows for custom
  * implementations to be loaded using {@link java.util.ServiceLoader}. This enables
- * developers to extend Kiwi with additional media types or URI handling mechanisms.
+ * developers to extend Ezkv with additional media types or URI handling mechanisms.
  *
  * <h2>Key Interfaces and Classes</h2>
  * <ul>

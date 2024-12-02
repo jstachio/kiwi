@@ -10,7 +10,7 @@ import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Represents a key-value pair in the Kiwi configuration system. Unlike a simple
+ * Represents a key-value pair in the Ezkv configuration system. Unlike a simple
  * {@code Map.Entry<String, String>}, this record holds additional metadata that provides
  * more context about the key-value pair, such as:
  *
@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
  *
  * <h2>Example Usage</h2>
  *
- * The following example shows how to load key-values using the Kiwi system:
+ * The following example shows how to load key-values using the Ezkv system:
  *
  * {@snippet :
  *

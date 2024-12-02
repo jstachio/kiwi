@@ -22,8 +22,8 @@ import io.jstach.ezkv.kvs.Variables;
 import io.jstach.ezkv.kvs.KeyValuesEnvironment.Logger;
 
 /**
- * Kiwi Config is tiny opinionated configuration framework modeled after Spring Boot that
- * uses Kiwi KVS system to load key values into a Map. It is made to be a slightly better
+ * Ezkv Config is tiny opinionated configuration framework modeled after Spring Boot that
+ * uses Ezkv KVS system to load key values into a Map. It is made to be a slightly better
  * {@link System#getProperties()}.
  * <p>
  * Features are purposely very limited.
@@ -38,11 +38,11 @@ import io.jstach.ezkv.kvs.KeyValuesEnvironment.Logger;
  * </ol>
  * <h2>Example Usage</h2>
  * {@snippet :
- * KiwiConfig.of().getProperty(key); // Use instead of System.getProperty
+ * ezkvConfig.of().getProperty(key); // Use instead of System.getProperty
  * }
  *
  */
-public sealed interface KiwiConfig {
+public sealed interface EzkvConfig {
 
 	/**
 	 * Analogous to {@link System#getProperty(String)}.
@@ -86,7 +86,7 @@ public sealed interface KiwiConfig {
 	 * there is no event propagation or watching of resources. That is am exercise for the
 	 * consumer of the library.
 	 */
-	sealed interface ReloadableConfig extends KiwiConfig {
+	sealed interface ReloadableConfig extends EzkvConfig {
 
 		/**
 		 * The current backing stable config (might be generated).
@@ -98,7 +98,7 @@ public sealed interface KiwiConfig {
 		 * Will reload the config and return the previous config.
 		 * @return previous config.
 		 */
-		public KiwiConfig reload();
+		public EzkvConfig reload();
 
 	}
 
@@ -106,7 +106,7 @@ public sealed interface KiwiConfig {
 	 * A stable config guarantees that repeated calls of {@link #getProperty(String)} and
 	 * similar will return the same result.
 	 */
-	non-sealed interface StableConfig extends KiwiConfig {
+	non-sealed interface StableConfig extends EzkvConfig {
 
 		/**
 		 * Describes the key like what resource it came from. Stable Config has this
@@ -158,7 +158,7 @@ class QueueLogger implements Logger {
 
 	@Override
 	public void closed(KeyValuesSystem system) {
-		System.Logger logger = System.getLogger("io.jstach.ezkv.boot.KiwiConfig");
+		System.Logger logger = System.getLogger("io.jstach.ezkv.boot.ezkvConfig");
 		Event e;
 		while ((e = events.poll()) != null) {
 			logger.log(e.level, e.message);
@@ -170,9 +170,9 @@ class QueueLogger implements Logger {
 		var err = System.err;
 		Event e;
 		while ((e = events.poll()) != null) {
-			err.println("[" + Logger.formatLevel(e.level) + "] io.jstach.ezkv.boot.KiwiConfig - " + e.message);
+			err.println("[" + Logger.formatLevel(e.level) + "] io.jstach.ezkv.boot.ezkvConfig - " + e.message);
 		}
-		err.println("[ERROR] io.jstach.ezkv.boot.KiwiConfig - " + exception.getMessage());
+		err.println("[ERROR] io.jstach.ezkv.boot.ezkvConfig - " + exception.getMessage());
 		exception.printStackTrace(err);
 	}
 
@@ -184,11 +184,11 @@ final class Holder {
 
 	static class Hidden {
 
-		final static KiwiConfig.ReloadableConfig CONFIG = new WrapperKiwiConfig(load());
+		final static EzkvConfig.ReloadableConfig CONFIG = new WrapperEzkvConfig(load());
 
 	}
 
-	static KiwiConfig.StableConfig load() {
+	static EzkvConfig.StableConfig load() {
 
 		record BootEnvironment(QueueLogger logger) implements KeyValuesEnvironment {
 			@Override
@@ -218,7 +218,7 @@ final class Holder {
 			for (var kv : kvs) {
 				m.put(kv.key(), kv);
 			}
-			var config = new DefaultKiwiConfig("application.properties", m);
+			var config = new DefaultEzkvConfig("application.properties", m);
 			config.setSystemProperties(system);
 			return config;
 		}
@@ -229,11 +229,11 @@ final class Holder {
 
 }
 
-final class WrapperKiwiConfig implements KiwiConfig.ReloadableConfig {
+final class WrapperEzkvConfig implements EzkvConfig.ReloadableConfig {
 
-	volatile KiwiConfig.StableConfig config;
+	volatile EzkvConfig.StableConfig config;
 
-	public WrapperKiwiConfig(KiwiConfig.StableConfig config) {
+	public WrapperEzkvConfig(EzkvConfig.StableConfig config) {
 		super();
 		this.config = config;
 	}
@@ -249,7 +249,7 @@ final class WrapperKiwiConfig implements KiwiConfig.ReloadableConfig {
 	}
 
 	@Override
-	public KiwiConfig reload() {
+	public EzkvConfig reload() {
 		var c = config;
 		config = Holder.load();
 		return c;
@@ -258,13 +258,13 @@ final class WrapperKiwiConfig implements KiwiConfig.ReloadableConfig {
 
 }
 
-final class DefaultKiwiConfig implements KiwiConfig.StableConfig {
+final class DefaultEzkvConfig implements EzkvConfig.StableConfig {
 
 	private final String description;
 
 	private final Map<String, KeyValue> keyValues;
 
-	public DefaultKiwiConfig(String description, Map<String, KeyValue> keyValues) {
+	public DefaultEzkvConfig(String description, Map<String, KeyValue> keyValues) {
 		super();
 		this.description = description;
 		this.keyValues = keyValues;

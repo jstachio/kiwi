@@ -14,7 +14,7 @@ import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
 import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
 
 /**
- * The main entry point into the Kiwi configuration library. This interface provides
+ * The main entry point into the Ezkv configuration library. This interface provides
  * access to core components for loading and processing key-value resources.
  *
  * <p>

@@ -9,12 +9,12 @@ import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder.LoaderC
 import io.jstach.ezkv.kvs.Variables.Parameters;
 
 /**
- * A service provider interface (SPI) for extending Kiwi's capabilities to support
+ * A service provider interface (SPI) for extending ezkv's capabilities to support
  * additional media types and URI patterns. Implementations of this interface can be
  * loaded using {@link java.util.ServiceLoader}.
  *
  * <p>
- * This SPI allows customization and extension of Kiwi's loading mechanisms and media type
+ * This SPI allows customization and extension of ezkv's loading mechanisms and media type
  * parsing.
  *
  * <p>

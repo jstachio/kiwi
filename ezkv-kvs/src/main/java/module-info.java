@@ -6,12 +6,12 @@
  */
 
 /**
- * The {@code io.jstach.ezkv.kvs} module provides the core library for Kiwi, a non-opinionated
+ * The {@code io.jstach.ezkv.kvs} module provides the core library for Ezkv, a non-opinionated
  * Java configuration system that supports recursive chain loading of configuration from key-value
  * pairs. This module is designed for use cases where early-stage configuration is needed, even
  * before application logging is set up.
  *
- * <p>Kiwi focuses on loading streams of key-value pairs (represented as {@link io.jstach.ezkv.kvs.KeyValues})
+ * <p>Ezkv focuses on loading streams of key-value pairs (represented as {@link io.jstach.ezkv.kvs.KeyValues})
  * from various URI-based resources, such as classpath resources, files, system properties, and environment
  * variables. The system is highly configurable and can be extended to support additional media types and
  * URI patterns using the {@link java.util.ServiceLoader} mechanism.
@@ -29,8 +29,8 @@
  * <h2>Maven Coordinates</h2>
  * <pre>{@code
  * <dependency>
- *     <groupId>io.jstach.kiwi</groupId>
- *     <artifactId>kiwi-kvs</artifactId>
+ *     <groupId>io.jstach.ezkv</groupId>
+ *     <artifactId>ezkv-kvs</artifactId>
  *     <version>1.0.0</version>
  * </dependency>
  * }</pre>
@@ -92,7 +92,7 @@
  * @since 1.0
  * @author agentgt
  */
-module io.jstach.kiwi.kvs {
+module io.jstach.ezkv.kvs {
 	exports io.jstach.ezkv.kvs;
 	
 	requires org.jspecify;

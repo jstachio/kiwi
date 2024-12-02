@@ -1,7 +1,7 @@
 
 /**
- * Kiwi Boot is tiny opinionated configuration framework modeled after Spring
- * Boot that uses Kiwi KVS system to load key values into Map. It is made to be
+ * Ezkv Boot is tiny opinionated configuration framework modeled after Spring
+ * Boot that uses Ezkv KVS system to load key values into Map. It is made to be
  * a slightly better {@link System#getProperties()}.
  * <p>
  * Features are purposely very limited.
@@ -13,11 +13,11 @@
  * <li>Resource <code>profile.classpath:/application__PROFILE__.properties</code> is loaded (but not required)
  * </li>
  * </ol>
- * @see io.jstach.ezkv.boot.KiwiConfig
+ * @see io.jstach.ezkv.boot.EzkvConfig
  */
-module io.jstach.kiwi.boot {
+module io.jstach.ezkv.boot {
 	exports io.jstach.ezkv.boot;
-	requires io.jstach.kiwi.kvs;
+	requires io.jstach.ezkv.kvs;
 	requires static org.jspecify;
 	/*
 	 * I cannot remember if JLink will pull this in or not.

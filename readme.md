@@ -1,11 +1,12 @@
-[![Github](https://github.com/jstachio/kiwi/actions/workflows/maven.yml/badge.svg)](https://github.com/jstachio/kiwi/actions)
+[![Github](https://github.com/jstachio/ezkv/actions/workflows/maven.yml/badge.svg)](https://github.com/jstachio/ezkv/actions)
 
-# Kiwi
+# Ezkv
 
 A non-opinionated Java *bootstrapping configuration* library
 that allows recursive chain loading of configuration from key values.
 
 
+*"Ezkv lemon squeezy!"*
 
 **Key values are everywhere** 
 (also known as an associative arrays, list of tuples, or name value pairs)!
@@ -18,7 +19,7 @@ can all be represented as simple *"key value"* pairs.
 Thus it is the perfect common denominator for providing applications with initial configuration.
 We call this *"bootstrapping configuration"* and it is usually gathered even before logging.
 
-To do this Kiwi loads streams of key values (KeyValue) from resources. 
+To do this Ezkv loads streams of key values (KeyValue) from resources. 
 What is unique about it is that certain key values will load more key values to the current
 stream which is what we call chaining.
 
@@ -33,19 +34,19 @@ and some prefix removed.
 
 ## Documentation
 
-* **[Latest SNAPSHOT Kiwi doc](https://jstach.io/kiwi/)**
-* **[Current released Kiwi doc](https://jstach.io/doc/kiwi/current/apidocs)**
+* **[Latest SNAPSHOT Ezkv doc](https://jstach.io/ezkv/)**
+* **[Current released Ezkv doc](https://jstach.io/doc/ezkv/current/apidocs)**
 
 ## Why and Use Case
 
-Kiwi allows **"users"** to decide where their configuration comes from instead of developers. 
+Ezkv allows **"users"** to decide where their configuration comes from instead of developers. 
 
 A simple command line application use case might be like [ripgrep](https://github.com/BurntSushi/ripgrep) where a single
-environment variable dictates the location of configuration. Kiwi easily supports
+environment variable dictates the location of configuration. Ezkv easily supports
 this style as well as allow the user to then load additional configuration from
-other places using key values in the configuration file. Kiwi can even allow configuration to come from other environment variables which is something not really possible with ripgrep or other similar tools.
+other places using key values in the configuration file. Ezkv can even allow configuration to come from other environment variables which is something not really possible with ripgrep or other similar tools.
 
-Another use case might be to simulate Spring Boot's configuration loading but without all of Spring Boot. Kiwi can do that declaratively through key values. In fact a user could make the previously mentioned ripgrep environment variable do a Spring Boot like load of configuration.
+Another use case might be to simulate Spring Boot's configuration loading but without all of Spring Boot. Ezkv can do that declaratively through key values. In fact a user could make the previously mentioned ripgrep environment variable do a Spring Boot like load of configuration.
 
 ## Example
 
@@ -134,45 +135,45 @@ _load_cmd=cmd:///?_filter_sed=s/^-D//
 
 (If you don't like the syntax of the special loading keys that is indeed configurable... through key values of course.)
 
-## Kiwi is NOT a `System.getProperty` or other config framework replacement
+## Ezkv is NOT a `System.getProperty` or other config framework replacement
 
 Most configuration frameworks are focused on *"binding"*, dependency injection, or ergonomics on a
-`Map<String,String>`. They are focused on transforming the flat key values to objects. Kiwi does not do that. 
+`Map<String,String>`. They are focused on transforming the flat key values to objects. Ezkv does not do that. 
 **These libraries often have a very opinionated loading scheme**
 and often the only way to configure that is through code. 
 
-Kiwi is lower level than most config libraries but yet allows the configuration to happen in configuration. 
+Ezkv is lower level than most config libraries but yet allows the configuration to happen in configuration. 
 It is mostly concerned with loading and because of its zero dependency and no logging architecture it can be 
 used very early to provide other early init libraries with a `Map<String,String>`
 (or the complete stream of key values found). That is why there is not really a `getProperty(key)`
-like method provided by `kiwi-kvs`. That is for configuration frameworks downstream.
+like method provided by `ezkv-kvs`. That is for configuration frameworks downstream.
 
-In fact Kiwi rather just fill `System.getProperties` from loaded resources so that
+In fact Ezkv rather just fill `System.getProperties` from loaded resources so that
 you do not have to use another library for configuration lookup. That is for retrieval 
 a singleton like `System.getProperties` is often good enough for simple applications. 
 
-Yes Kiwi is very simple but [simple is good](https://www.infoq.com/presentations/Simple-Made-Easy/).
+Yes Ezkv is very simple but [simple is good](https://www.infoq.com/presentations/Simple-Made-Easy/).
 
-That being said if you need a System.getProperty like replacement Kiwi does provide an
+That being said if you need a System.getProperty like replacement Ezkv does provide an
 opinionated module.
 
-### Kiwi Boot 
+### Ezkv Boot 
 
-While the Kiwi KVS core does not provide an opinion on loading Kiwi does provide a separate opinionated
-module (kiwi-boot) that more or less mimics Spring Boot's loading of configuration without requiring Spring Boot.
+While the Ezkv KVS core does not provide an opinion on loading Ezkv does provide a separate opinionated
+module (ezkv-boot) that more or less mimics Spring Boot's loading of configuration without requiring Spring Boot.
 
-This module also serves another purpose in that it is example code of using kiwi-kvs you can copy and customize 
+This module also serves another purpose in that it is example code of using ezkv-kvs you can copy and customize 
 for your own applications/libraries.
 
-### Kiwi Maven plugin
+### Ezkv Maven plugin
 
 (Coming soon. My company has an internal implementation that I just need to port).
 
-The kiwi maven plugin is a far more capable replacement of the [Codehaus Properties Maven plugin](https://www.mojohaus.org/properties-maven-plugin/).
+The Ezkv maven plugin is a far more capable replacement of the [Codehaus Properties Maven plugin](https://www.mojohaus.org/properties-maven-plugin/).
 This allows you to use much of the same configuration you would use in your application during the build process.
 This is particularly useful for database code generator plugins like [jOOQ](https://www.jooq.org/doc/latest/manual/code-generation/codegen-maven/) or Flyways Maven plugins.
 
-## Kiwi's advantages:
+## ezkv's advantages:
 
 * **Zero opinions** - it does not assume you want to load `app.properties` first. You define what resources and order.
 * Zero dependencies
@@ -189,26 +190,26 @@ This is particularly useful for database code generator plugins like [jOOQ](http
 * Can simulate other configuration frameworks loading easily with k/v configuration.
 * Allow users to choose where configuration comes from without recompiling.
 
-The last point is what really separates out Kiwi from other systems. 
+The last point is what really separates out Ezkv from other systems. 
 For example if you want to use environment variables with some special prefix without recompiling the application
 you can. Or perhaps you want to use a special properties file in your home directory.
 While there are applications and such that allow naive file *"includes"* (for example NGINX) but usually it is only files.
 
 ## Architecture
 
-Kiwi's two major concepts are:
+Ezkv's two major concepts are:
 
 1. KeyValues - a stream of key values
 1. Resources - a URI with associated key value meta data.
 
 Resources are used to load key values and key values can be used to specify and find more resources 
-(to load more key values). Kiwi is recursive.
+(to load more key values). Ezkv is recursive.
 
 For the rest of the explanation of architecture we will go bottom up.
 
 ### KeyValue
 
-A `KeyValue` object in Kiwi unlike a `Map.Entry<String,String>` has more information than just the simple tuple of `key` and `value`. 
+A `KeyValue` object in Ezkv unlike a `Map.Entry<String,String>` has more information than just the simple tuple of `key` and `value`. 
 
 `KeyValue` are:
 
@@ -218,10 +219,10 @@ A `KeyValue` object in Kiwi unlike a `Map.Entry<String,String>` has more informa
 * Whether or not it should be used for interpolation
 * Whether or not it should be printed out ever (e.g. a password or other sensitive information)
 
-Kiwi provides ergonomics working with streams of key values to filter, and collect key values
+Ezkv provides ergonomics working with streams of key values to filter, and collect key values
 as well as parse and format.
 
-**Notice that Kiwi is like a list of key values and thus:**
+**Notice that Ezkv is like a list of key values and thus:**
 
 * Order can be important
 * There can be duplicate "keys" (that may or may not override in the final result)
@@ -234,7 +235,7 @@ This mini DSL syntax in the future will be configurable so that you can pick dif
 
 ### Interpolation
 
-Kiwi can do Bash like interpolation on a stream of `KeyValues` (e.g. `${somevar:-${othervar}}`). It does this by using
+Ezkv can do Bash like interpolation on a stream of `KeyValues` (e.g. `${somevar:-${othervar}}`). It does this by using
 the key values themselves and `Variables`. `Variables` are simply `Function<String,String>`.
 This allows you to interpolate on key values with things you do not want in the final
 result (`KeyValues`). For example a common practice is to use `System.getProperties()` as variables
@@ -326,7 +327,7 @@ This is currently a subset of the flags:
 
 #### Resource Media Type
 
-Kiwi will try to automatically determine the media type of a resource based on the URI file extension but
+Ezkv will try to automatically determine the media type of a resource based on the URI file extension but
 in some cases that is not enough. The key `_mediaType_[name]` allows you to provide that explicitly.
 
 This is especially useful on URIs that can load a key that has key values in it.
@@ -375,7 +376,7 @@ classloader mechanism and `file` will use `java.io`/`java.nio` file loading.
 
 This part of the library is extendable and custom loaders can be manually wired or the service loader can be used.
 
-Out of the box Kiwi supports by schema:
+Out of the box Ezkv supports by schema:
 
 * `classpath`
 * `file`
@@ -387,7 +388,7 @@ Out of the box Kiwi supports by schema:
 
 Other URI schemas will be added soon usually as separate modules like dotenv, HOCON, Terraform/Tofu `tfvars.json` format etc.
 
-**Note that if no schema is provided kiwi will assume it is a file path which is a URI.**
+**Note that if no schema is provided Ezkv will assume it is a file path which is a URI.**
 
 We won't cover `file` and `classpath` as they are pretty self explanatory.
 
@@ -456,13 +457,13 @@ So one can make something similar if they like.
 Some `KeyValuesLoader` will know how to parse the `URI` directly to key values
 BUT many will will want to use a parser. 
 
-Kiwi provides a framework to parse and format key values from/to byte streams, 
+Ezkv provides a framework to parse and format key values from/to byte streams, 
 or strings based on ["media type" aka "Content Type" aka MIME](https://en.wikipedia.org/wiki/Media_type) 
 or file extension.
 
 This part of the library is extendable and custom media types can be manually wired or the service loader can be used.
 
-Out of the box Kiwi supports:
+Out of the box Ezkv supports:
 
  * `java.util.Properties` format.
  * URL Query percent encoding format.
@@ -473,17 +474,17 @@ Other formats will be added soon usually as separate modules like dotenv, HOCON,
 
 `KeyValuesEnvironment`
 
-Kiwi provides a facade to access system properties, environment variables, class resource loaders, stdin,
+Ezkv provides a facade to access system properties, environment variables, class resource loaders, stdin,
 command line arguments and logging. This can be useful for unit testing but the most useful is the logger.
 
-The logger in Kiwi by default does nothing but users may want to plug their own implementations to keep
+The logger in Ezkv by default does nothing but users may want to plug their own implementations to keep
 track of resource loading.
 
 ### KeyValuesSystem
 
 `KeyValuesSystem`
 
-This is the entrypoint into Kiwi and used to load the initial part of the chain of resources.
+This is the entrypoint into Ezkv and used to load the initial part of the chain of resources.
 The bootstrapping part of your application will call it first and will often convert or pass
 the loaded key values to something else.
 
@@ -502,4 +503,4 @@ and behavior because of this library has largely not thanks to the flexibility.
 
 * [avaje-config](https://avaje.io/config/) 
 
-Kiwi hopes to bring many of its concepts and design to `avaje-config`.
+Ezkv hopes to bring many of its concepts and design to `avaje-config`.
