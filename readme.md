@@ -175,7 +175,7 @@ The Ezkv maven plugin is a far more capable replacement of the [Codehaus Propert
 This allows you to use much of the same configuration you would use in your application during the build process.
 This is particularly useful for database code generator plugins like [jOOQ](https://www.jooq.org/doc/latest/manual/code-generation/codegen-maven/) or Flyways Maven plugins.
 
-## ezkv's advantages:
+## Ezkv's advantages:
 
 * **Zero opinions** - it does not assume you want to load `app.properties` first. You define what resources and order.
 * Zero dependencies
