@@ -1,75 +1,78 @@
 <?xml version="1.0" standalone="yes"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" style="zoom: 1;">
 
-  <g id="twig" transform="scale(1.4) translate(90, -9)">
-    <line stroke="darkgoldenrod" y1="37.75px" id="line1" x1="37.25px" stroke-width="1.5px" y2="45px"
-      x2="37.25px" transform="" />
-    <g transform="rotate(-45, 60, 40)">
-      <ellipse cx="63.270382px" fill="green" ry="10" rx="20" cy="26.830135px" />
-      <line stroke="darkgreen" y1="26.830135px" stroke-width="2" x1="43.270367px" y2="26.830135px"
-        x2="83.270416px" />
+  <g id="everything" transform="translate(30)">
+    <g id="twig" transform="scale(1.4) translate(90, -9)">
+      <line stroke="darkgoldenrod" y1="37.75px" id="line1" x1="37.25px" stroke-width="1.5px"
+        y2="45px"
+        x2="37.25px" transform="" />
+      <g transform="rotate(-45, 60, 40)">
+        <ellipse cx="63.270382px" fill="green" ry="10" rx="20" cy="26.830135px" />
+        <line stroke="darkgreen" y1="26.830135px" stroke-width="2" x1="43.270367px" y2="26.830135px"
+          x2="83.270416px" />
+      </g>
+      <!-- Leftleaf  -->
+      <g transform="translate(-31, 0) rotate(45, 60, 40)">
+        <ellipse cx="45.41592px" cy="36.022526px" ry="10" fill="green" rx="20" />
+        <line stroke="darkgreen" y1="36.022526px" stroke-width="2" x1="25.41592px" y2="36.022526px"
+          x2="65.415939px" />
+      </g>
     </g>
-    <!-- Leftleaf  -->
-    <g transform="translate(-31, 0) rotate(45, 60, 40)">
-      <ellipse cx="45.41592px" cy="36.022526px" ry="10" fill="green" rx="20" />
-      <line stroke="darkgreen" y1="36.022526px" stroke-width="2" x1="25.41592px" y2="36.022526px"
-        x2="65.415939px" />
+
+    <g id="lemon" transform="translate(105, 40) scale(0.5) ">
+      <!-- Outer yellow skin -->
+      <circle cx="100" cy="100" r="95" fill="yellow" stroke="none" />
+
+      <!-- Inner white circle -->
+      <circle cx="100" cy="100" r="80" fill="white" stroke="none" />
+
+      <!-- Inner lighter yellow circle -->
+      <circle cx="100" cy="100" r="65" fill="lemonchiffon" stroke="none" />
+
+      <!-- Wedges as white spokes -->
+      <g fill="none" stroke="white" stroke-width="5">
+        <line x1="100" y1="20" x2="100" y2="180" />
+        <line x1="20" y1="100" x2="180" y2="100" />
+        <line x1="50" y1="50" x2="150" y2="150" />
+        <line x1="150" y1="50" x2="50" y2="150" />
+      </g>
+      <g id="key" transform="translate(35,62) scale(0.5)">
+        <style>
+          svg {
+          --key-color: darkgoldenrod
+          }
+        </style>
+        <!-- Key shaft -->
+        <rect x="30" y="40" width="50" height="8" fill="var(--key-color)" stroke="white" />
+
+        <!-- Key head -->
+        <circle cx="30" cy="45" r="15" fill="var(--key-color)" stroke="white" />
+
+        <circle cx="30" cy="45" r="10" fill="lemonchiffon" />
+
+        <!-- Key teeth -->
+        <rect x="60" y="48" width="5" height="8" fill="var(--key-color)" stroke="white" />
+        <rect x="67" y="48" width="5" height="8" fill="var(--key-color)" stroke="white" />
+        <rect x="75" y="48" width="5" height="8" fill="var(--key-color)" stroke="white" />
+      </g>
+      <use href="#key" transform="translate(-50,110) rotate(-45)">
+      </use>
+      <use href="#key" transform="translate(-50,150) rotate(-45)">
+      </use>
+      <use href="#key" transform="translate(-50,150) rotate(-45)">
+      </use>
+      <use href="#key" transform="translate(201) scale(-1,1)">
+      </use>
+      <use href="#key" transform="translate(240, 95) scale(-1,1) rotate(-42)">
+      </use>
     </g>
-  </g>
-
-  <g id="lemon" transform="translate(105, 40) scale(0.5) ">
-    <!-- Outer yellow skin -->
-    <circle cx="100" cy="100" r="95" fill="yellow" stroke="none" />
-
-    <!-- Inner white circle -->
-    <circle cx="100" cy="100" r="80" fill="white" stroke="none" />
-
-    <!-- Inner lighter yellow circle -->
-    <circle cx="100" cy="100" r="65" fill="lemonchiffon" stroke="none" />
-
-    <!-- Wedges as white spokes -->
-    <g fill="none" stroke="white" stroke-width="5">
-      <line x1="100" y1="20" x2="100" y2="180" />
-      <line x1="20" y1="100" x2="180" y2="100" />
-      <line x1="50" y1="50" x2="150" y2="150" />
-      <line x1="150" y1="50" x2="50" y2="150" />
-    </g>
-    <g id="key" transform="translate(35,62) scale(0.5)">
-      <style>
-        svg {
-        --key-color: darkgoldenrod
-        }
-      </style>
-      <!-- Key shaft -->
-      <rect x="30" y="40" width="50" height="8" fill="var(--key-color)" stroke="white" />
-
-      <!-- Key head -->
-      <circle cx="30" cy="45" r="15" fill="var(--key-color)" stroke="white" />
-
-      <circle cx="30" cy="45" r="10" fill="lemonchiffon" />
-
-      <!-- Key teeth -->
-      <rect x="60" y="48" width="5" height="8" fill="var(--key-color)" stroke="white" />
-      <rect x="67" y="48" width="5" height="8" fill="var(--key-color)" stroke="white" />
-      <rect x="75" y="48" width="5" height="8" fill="var(--key-color)" stroke="white" />
-    </g>
-    <use href="#key" transform="translate(-50,110) rotate(-45)">
-    </use>
-    <use href="#key" transform="translate(-50,150) rotate(-45)">
-    </use>
-    <use href="#key" transform="translate(-50,150) rotate(-45)">
-    </use>
-    <use href="#key" transform="translate(201) scale(-1,1)">
-    </use>
-    <use href="#key" transform="translate(240, 95) scale(-1,1) rotate(-42)">
-    </use>
-    <g id="ezkv">
-    </g>
-  </g>
-    <text id="sample_text_element" x="15" y="50" font-family="ArialRoundedMTBold" font-size="40" fill="green"  transform="">
+    <text id="sample_text_element" x="15" y="50" font-family="ArialRoundedMTBold" font-size="40"
+      fill="green" stroke-width="0.25" stroke="black">
       EZKV
     </text>
-    <text id="sample_text_element" x="30" y="65" font-family="ArialRoundedMTBold" font-size="8" fill="yellow"  transform="">
-      Lemon Squeezy
+    <text id="sample_text_element" x="30" y="65" font-family="ArialRoundedMTBold" font-size="9"
+      fill="yellow" stroke-width="0.25" stroke="darkgoldenrod">
+      Lemon Squeezy!
     </text>
+  </g>
 </svg>
