@@ -6,7 +6,7 @@
       --green: limegreen
     }
   </style>
-  <g id="everything" transform="translate(30)">
+  <g id="everything" transform="translate(30) scale(1.2)">
     <g id="twig" transform="scale(1.4) translate(90, -9)">
       <line stroke="darkgoldenrod" y1="37.75px" id="line1" x1="37.25px" stroke-width="1.5px"
         y2="45px"
