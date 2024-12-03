@@ -79,5 +79,9 @@
       fill="yellow" stroke-width="0.25" stroke="darkgoldenrod">
       Lemon Squeezy!
     </text>
+    <text id="sample_text_element" x="35" y="80" font-family="ArialRoundedMTBold" font-size="6"
+      fill="darkgoldenrod" stroke-width="0.25" stroke="darkgoldenrod">
+     Micro Config Library 
+    </text>
   </g>
 </svg>
