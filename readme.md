@@ -1,6 +1,10 @@
 [![Github](https://github.com/jstachio/ezkv/actions/workflows/maven.yml/badge.svg)](https://github.com/jstachio/ezkv/actions)
 
-<img src="etc/ezkv_logo.svg" alt="ezkv logo">
+<img src="etc/ezkv_logo.svg" alt="EZKV (pronounced ee-zee kee-vee) logo">
+
+<div style="text-align: center; font-size: smaller; font-style: italic;">
+(pronounced "ee-zee kee-vee")
+</div>
 
 # Ezkv
 
