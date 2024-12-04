@@ -2,9 +2,7 @@
 
 <img src="etc/ezkv_logo.svg" alt="EZKV (pronounced ee-zee kee-vee) logo">
 
-<div style="text-align: center; font-size: smaller; font-style: italic;">
-(pronounced "ee-zee kee-vee")
-</div>
+<sub><sup>*(pronounced "ee-zee kee-vee")*</sup></sub>
 
 # Ezkv
 
