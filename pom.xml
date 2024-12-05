@@ -481,8 +481,10 @@
               <docfilessubdirs>true</docfilessubdirs>
               <doctitle>
               <![CDATA[
-              <img src ="resources/ezkv_logo.svg" alt="EZKV" title="EZKV" width="66%" />
-              <br/>
+              <img src ="resources/ezkv_logo.svg" alt="EZKV logo" title="EZKV (pronounced ee-zee kee-vee)" width="66%" />
+              <div style="text-align: center; font-size: smaller; color: limegreen; padding-bottom:2em">
+                <em>(pronounced "ee-zee kee-vee")</em>
+              </div>
               Ezkv API ${project.version}
               ]]>
               </doctitle>
