@@ -293,6 +293,21 @@ Resource loading configuration can be done with special key values.
 It can be either specified in the URI of the resource or as key values in
 the resource where the `_load_[name]` is specified.
 
+The underscore is a called the prefix. 
+That will be configurable at some point as well as the separator
+which is also an underscore.
+
+The key names without the prefix and separators are:
+
+* `load` - resource to load required
+* `mediaType` or `mime` - media type of resource not required
+* `flags` or `flag` - flags for loading
+* `param` or `parm` - parameters for custom plugins
+* `filter` or `filt` - filters
+
+The next sections will cover the default key syntax within a resource
+or within a URI. 
+
 ##### Resource configuration in resource
 
 The default key value pattern to specify resources is:
@@ -309,6 +324,18 @@ The `[name]` part should be replaced with a name of ones choosing where only cas
 It becomes the symbolic name of the resource. Don't worry those special keys will be filtered out. 
 
 The `_load_[name]` is the most important key as it dictates the name of the resource and the URI of the resource.
+
+
+**TIP:** the key aliases are all 4 characters which is useful for visual alignment.
+
+
+```properties
+_load_[name]=URI
+_mime_[name]=Content Type or file extension to resolve format of resource for parsing
+_flag_[name]=CSV of flag names
+_parm_[name]_[key]=String
+_filt_[name]_[filter]=String expression for filter
+```
 
 ##### Resource configuration in URI
 

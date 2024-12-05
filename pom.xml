@@ -479,7 +479,13 @@
               <show>protected</show>
               <overview>doc/overview.html</overview>
               <docfilessubdirs>true</docfilessubdirs>
-              <doctitle>Ezkv API ${project.version}</doctitle>
+              <doctitle>
+              <![CDATA[
+              <img src ="resources/ezkv_logo.svg" alt="EZKV" title="EZKV" width="66%" />
+              <br/>
+              Ezkv API ${project.version}
+              ]]>
+              </doctitle>
               <windowtitle>Ezkv API ${project.version}</windowtitle>
               <linksource>true</linksource>
             </configuration>

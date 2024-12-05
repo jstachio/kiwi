@@ -42,35 +42,38 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * <table class="table">
  * <caption><strong>Resource Keys using default syntax</strong></caption> <thead>
  * <tr>
- * <th>Constant</th>
- * <th>Resource Key</th>
- * <th>URI Query Key</th>
+ * <th>Resource Key(s)</th>
+ * <th>Resource Syntax</th>
+ * <th>URI Syntax</th>
  * <th>Description</th>
  * </tr>
  * </thead> <tbody>
  * <tr>
- * <td>{@link io.jstach.ezkv.kvs.KeyValuesResource#KEY_LOAD}</td>
+ * <td>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_LOAD}</td>
  * <td><code>_load_[resource]</code></td>
  * <td><strong>N/A</strong></td>
  * <td>Specifies a resource to load. The resource name is defined as the content following
  * <code>_load_</code>. It should be alphanumeric with no spaces.</td>
  * </tr>
  * <tr>
- * <td>{@link io.jstach.ezkv.kvs.KeyValuesResource#KEY_FLAGS}</td>
+ * <td>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_FLAGS} or
+ * {@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_FLAG}</td>
  * <td><code>_flags_[resource]</code></td>
  * <td><code>_flags</code></td>
  * <td>Defines flags associated with a resource. Replace <code>[resource]</code> with the
  * actual resource name.</td>
  * </tr>
  * <tr>
- * <td>{@link io.jstach.ezkv.kvs.KeyValuesResource#KEY_MEDIA_TYPE}</td>
+ * <td>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_MEDIA_TYPE} or
+ * {@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_MIME}</td>
  * <td><code>_mediaType_[resource]</code></td>
  * <td><code>_mediaType</code></td>
  * <td>Specifies the media type of a resource. Replace <code>[resource]</code> with the
  * actual resource name.</td>
  * </tr>
  * <tr>
- * <td>{@link io.jstach.ezkv.kvs.KeyValuesResource#KEY_PARAM}</td>
+ * <td>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_PARAM} or
+ * {@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_PARM}</td>
  * <td><code>_param_[resource]_[name]</code></td>
  * <td><code>_param_[name]</code></td>
  * <td>Defines parameters associated with a resource. Replace <code>[resource]</code> with
@@ -78,7 +81,8 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * be alphanumeric with no spaces.</td>
  * </tr>
  * <tr>
- * <td>{@link io.jstach.ezkv.kvs.KeyValuesResource#KEY_FILTER}</td>
+ * <td>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_FILTER} or
+ * {@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_FILT}</td>
  * <td><code>_filter_[resource]_[filter]</code></td>
  * <td><code>_filter_[filter]</code></td>
  * <td>Specifies filters to apply to a resource. Replace <code>[resource]</code> with the
@@ -118,12 +122,13 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * </table>
  *
  * <em>Note: flags can be negated textual by appending <code>NO_</code> or removing
- * <code>NO_</code></em>
+ * <code>NO_</code> and are case insensitive</em>
  *
  * Example usage for building a {@code KeyValuesResource}:
  * {@snippet :
  * var resource = KeyValuesResource.builder("classpath:/config.properties")
  * 	.name("config")
+ * 	.flags("optional,interpolate")
  * 	.parameter("key1", "value1")
  * 	.sensitive(true)
  * 	.build();
