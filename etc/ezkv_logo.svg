@@ -3,36 +3,39 @@
 
   <style>
     svg {
-      --green: limegreen
+      --green: limegreen;
+      --pulp: palegoldenrod;
+      --skin: yellow;
+      --key-color: darkgoldenrod;
     }
   </style>
-  <g id="everything" transform="translate(30) scale(1.2)">
+  <g id="everything" transform="translate(10) scale(1.2)">
+    <g id="lemon-twig" transform="translate(30)">
     <g id="twig" transform="scale(1.4) translate(90, -9)">
       <line stroke="darkgoldenrod" y1="37.75px" id="line1" x1="37.25px" stroke-width="1.5px"
         y2="45px"
         x2="37.25px" transform="" />
-      <g transform="rotate(-45, 60, 40)">
+      <g transform="rotate(-45, 60, 41)">
         <ellipse cx="63.270382px" fill="var(--green)" ry="10" rx="20" cy="26.830135px" />
         <line stroke="green" y1="26.830135px" stroke-width="2" x1="43.270367px" y2="26.830135px"
           x2="83.270416px" />
       </g>
-      <!-- Leftleaf  -->
-      <g transform="translate(-31, 0) rotate(45, 60, 40)">
+      <g transform="translate(-31, 0) rotate(45, 58, 41)">
         <ellipse cx="45.41592px" cy="36.022526px" ry="10" fill="var(--green)" rx="20" />
         <line stroke="green" y1="36.022526px" stroke-width="2" x1="25.41592px" y2="36.022526px"
           x2="65.415939px" />
       </g>
     </g>
 
-    <g id="lemon" transform="translate(105, 40) scale(0.5) ">
+    <g id="lemon" transform="translate(128, 48) scale(0.5) ">
       <!-- Outer yellow skin -->
-      <circle cx="100" cy="100" r="95" fill="yellow" stroke="none" />
+      <circle cx="100" cy="100" r="95" fill="var(--skin)" stroke="none" />
 
       <!-- Inner white circle -->
       <circle cx="100" cy="100" r="80" fill="white" stroke="none" />
 
       <!-- Inner lighter yellow circle -->
-      <circle cx="100" cy="100" r="65" fill="lemonchiffon" stroke="none" />
+      <circle cx="100" cy="100" r="65" fill="var(--pulp)" stroke="none" />
 
       <!-- Wedges as white spokes -->
       <g fill="none" stroke="white" stroke-width="5">
@@ -42,18 +45,13 @@
         <line x1="150" y1="50" x2="50" y2="150" />
       </g>
       <g id="key" transform="translate(35,62) scale(0.5)">
-        <style>
-          svg {
-          --key-color: darkgoldenrod
-          }
-        </style>
         <!-- Key shaft -->
         <rect x="30" y="40" width="50" height="8" fill="var(--key-color)" stroke="white" />
 
         <!-- Key head -->
         <circle cx="30" cy="45" r="15" fill="var(--key-color)" stroke="white" />
 
-        <circle cx="30" cy="45" r="10" fill="lemonchiffon" />
+        <circle cx="30" cy="45" r="10" fill="var(--pulp)" />
 
         <!-- Key teeth -->
         <rect x="60" y="48" width="5" height="8" fill="var(--key-color)" stroke="white" />
@@ -71,17 +69,20 @@
       <use href="#key" transform="translate(240, 95) scale(-1,1) rotate(-42)">
       </use>
     </g>
-    <text id="sample_text_element" x="15" y="50" font-family="ArialRoundedMTBold" font-size="40"
+    </g>
+    <g id="slug" transform="translate(0, 20)">
+    <text id="sample_text_element" x="5" y="50" font-family="ArialRoundedMTBold" font-size="55"
       fill="var(--green)" stroke-width="0.25" stroke="black">
       EZKV
     </text>
-    <text id="sample_text_element" x="30" y="65" font-family="ArialRoundedMTBold" font-size="9"
-      fill="yellow" stroke-width="0.25" stroke="darkgoldenrod">
+    <text id="sample_text_element" x="15" y="77" font-family="ArialRoundedMTBold" font-size="16"
+      fill="var(--skin)" stroke-width="0.25" stroke="var(--key-color)">
       Lemon Squeezy!
     </text>
-    <text id="sample_text_element" x="35" y="80" font-family="ArialRoundedMTBold" font-size="6"
-      fill="darkgoldenrod" stroke-width="0.25" stroke="darkgoldenrod">
+    <text id="sample_text_element" x="18" y="100" font-family="ArialRoundedMTBold" font-size="12"
+      fill="var(--key-color)" stroke-width="0.25" stroke="var(--key-color)">
      Micro Config Library 
     </text>
+    </g>
   </g>
 </svg>
