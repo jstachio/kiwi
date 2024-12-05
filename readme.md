@@ -41,6 +41,9 @@ and some prefix removed.
 * **[Latest SNAPSHOT Ezkv doc](https://jstach.io/ezkv/)**
 * **[Current released Ezkv doc](https://jstach.io/doc/ezkv/current/apidocs)**
 
+**While this readme does contain some documentation the above is the preferred documentation and
+more likely to be correct!**
+
 ## Why and Use Case
 
 Ezkv allows **"users"** to decide where their configuration comes from instead of developers. 
@@ -299,7 +302,7 @@ _load_[name]=URI
 _mediaType_[name]=Content Type or file extension to resolve format of resource for parsing
 _flags_[name]=CSV of flag names
 _param_[name]_[key]=String
-_filter_[name]=String expression for filter
+_filter_[name]_[filter]=String expression for filter
 ```
 
 The `[name]` part should be replaced with a name of ones choosing where only case sensitive alphanumeric characters are allowed.
