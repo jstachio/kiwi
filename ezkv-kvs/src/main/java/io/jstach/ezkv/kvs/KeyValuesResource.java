@@ -255,8 +255,8 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	public static final String FLAG_NO_ADD_VARIABLES = "NO_ADD_VARIABLES";
 
 	/**
-	 * Prevents the resource from invoking `_load` calls to load additional child
-	 * resources.
+	 * Prevents the resource from invoking <code>_load</code> calls to load additional
+	 * child resources.
 	 */
 	public static final String FLAG_NO_LOAD_CHILDREN = "NO_LOAD_CHILDREN";
 
@@ -353,34 +353,77 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	 */
 	public static final String KEY_FILT = "filt";
 
+	// @formatter:off
 	/**
-	 * Classpath resource.
+	 * Classpath resource is loaded using
+	 * {@link KeyValuesEnvironment#getResourceStreamLoader()}.
+	 *
+	 * {@snippet lang=properties :
+	 * _load_app=classpath:///app.properties
+	 * }
 	 */
+	// @formatter:on
 	public static final String SCHEMA_CLASSPATH = "classpath";
 
+	// @formatter:off
 	/**
-	 * File resource.
+	 * File resource which is the default if no schema is given.
+	 * {@snippet lang=properties :
+	 * _load_somefile=file:///./app.properties
+	 * _load_another=another.properties
+	 * }
 	 */
+	// @formatter:on
 	public static final String SCHEMA_FILE = "file";
 
 	/**
-	 * System properties.
+	 * System properties which come from
+	 * {@link KeyValuesEnvironment#getSystemProperties()}.
+	 * <p>
+	 * This schema can take a path that fetches a key value, where the value is used as
+	 * the source of the key values. If no path is provided, all key values of the
+	 * resource will be loaded.
+	 *
 	 */
 	public static final String SCHEMA_SYSTEM = "system";
 
 	/**
-	 * Environment variables.
+	 * Environment variables which come from {@link KeyValuesEnvironment#getSystemEnv()}.
+	 * <p>
+	 * This schema can take a path that fetches a key value, where the value is used as
+	 * the source of the key values. If no path is provided, all key values of the
+	 * resource will be loaded.
 	 */
 	public static final String SCHEMA_ENV = "env";
 
 	/**
 	 * Command line argument pairs separated by <code>=</code>.
+	 * <p>
+	 * This schema can take a path that fetches a key value, where the value is used as
+	 * the source of the key values. If no path is provided, all key values of the
+	 * resource will be loaded.
 	 */
 	public static final String SCHEMA_CMD = "cmd";
 
+	// @formatter:off
 	/**
 	 * Allows Unix piping of key values, often useful for passwords.
+	 * <p>
+	 * <code>stdin:///</code> without a path assumes that the entire contents of stdin are
+	 * in java.util.Properties key-value format. If this is not the case, it is advisable
+	 * to specify _mediaType= explicitly with stdin.
+	 * </p>
+	 * <code>stdin:///</code> can also bind the input content, parsed as a UTF-8 string,
+	 * to the key provided in the URI path.
+	 *
+	 * {@snippet lang=properties :
+	 * _load_stdin=stdin:///db.password?_flag=sensitive,optional
+	 * }
+	 *
+	 * Stdin is retrieved from {@link KeyValuesEnvironment#getStandardInput()}.
+	 *
 	 */
+	// @formatter:on
 	public static final String SCHEMA_STDIN = "stdin";
 
 	/**
