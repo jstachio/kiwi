@@ -20,6 +20,8 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * Represents a resource that contains key-value pairs to be loaded and processed. A
  * {@code KeyValuesResource} includes a URI, optional parameters, and metadata flags that
  * determine its behavior during loading.
+ *
+ * <h2>Resource URIs</h2>
  * <p>
  * Out of the box, Ezkv supports the following URI schemas:
  * </p>
@@ -41,24 +43,31 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * URI</li>
  * </ul>
  *
+ * <h2>Resource Keys</h2>
  * <p>
  * Resources can have special keys associated with them. The most important key is the
  * load key ({@link #KEY_LOAD}), which assigns a name to the resource. The resource name
- * is the text following the load key prefix, and the value of the key should be a URI.
+ * is the text after the {@value #DEFAULT_KEY_PREFIX} + {@value #KEY_LOAD} +
+ * {@value #DEFAULT_KEY_SEP} which becomes the resource name and the value of the key
+ * should be a URI. The resource name must match the regex: {@value #RESOURCE_NAME_REGEX}.
+ * For example <code>_load_myresource=URI</code> would have the {@linkplain #name() name}
+ * "<code>myresource</code>".
  * </p>
  * <p>
- * Other keys can be specified in two ways:
+ * All other keys can be specified in two ways:
  * </p>
  * <ol>
- * <li>As query parameters in the resource's URI (these keys will be removed before the
- * resource is loaded).</li>
- * <li>As additional key-value pairs within the same resource, using the resource name as
- * part of the key (they keys will be removed from the final result).</li>
+ * <li><strong>In-URI keys</strong>: As query parameters in the resource's URI (these keys
+ * will be removed before the resource is loaded).</li>
+ * <li><strong>In-Resource keys</strong>: As additional key-value pairs within the same
+ * resource, using the resource name as part of the key (they keys will be removed from
+ * the final result).</li>
  * </ol>
  *
- * <em>The parameters are combined from both the URI and key value pairs but the key value
- * pairs take prededence on collision.</em> One advantage that URI query keys have is that
- * they do not need the resource name as that can be deduced.
+ * <em>The parameters are combined from both the "In-URI keys" and "In-Resource keys" but
+ * "In-Resource keys" take prededence on collision.</em> One advantage that "In-URI keys"
+ * have is that they do not need the resource name as that can be deduced and order is
+ * guaranteed which is important for filters.
  *
  * <table class="table">
  * <caption><strong>Resource Keys using default syntax</strong></caption> <thead>
@@ -112,6 +121,8 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * </tr>
  * </tbody>
  * </table>
+ * <h3>Resource Flags</h3> As mentioned above flags are set with the {@value #KEY_FLAGS}
+ * key.
  *
  * <table class="table">
  * <caption><strong>Resource loading flags</strong></caption> <thead>
@@ -143,10 +154,13 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * </table>
  *
  * <p>
- * <em>Note: flags can be negated textual by appending <code>NO_</code> or removing
- * <code>NO_</code> and are case insensitive</em>
+ * <em>Note: flags can be negated textual by appending <code>NO_</code> /
+ * <code>NOT_</code> or removing <code>NO_</code> (if present) and are case
+ * insensitive</em>
  * </p>
  *
+ * <h3>Resource Filters</h3> As mentioned previously filters are set with the
+ * {@value #KEY_FILTER} key.
  * <p>
  * Out of the box, Ezkv supports the following resource filters:
  * </p>
@@ -181,11 +195,18 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * 	.build();
  * }
  *
- * @see KeyValuesSource
- * @see LoadFlag
+ * @see KeyValuesServiceProvider
+ * @see KeyValuesLoader.Builder#add(KeyValuesResource)
+ * @see #builder(URI)
  */
 public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValueReference
 		permits InternalKeyValuesResource {
+
+	/**
+	 * Resource names must match {@value #RESOURCE_NAME_REGEX} regular expression which is
+	 * effectively only alphanumeric and no spaces.
+	 */
+	public static final String RESOURCE_NAME_REGEX = "[a-zA-Z0-9]+";
 
 	/**
 	 * Indicates that the resource is optional and no error should occur if it is not
@@ -262,27 +283,53 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	public static final String FLAG_INHERIT = "INHERIT";
 
 	/**
-	 * Represents the key for specifying resources to load.
+	 * By default resource keys are prefixed with {@value #DEFAULT_KEY_PREFIX}. Note that
+	 * other keys that are not resource keys may have this prefix and will not be filtered
+	 * out.
+	 */
+	public static final String DEFAULT_KEY_PREFIX = "_";
+
+	/**
+	 * By default resource keys use this as separator to separate the resource key and
+	 * resource name ({@link #KEY_LOAD}) as well as other key properties (filter id for
+	 * {@link #KEY_FILTER} and parameter name for {@link #KEY_PARAM}).
+	 */
+	public static final String DEFAULT_KEY_SEP = "_";
+
+	/**
+	 * Key to specify a resource to load. The resource name is defined as the content
+	 * following * <code>_load_</code>. It should be alphanumeric with no spaces.
+	 * @see #RESOURCE_NAME_REGEX
 	 */
 	public static final String KEY_LOAD = "load";
 
 	/**
-	 * Represents the key for specifying flags associated with a resource.
+	 * Defines flags associated with a resource.
+	 * @see #KEY_FLAG
 	 */
 	public static final String KEY_FLAGS = "flags";
 
 	/**
-	 * Represents the key for specifying the media type of a resource.
+	 * Key for specifying the media type (or file extension) of a resource.
+	 * {@link KeyValuesSystem#mediaFinder()} is then typically used for the lookup.
+	 * @see #KEY_MIME
+	 * @see KeyValuesMedia
 	 */
 	public static final String KEY_MEDIA_TYPE = "mediaType";
 
 	/**
-	 * Represents the key for specifying parameters associated with a resource.
+	 * Represents the key for specifying parameters associated with a resource and are
+	 * usually suffixed with a separator and name of the parameter.
 	 */
 	public static final String KEY_PARAM = "param";
 
 	/**
-	 * Represents the key for specifying filters to apply to the resource.
+	 * Key for specifying filters to apply to the resource. The name after the last
+	 * {@link #DEFAULT_KEY_SEP} is the filter id. The value of the key is the filter
+	 * expression and its syntax and semantics vary by filter.
+	 * @see KeyValuesServiceProvider.KeyValuesFilter
+	 * @see #FILTER_SED
+	 * @see #FILTER_GREP
 	 */
 	public static final String KEY_FILTER = "filter";
 
@@ -363,20 +410,25 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	public URI uri();
 
 	/**
-	 * Returns the parameters associated with the resource.
+	 * Returns the parameters associated with the resource which are specified with the
+	 * resource key {@value #KEY_PARAM}. Parameters are away to configure custom plugins.
 	 * @return the parameters as {@link Parameters}
+	 * @see KeyValuesServiceProvider
 	 */
 	public Parameters parameters();
 
 	/**
 	 * Returns the name of the resource.
 	 * @return the name of the resource
+	 * @see #RESOURCE_NAME_REGEX
 	 */
 	@Override
 	public String name();
 
 	/**
-	 * Returns the {@link KeyValue} that references this resource, if any.
+	 * Returns the {@link KeyValue} that references this resource, if any. This is
+	 * normally the {@linkplain #KEY_LOAD load key} in the parent resource loaded key
+	 * values.
 	 * @return the reference {@code KeyValue}, or {@code null} if not applicable
 	 */
 	@Override
@@ -385,6 +437,8 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	/**
 	 * Returns the media type of the resource, if specified.
 	 * @return the media type, or {@code null} if not specified
+	 * @see KeyValuesMedia
+	 * @see #KEY_MEDIA_TYPE
 	 */
 	public @Nullable String mediaType();
 
@@ -461,7 +515,7 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 				@Nullable KeyValue reference, @Nullable String mediaType, List<Filter> filters) {
 			super();
 			this.uri = uri;
-			this.name = name;
+			this.name = DefaultKeyValuesResource.validateResourceName(name);
 			this.parameters = parameters;
 			this.flags = flags;
 			this.reference = reference;
@@ -470,9 +524,11 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		}
 
 		/**
-		 * Sets the URI for the resource.
+		 * Sets the URI for the resource. The URI may contain resource keys and for a full
+		 * listing of that syntax see {@link KeyValuesResource}.
 		 * @param uri the URI to set
 		 * @return this builder instance
+		 * @see KeyValuesResource
 		 */
 		public Builder uri(URI uri) {
 			this.uri = uri;
@@ -480,7 +536,9 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		}
 
 		/**
-		 * Sets the name for the resource.
+		 * Sets the name for the resource. The name should match the regex
+		 * {@link KeyValuesResource#RESOURCE_NAME_REGEX}. The validation however is done
+		 * at build time and not on this call.
 		 * @param name the name to set
 		 * @return this builder instance
 		 */
@@ -511,8 +569,10 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 
 		/**
 		 * Sets the media type for the resource.
-		 * @param mediaType the media type to set
+		 * @param mediaType the media type to set and can be the actual media type or the
+		 * file extension.
 		 * @return this builder instance
+		 * @see KeyValuesMedia
 		 */
 		public Builder mediaType(String mediaType) {
 			this.mediaType = mediaType;
@@ -520,9 +580,20 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		}
 
 		/**
-		 * Sets or clears the {@link LoadFlag#NO_INTERPOLATE} flag.
+		 * Sets the media type for the resource.
+		 * @param media the media type to set from {@link KeyValuesMedia#getMediaType()}.
+		 * @return this builder instance
+		 * @see KeyValuesMedia
+		 */
+		public Builder mediaType(KeyValuesMedia media) {
+			return this.mediaType(media);
+		}
+
+		/**
+		 * Sets or clears the {@value KeyValuesResource#FLAG_NO_INTERPOLATE} flag.
 		 * @param flag whether to set or clear the flag
 		 * @return this builder instance
+		 * @see KeyValuesResource#FLAG_NO_INTERPOLATE
 		 */
 		public Builder noInterpolation(boolean flag) {
 			LoadFlag.NO_INTERPOLATE.set(flags, flag);
@@ -530,11 +601,11 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		}
 
 		/**
-		 * Sets or clears the {@link LoadFlag#NO_ADD} flag.
+		 * Sets or clears the {@value KeyValuesResource#FLAG_NO_ADD} flag.
 		 * @param flag whether to set or clear the flag
 		 * @return this builder instance
 		 */
-		public Builder noAddKeyValues(boolean flag) {
+		public Builder noAdd(boolean flag) {
 			LoadFlag.NO_ADD.set(flags, flag);
 			return this;
 		}
@@ -543,6 +614,7 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		 * Marks the resource as sensitive, meaning its values should not be printed.
 		 * @param flag whether to mark the resource as sensitive
 		 * @return this builder instance
+		 * @see KeyValuesResource#FLAG_SENSITIVE
 		 */
 		public Builder sensitive(boolean flag) {
 			LoadFlag.SENSITIVE.set(flags, flag);
@@ -555,6 +627,17 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		 * @return this
 		 */
 		public Builder noRequire(boolean flag) {
+			LoadFlag.NO_REQUIRE.set(flags, flag);
+			return this;
+		}
+
+		/**
+		 * Marks the resource as not required.
+		 * @param flag true make the resource not required.
+		 * @return this
+		 * @see KeyValuesResource#FLAG_OPTIONAL
+		 */
+		public Builder optional(boolean flag) {
 			LoadFlag.NO_REQUIRE.set(flags, flag);
 			return this;
 		}
@@ -687,17 +770,6 @@ record DefaultKeyValuesResource(URI uri, //
 		var filters = builder.filters;
 		return new DefaultKeyValuesResource(uri, name, loadFlags, reference, mediaType, variables, filters, normalized);
 	}
-
-	// @Override
-	// public List<Filter> filters() {
-	// var csv = parameters.getValue("filter");
-	// if (csv == null) {
-	// return List.of();
-	// }
-	// List<String> filters = new ArrayList<>();
-	// DefaultKeyValuesMedia.parseCSV(csv, filters::add);
-	// return List.copyOf(filters);
-	// }
 
 	@Override
 	public boolean isRedacted() {

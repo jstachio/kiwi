@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
@@ -12,25 +13,19 @@ import io.jstach.ezkv.kvs.KeyValue.Source;
 // TODO need to consolidate all the "source" types.
 sealed interface KeyValuesSource permits NamedKeyValuesSource, KeyValue.Source {
 
+	/**
+	 * Resource name pattern for validation.
+	 */
+	static final Pattern RESOURCE_NAME_PATTERN = Pattern.compile(KeyValuesResource.RESOURCE_NAME_REGEX);
+
 	static String validateName(String identifier) {
-		if (identifier == null || !identifier.matches("[a-zA-Z0-9]+")) {
+		if (identifier == null || !RESOURCE_NAME_PATTERN.matcher(identifier).matches()) {
 			throw new IllegalArgumentException(
-					"Invalid source name: must contain only alphanumeric characters (no underscores) and not be null. input: "
+					"Invalid resource name: must contain only alphanumeric characters (no underscores) and not be null. input: "
 							+ identifier);
 		}
 		return identifier;
 	}
-
-	// static String toString(KeyValuesSource source) {
-	// return switch(source) {
-	// case KeyValuesResource r -> "uri=" + r.uri() + ", name=" + r.name() + ", ref=" +
-	// KeyValueReference.toStringRef(r.reference());
-	// case KeyValue.Source s -> "uri=" + s.uri() + ", ref=" +
-	// KeyValueReference.toStringRef(s.reference());
-	// case NamedKeyValues nkvs -> "name=" + nkvs.name();
-	//
-	// };
-	// }
 
 	static StringBuilder describe(StringBuilder sb, KeyValuesSource source) {
 		return switch (source) {

@@ -306,11 +306,11 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 	}
 
 	protected String prefix() {
-		return sep();
+		return KeyValuesResource.DEFAULT_KEY_PREFIX;
 	}
 
 	protected String sep() {
-		return "_";
+		return KeyValuesResource.DEFAULT_KEY_SEP;
 	}
 
 	protected String prefix(String keyAlias) {

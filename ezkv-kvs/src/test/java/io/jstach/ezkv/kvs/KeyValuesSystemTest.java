@@ -191,7 +191,7 @@ class KeyValuesSystemTest {
 		var r = KeyValuesResource.builder(URI.create("system:///?_filter_sed=s/a/b/"))
 			.name("system")
 			.noInterpolation(true)
-			.noAddKeyValues(true)
+			.noAdd(true)
 			.sensitive(true)
 			.parameter("custom", "something")
 			.build(DefaultKeyValuesResourceParser.DEFAULT);

@@ -29,7 +29,7 @@ import io.jstach.ezkv.kvs.KeyValuesMedia.Parser;
 
 enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 
-	PROPERTIES("text/x-java-properties", "properties") {
+	PROPERTIES(MEDIA_TYPE_PROPERTIES, FILE_EXT_PROPERTIES) {
 		@Override
 		public void parse(InputStream is, BiConsumer<String, String> consumer) throws IOException {
 			PropertiesParser.readProperties(new InputStreamReader(is, StandardCharsets.UTF_8), consumer);
@@ -50,7 +50,7 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 		}
 	},
 
-	URLENCODED("application/x-www-form-urlencoded", null) {
+	URLENCODED(MEDIA_TYPE_URLENCODED, null) {
 		@Override
 		public void parse(InputStream input, BiConsumer<String, String> consumer) throws IOException {
 			String i = inputStreamToString(input);

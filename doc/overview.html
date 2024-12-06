@@ -83,7 +83,7 @@ implementation 'io.jstach.ezkv:ezkv-kvs:_VERSION_'
 var kvs = KeyValuesSystem.defaults()
     .loader()
     .variables(Variables::ofSystemProperties) // Use system properties as base variables for interpolation
-    .add("classpath:/start.properties")
+    .add("classpath:/start.properties")       // Use a classpath properties file
     .add("system:///")                        // add system properties to override
     .add("env:///")                           // add environment variables to override
     .add("cmd:///?_filter_sed=s/^-D//")       // add command line for final override using the prefix of -D
@@ -95,10 +95,10 @@ ConfigurableEnvironment env = applicationContext.getEnvironment();
 env.getPropertySources().addFirst(new MapPropertySource("start", map));
 }
 
-Now in  **start.properties** I can load more resources with special keys:
+Now in  <code>start.properties</code> you load more resources with special keys:
 
 {@snippet lang=properties :
-_load_foo=file:/./myapp.properties?_flag=optional
+_load_foo=file:/./myapp.properties?_flag=optional # optionally load myapp.properties from the CWD.
 }
 
 
@@ -173,17 +173,26 @@ The only module needed during runtime is
 <h3 id="interpolation">Interpolation</h3>
 <p>Ezkv can perform Bash-like interpolation on a stream of {@link io.jstach.ezkv.kvs.KeyValues} (e.g., <code>${somevar:-${othervar}}</code>). It does this by using the key values themselves and {@link io.jstach.ezkv.kvs.Variables}. {@link io.jstach.ezkv.kvs.Variables} are simply <code>Function&lt;String, String&gt;</code>.</p>
 <p>This allows you to interpolate on key values with data you do not want in the final result ({@link io.jstach.ezkv.kvs.KeyValues}). For example, it is common to use <code>System.getProperties()</code> as variables, but often you do not want all the system properties to end up in the {@link io.jstach.ezkv.kvs.KeyValues}.</p>
+<p>Variables can be {@linkplain io.jstach.ezkv.kvs.KeyValuesLoader.Builder#variables(Function<KeyValuesEnvironment, Variables>) added to the loader}</p>
 <p>Interpolation can be disabled with the resource flag <code>no_interpolation</code>.</p>
-<p>Furthermore, you can load a resource as variables instead of {@link io.jstach.ezkv.kvs.KeyValues} with the resource flag <code>no_add</code>.</p>
+<p>Finally, you can load a resource as variables instead of {@link io.jstach.ezkv.kvs.KeyValues} with the resource flag <code>no_add</code>.</p>
+
+{@snippet lang="java" :
+var kvs = KeyValuesSystem.defaults()
+    .loader()
+    .add("classpath:/variable.properties?_flag=no_add")  # Use the variable.properties file as variables.
+    .add("classpath:/start.properties")
+    .load();
+}
+
+<code>start.properties</code>
 
 {@snippet lang="properties":
-# first loaded properties
-_load_system=system:///
-_flags_system=no_add
+# start.properties
 _load_app=classpath:/${app.name:-app}.properties
 }
 
-<p>If <code>app.name</code> is defined in system properties, it will be used in the <code>_load_app</code> URI. Otherwise, <code>app.properties</code> will be used.</p>
+<p>If <code>app.name</code> is defined in variable.properties, it will be used in the <code>_load_app</code> URI. Otherwise, <code>app.properties</code> will be used.</p>
 <p>Often, interpolation will create a new stream of {@link io.jstach.ezkv.kvs.KeyValues} where the value part of the key is replaced with the interpolated result; however, the original value is always retained.</p>
 
 <h3 id="keyvaluesresource">KeyValuesResource</h3>
@@ -217,11 +226,17 @@ These can either be specified in the URI of the resource or as key values within
 </p>
 
 <ul>
-    <li><code>load</code> - resource to load (required)</li>
-    <li><code>mediaType</code> or <code>mime</code> - media type of the resource (not required)</li>
-    <li><code>flags</code> or <code>flag</code> - flags for loading</li>
-    <li><code>param</code> or <code>parm</code> - parameters for custom plugins</li>
-    <li><code>filter</code> or <code>filt</code> - filters</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_LOAD} - resource to load (required)</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_MEDIA_TYPE} or  {@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_MIME} 
+        - media type of the resource (not required)
+    </li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_FLAGS}  or {@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_FLAG} 
+        - flags for loading</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_PARAM} or {@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_PARM}
+        - parameters for custom plugins
+    </li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_FILTER} or {@value io.jstach.ezkv.kvs.KeyValuesResource#KEY_FILT} 
+         - filters</li>
 </ul>
 
 The next sections will cover the default key syntax within a resource

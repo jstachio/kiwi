@@ -22,24 +22,55 @@ import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
  *
  * <p>
  * Out-of-the-box implementations include properties and URL-encoded formats. <strong>The
- * properties and URL encoded formats do maintain order of the key values parsed (unlike
- * regular java.util {@link Properties})! </strong>
- *
+ * properties and URL encoded formats do maintain order of the key values parsed and do
+ * allow duplicate keys (unlike regular java.util {@link Properties})! </strong>
  * <p>
  * Example usage for parsing an {@code InputStream}:
  * {@snippet :
  * KeyValuesMedia propertiesMedia = KeyValuesMedia.ofProperties();
  * KeyValues parsedKeyValues = propertiesMedia.parser().parse(resource, inputStream);
  * }
+ * For a formal specification of media types see:
+ * <a href="https://datatracker.ietf.org/doc/html/rfc6838"> Media Type Specifications and
+ * Registration Procedures RFC 6838 </a>
+ * <p>
+ * All KeyValuesMedia implement {@link KeyValuesMediaFinder} and thus each media can be
+ * queried if it is a match of file extension of media type. When a
+ * {@link KeyValuesSystem} is fully loaded it will have a list of all found
+ * {@link KeyValuesMedia} and create a composite {@link KeyValuesMediaFinder}.
  *
  * @see KeyValues
  * @see Parser
  * @see Formatter
+ * @see #ofProperties()
+ * @see #ofUrlEncoded()
+ * @see KeyValuesSystem#mediaFinder()
+ * @see KeyValuesResource#mediaType()
+ * @see KeyValuesResource#KEY_MEDIA_TYPE
  */
 public interface KeyValuesMedia extends KeyValuesMediaFinder {
 
 	/**
-	 * Returns the media type as a string.
+	 * Media Type for {@link Properties}.
+	 */
+	public static String MEDIA_TYPE_PROPERTIES = "text/x-java-properties";
+
+	/**
+	 * Media Type for URL encoded pairs which is almost entirely compatible with URI
+	 * percent encoding.
+	 */
+	public static String MEDIA_TYPE_URLENCODED = "application/x-www-form-urlencoded";
+
+	/**
+	 * File extension for {@link Properties} files.
+	 */
+	public static String FILE_EXT_PROPERTIES = "properties";
+
+	/**
+	 * Returns the media type as a string and should ideally be in
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc6838">rfc6838 format</a>, is
+	 * required and should be unique from other {@link KeyValuesMedia} unlike
+	 * {@link #getFileExt()}.
 	 * @return the media type
 	 */
 	public String getMediaType();
@@ -70,7 +101,7 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 	/**
 	 * Returns a {@code KeyValuesMedia} instance for the {@link Properties} format however
 	 * unlike normal {@link Properties} order of the properties key values is maintained
-	 * based on the order parsed.
+	 * based on the order parsed and duplicate key names are allowed.
 	 * @return a properties format media type
 	 */
 	public static KeyValuesMedia ofProperties() {

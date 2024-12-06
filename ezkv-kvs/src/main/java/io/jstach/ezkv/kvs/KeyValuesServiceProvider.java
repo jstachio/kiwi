@@ -190,7 +190,8 @@ public sealed interface KeyValuesServiceProvider {
 		 *
 		 * @param environment the environment used to access system-level properties and
 		 * resources
-		 * @param parameters the parameters associated with the filtering operation
+		 * @param parameters resource parameters that come from
+		 * {@link KeyValuesResource#KEY_PARAM} keys.
 		 */
 		public record FilterContext(KeyValuesEnvironment environment, Parameters parameters) {
 		}
