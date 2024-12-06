@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
-import io.jstach.ezkv.kvs.DefaultSedParser;
 import io.jstach.ezkv.kvs.DefaultSedParser.Command;
 import io.jstach.ezkv.kvs.DefaultSedParser.Tokenizer;
 

@@ -62,11 +62,11 @@ In fact, a user could configure the previously mentioned ripgrep environment var
 <h3 id="maven">Maven</h3>
 
 {@snippet lang=xml : 
-    <dependency>
-        <groupId>io.jstach.ezkv</groupId>
-        <artifactId>ezkv-kvs</artifactId>
-        <version>_VERSION_</version>
-    </dependency>
+<dependency>
+  <groupId>io.jstach.ezkv</groupId>
+  <artifactId>ezkv-kvs</artifactId>
+  <version>_VERSION_</version>
+</dependency>
 }
 
 <h3 id="gradle">Gradle</h3>
@@ -208,6 +208,25 @@ as you might guess, more {@link io.jstach.ezkv.kvs.KeyValues}.</p>
 <p>Resource loading configuration can be done with special key values. 
 These can either be specified in the URI of the resource or as key values within the resource where the <code>_load_[name]</code> is specified.</p>
 
+<p>
+    The underscore is a called the prefix. That will be configurable at some point as well as the separator
+    which is also an underscore.
+</p>
+<p>
+    The key names without the prefix and separators are:
+</p>
+
+<ul>
+    <li><code>load</code> - resource to load (required)</li>
+    <li><code>mediaType</code> or <code>mime</code> - media type of the resource (not required)</li>
+    <li><code>flags</code> or <code>flag</code> - flags for loading</li>
+    <li><code>param</code> or <code>parm</code> - parameters for custom plugins</li>
+    <li><code>filter</code> or <code>filt</code> - filters</li>
+</ul>
+
+The next sections will cover the default key syntax within a resource
+or within a URI. 
+
 <h5 id="resource-configuration-in-resource">Resource Configuration in Resource</h5>
 <p>The default key-value pattern to specify resources is:</p>
 
@@ -216,13 +235,15 @@ _load_[name]=URI
 _mediaType_[name]=Content Type or file extension to resolve format of resource for parsing
 _flags_[name]=CSV of flag names
 _param_[name]_[key]=String
-_filter_[name]=String expression for filter
+_filter_[name]_[filter]=String expression for filter
 }
 
 <p>The <code>[name]</code> part should be replaced with a name of your choosing, where only case-sensitive alphanumeric characters are allowed. 
 This becomes the symbolic name of the resource. Don't worry—those special keys will be filtered out.</p>
 
 <p>The <code>_load_[name]</code> is the most important key as it dictates the name of the resource and the URI of the resource.</p>
+
+<strong>TIP:</strong> the key aliases like "filt" and "mime" are all 4 characters which is useful for visual alignment or brevity.
 
 <h5 id="resource-configuration-in-uri">Resource Configuration in URI</h5>
 <p>The URI of the <code>_load_[name]</code> can also contribute to resource keys using the following format:</p>
@@ -265,6 +286,8 @@ _load_springJson=env:///SPRING_APPLICATION_JSON?_mediaType=json
 
 <p><strong>Note:</strong> JSON support is not provided out-of-the-box (OOB) and will be available as a separate module.</p>
 
+See <a href="#keyvaluesmedia">KeyValuesMedia section</a> for information on how to add more media types.
+
 <h4 id="resource-filters">Resource Filters</h4>
 <p>Filters can be applied to a resource to alter the key values after they are loaded but before being added to the final results. 
 The ordering of filters matters, so it is generally recommended to use the URI notation, as the order is guaranteed.</p>
@@ -306,17 +329,24 @@ based on the schema of the URI. For example:</p>
 <p>This part of the library is extendable, and custom loaders can be manually wired or the service loader can be used.</p>
 
 <p>Out of the box, Ezkv supports the following URI schemas:</p>
+
 <ul>
-    <li><code>classpath</code></li>
-    <li><code>file</code></li>
-    <li><code>system</code> - System properties</li>
-    <li><code>env</code> - Environment variables</li>
-    <li><code>cmd</code> - Command line argument pairs separated by <code>=</code></li>
-    <li><code>stdin</code> - Allows Unix piping of key values, often useful for passwords</li>
-    <li><code>profile.[schema]</code> - Loads multiple resources based on a CSV of profiles where the profile name replaces part of the URI</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_CLASSPATH} - classpath resource</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_FILE} - file resource</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_SYSTEM} - System properties</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_ENV} - Environment variables</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_CMD} - Command line argument pairs separated by <code>=</code></li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_STDIN} - Allows Unix piping of key values, often useful for passwords</li>
+    <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_PROFILE} - Will load multiple resources based on a CSV of profiles where the profile name replaces part of the URI</li>
 </ul>
 
-<p>Other URI schemas will be added in the future, usually as separate modules, such as dotenv, HOCON, Terraform/Tofu <code>tfvars.json</code> format, etc.</p>
+
+<p>Other URI schemas will be added in the future, usually as separate modules, such as vaults k8s ConfigMap API, cloud meta data services, 
+    distribute key value systems and more.</p>
+
+<p><strong>Note:</strong> To add new loaders, 
+    implement {@link io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder}
+    to optionally load key values based on a URI and resource parameters.</p>
 
 <p><strong>Note:</strong> If no schema is provided, Ezkv assumes it is a file path, which is treated as a URI.</p>
 
@@ -380,7 +410,6 @@ _flags_profiles2=no_require
 }
 
 <p>This means users can create a similar implementation themselves if desired.</p>
-
 
 <h3 id="keyvaluesmedia">KeyValuesMedia</h3>
 

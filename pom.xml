@@ -482,7 +482,7 @@
               <doctitle>
               <![CDATA[
               <img src ="resources/ezkv_logo.svg" alt="EZKV logo" title="EZKV (pronounced ee-zee kee-vee)" width="66%" />
-              <div style="text-align: center; font-size: smaller; color: limegreen; padding-bottom:2em">
+              <div style="text-align: center; font-size: x-small; color: limegreen; padding-bottom:2em">
                 <em>(pronounced "ee-zee kee-vee")</em>
               </div>
               Ezkv API ${project.version}

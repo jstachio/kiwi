@@ -412,8 +412,8 @@ This part of the library is extendable and custom loaders can be manually wired 
 
 Out of the box Ezkv supports by schema:
 
-* `classpath`
-* `file`
+* `classpath` - classpath resource
+* `file` - file resource 
 * `system` - System properties
 * `env` - Environment variables
 * `cmd` - Command line argument pairs separated by `=`.

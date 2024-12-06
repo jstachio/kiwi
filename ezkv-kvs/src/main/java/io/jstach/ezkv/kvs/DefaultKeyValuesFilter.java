@@ -6,7 +6,7 @@ import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesFilter;
 
 enum DefaultKeyValuesFilter implements KeyValuesFilter {
 
-	GREP {
+	GREP(KeyValuesResource.FILTER_GREP) {
 
 		@Override
 		protected KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression) {
@@ -21,7 +21,7 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 			});
 		}
 	},
-	SED {
+	SED(KeyValuesResource.FILTER_SED) {
 
 		@Override
 		protected KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression) {
@@ -45,10 +45,16 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 
 	};
 
+	private final String filter;
+
+	private DefaultKeyValuesFilter(String filter) {
+		this.filter = filter;
+	}
+
 	@Override
 	public KeyValues filter(FilterContext context, KeyValues keyValues, Filter filter) {
 		String filterName = filter.filter();
-		if (name().equalsIgnoreCase(filterName)) {
+		if (this.filter.equalsIgnoreCase(filterName)) {
 			return doFilter(context, keyValues, filter.expression());
 		}
 		return keyValues;

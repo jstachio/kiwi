@@ -21,6 +21,27 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * {@code KeyValuesResource} includes a URI, optional parameters, and metadata flags that
  * determine its behavior during loading.
  * <p>
+ * Out of the box, Ezkv supports the following URI schemas:
+ * </p>
+ *
+ * <ul>
+ * <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_CLASSPATH} - classpath
+ * resource</li>
+ * <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_FILE} - file resource</li>
+ * <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_SYSTEM} - System
+ * properties</li>
+ * <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_ENV} - Environment
+ * variables</li>
+ * <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_CMD} - Command line argument
+ * pairs separated by <code>=</code></li>
+ * <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_STDIN} - Allows Unix piping of
+ * key values, often useful for passwords</li>
+ * <li>{@value io.jstach.ezkv.kvs.KeyValuesResource#SCHEMA_PROFILE} - Will load multiple
+ * resources based on a CSV of profiles where the profile name replaces part of the
+ * URI</li>
+ * </ul>
+ *
+ * <p>
  * Resources can have special keys associated with them. The most important key is the
  * load key ({@link #KEY_LOAD}), which assigns a name to the resource. The resource name
  * is the text following the load key prefix, and the value of the key should be a URI.
@@ -121,8 +142,34 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * </tbody>
  * </table>
  *
+ * <p>
  * <em>Note: flags can be negated textual by appending <code>NO_</code> or removing
  * <code>NO_</code> and are case insensitive</em>
+ * </p>
+ *
+ * <p>
+ * Out of the box, Ezkv supports the following resource filters:
+ * </p>
+ * <table class="table">
+ * <caption><strong>Resource Filters</strong></caption> <thead>
+ * <tr>
+ * <th>Filter</th>
+ * <th>Description</th>
+ * </tr>
+ * </thead> <tbody>
+ * <tr>
+ * <td>{@value io.jstach.ezkv.kvs.KeyValuesResource#FILTER_GREP}</td>
+ * <td>Grep filter, similar to Unix grep, allows picking keys based on matching
+ * regex.</td>
+ * </tr>
+ * <tr>
+ * <td>{@value io.jstach.ezkv.kvs.KeyValuesResource#FILTER_SED}</td>
+ * <td>Sed filter, similar to Unix sed, can rename or delete key-value keys using
+ * substitution (<code>s</code>) or delete (<code>d</code>) commands.</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
  *
  * Example usage for building a {@code KeyValuesResource}:
  * {@snippet :
@@ -258,6 +305,55 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	 * A synonym for {@link #KEY_FILTER}.
 	 */
 	public static final String KEY_FILT = "filt";
+
+	/**
+	 * Classpath resource.
+	 */
+	public static final String SCHEMA_CLASSPATH = "classpath";
+
+	/**
+	 * File resource.
+	 */
+	public static final String SCHEMA_FILE = "file";
+
+	/**
+	 * System properties.
+	 */
+	public static final String SCHEMA_SYSTEM = "system";
+
+	/**
+	 * Environment variables.
+	 */
+	public static final String SCHEMA_ENV = "env";
+
+	/**
+	 * Command line argument pairs separated by <code>=</code>.
+	 */
+	public static final String SCHEMA_CMD = "cmd";
+
+	/**
+	 * Allows Unix piping of key values, often useful for passwords.
+	 */
+	public static final String SCHEMA_STDIN = "stdin";
+
+	/**
+	 * Will load multiple resources based on a CSV of profiles where the profile name
+	 * replaces part of the URI.
+	 */
+	public static final String SCHEMA_PROFILE = "profile.";
+
+	/**
+	 * Grep filter just like unix grep allows pickings keys based on matching regex.
+	 * @see #FILTER_GREP
+	 */
+	public static final String FILTER_GREP = "grep";
+
+	/**
+	 * Sed filter can rename or delete key values keys just like unix sed by substitution
+	 * (<code>s</code>) command or delete command (<code>d</code>).
+	 * @see #FILTER_GREP
+	 */
+	public static final String FILTER_SED = "sed";
 
 	/**
 	 * Returns the URI of the resource.

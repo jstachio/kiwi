@@ -22,14 +22,14 @@ import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesLoaderFinder;
 
 enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
-	CLASSPATH {
+	CLASSPATH(KeyValuesResource.SCHEMA_CLASSPATH) {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var parser = context.requireParser(resource);
 			return load(context, resource, parser);
 		}
 	},
-	FILE {
+	FILE(KeyValuesResource.SCHEMA_FILE) {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var parser = context.requireParser(resource);
@@ -41,7 +41,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			return filePathOrNull(resource.uri()) != null;
 		}
 	},
-	SYSTEM {
+	SYSTEM(KeyValuesResource.SCHEMA_SYSTEM) {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var builder = KeyValues.builder(resource);
@@ -56,12 +56,11 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		}
 
 	},
-	PROFILE {
-		private final static String SCHEME = "profile";
+	PROFILE(KeyValuesResource.SCHEMA_PROFILE) {
 
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
-			return profiles(SCHEME, context, resource);
+			return profiles(this.schema, context, resource);
 		}
 
 		@Override
@@ -70,17 +69,17 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			if (scheme == null) {
 				return false;
 			}
-			return scheme.startsWith(SCHEME + ".");
+			return scheme.startsWith(this.schema);
 		}
 	},
-	NULL {
+	NULL("null") {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			throw new RuntimeException("null resource not allowed. " + resource);
 		}
 
 	},
-	CMD {
+	CMD(KeyValuesResource.SCHEMA_CMD) {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var b = KeyValues.builder(resource);
@@ -102,7 +101,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			}
 		}
 	},
-	ENV {
+	ENV(KeyValuesResource.SCHEMA_ENV) {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var b = KeyValues.builder(resource);
@@ -114,6 +113,12 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 	},
 
 	;
+
+	final String schema;
+
+	private DefaultKeyValuesLoaderFinder(String schema) {
+		this.schema = schema;
+	}
 
 	@Override
 	public Optional<KeyValuesLoader> findLoader(LoaderContext context, KeyValuesResource resource) {
@@ -144,7 +149,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
 	static KeyValues profiles(String scheme, LoaderContext context, KeyValuesResource resource) throws IOException {
 		String uriString = resource.uri().toString();
-		uriString = uriString.substring(scheme.length() + 1);
+		uriString = uriString.substring(scheme.length());
 		// var uri = URI.create(uriString);
 		var logger = context.environment().getLogger();
 		var vars = Variables.builder()

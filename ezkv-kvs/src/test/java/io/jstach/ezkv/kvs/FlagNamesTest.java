@@ -6,8 +6,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.jstach.ezkv.kvs.FlagNames;
-
 class FlagNamesTest {
 
 	@Test

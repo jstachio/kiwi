@@ -14,14 +14,6 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-import io.jstach.ezkv.kvs.DefaultKeyValuesResourceParser;
-import io.jstach.ezkv.kvs.KeyValues;
-import io.jstach.ezkv.kvs.KeyValuesEnvironment;
-import io.jstach.ezkv.kvs.KeyValuesMedia;
-import io.jstach.ezkv.kvs.KeyValuesResource;
-import io.jstach.ezkv.kvs.KeyValuesResourceParserException;
-import io.jstach.ezkv.kvs.KeyValuesSystem;
-import io.jstach.ezkv.kvs.LoadFlag;
 import io.jstach.ezkv.kvs.KeyValuesEnvironment.Logger;
 
 class KeyValuesSystemTest {

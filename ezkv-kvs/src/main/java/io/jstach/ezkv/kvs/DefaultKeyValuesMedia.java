@@ -153,23 +153,6 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 		Stream.of(csv.split(",")).map(s -> s.trim()).filter(s -> !s.isBlank()).forEach(consumer);
 	}
 
-	// static String fileFromPath(@Nullable String p) {
-	// if (p == null || p.endsWith("/")) {
-	// return "";
-	// }
-	// return p.substring(p.lastIndexOf("/") + 1).trim();
-	// }
-	//
-	// static String removeFileExt(String path, @Nullable String fileExtension) {
-	// if (fileExtension == null || fileExtension.isBlank())
-	// return path;
-	// String rawExt = "." + fileExtension;
-	// if (path.endsWith(rawExt)) {
-	// return path.substring(0, rawExt.length());
-	// }
-	// return path;
-	// }
-
 }
 
 /**
@@ -197,7 +180,7 @@ final class PropertiesParser {
 		StringWriter sw = new StringWriter();
 		new Properties() {
 			@Override
-			@SuppressWarnings({ "unchecked", "rawtypes", "UnsynchronizedOverridesSynchronized", "null" })
+			@SuppressWarnings({ "unchecked", "rawtypes", "UnsynchronizedOverridesSynchronized", })
 			public java.util.Enumeration keys() {
 				return Collections.enumeration(map.keySet());
 			}

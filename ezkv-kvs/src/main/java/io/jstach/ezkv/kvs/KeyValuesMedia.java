@@ -111,18 +111,14 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 
 	/**
 	 * Reads an {@link InputStream} and converts it to a UTF-8 encoded string.
-	 * @param inputStream the input stream to read
+	 * @param inputStream the input stream to read which will not be closed by this call.
 	 * @return the string representation of the input stream
 	 * @throws IOException if an I/O error occurs
 	 */
 	public static String inputStreamToString(InputStream inputStream) throws IOException {
 		try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
-			byte[] buffer = new byte[1024];
-			int length;
-			while ((length = inputStream.read(buffer)) != -1) {
-				result.write(buffer, 0, length);
-			}
-			return result.toString(StandardCharsets.UTF_8.name());
+			inputStream.transferTo(result);
+			return result.toString(StandardCharsets.UTF_8);
 		}
 
 	}
