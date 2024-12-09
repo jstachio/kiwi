@@ -629,7 +629,7 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 		 * @see KeyValuesMedia
 		 */
 		public Builder mediaType(KeyValuesMedia media) {
-			return this.mediaType(media);
+			return this.mediaType(media.getMediaType());
 		}
 
 		/**
