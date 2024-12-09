@@ -52,6 +52,22 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 					builder.add(sp, value);
 				}
 			}
+
+			return maybeUseKeyFromUri(context, resource, builder.build());
+		}
+
+	},
+	STDIN(KeyValuesResource.SCHEMA_STDIN) {
+		@Override
+		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
+			var builder = KeyValues.builder(resource);
+			var properties = context.environment().getSystemProperties();
+			for (var sp : properties.stringPropertyNames()) {
+				String value = properties.getProperty(sp);
+				if (value != null) {
+					builder.add(sp, value);
+				}
+			}
 			return builder.build();
 		}
 

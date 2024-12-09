@@ -74,7 +74,7 @@ public sealed interface KeyValuesServiceProvider {
 				return mediaFinder() //
 					.findByResource(resource) //
 					.orElseThrow(() -> new KeyValuesMediaException("Media Type not found. resource: " + resource))
-					.parser();
+					.parser(resource.parameters());
 			}
 
 			/**

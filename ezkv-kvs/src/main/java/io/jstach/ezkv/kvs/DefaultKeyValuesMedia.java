@@ -5,16 +5,11 @@ import static io.jstach.ezkv.kvs.KeyValuesMedia.inputStreamToString;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -37,8 +32,10 @@ enum DefaultKeyValuesMedia implements KeyValuesMedia, Parser, Formatter {
 
 		@Override
 		public void format(Appendable appendable, KeyValues kvs) throws IOException {
-			var map = kvs.toMap();
-			PropertiesParser.writeProperties(map, appendable);
+			for (var kv : kvs) {
+				PropertiesParser.writeProperty(appendable, kv.key(), kv.value());
+
+			}
 		}
 
 		@Override
@@ -175,37 +172,11 @@ final class PropertiesParser {
 
 	}
 
-	@SuppressWarnings({ "serial" })
-	static void writeProperties(Map<String, String> map, Appendable sb) throws IOException {
-		StringWriter sw = new StringWriter();
-		new Properties() {
-			@Override
-			@SuppressWarnings({ "unchecked", "rawtypes", "UnsynchronizedOverridesSynchronized", })
-			public java.util.Enumeration keys() {
-				return Collections.enumeration(map.keySet());
-			}
-
-			@Override
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			public java.util.Set entrySet() {
-				return map.entrySet();
-			}
-
-			@SuppressWarnings({ "nullness", "UnsynchronizedOverridesSynchronized" }) // checker
-																						// bug
-			@Override
-			public @Nullable Object get(Object key) {
-				return map.get(key);
-			}
-		}.store(sw, null);
-		LineNumberReader lr = new LineNumberReader(new StringReader(sw.toString()));
-
-		String line;
-		while ((line = lr.readLine()) != null) {
-			if (!line.startsWith("#")) {
-				sb.append(line).append("\n");
-			}
-		}
+	static void writeProperty(Appendable sb, String key, String value) throws IOException {
+		writeKeyOrValue(sb, key, true);
+		sb.append('=');
+		writeKeyOrValue(sb, value, false);
+		sb.append('\n');
 	}
 
 	private static Properties prepareProperties(BiConsumer<String, String> consumer) throws IOException {
@@ -224,6 +195,66 @@ final class PropertiesParser {
 			}
 		};
 		return bp;
+	}
+
+	/*
+	 * This is inspired by the JDK
+	 */
+	private static void writeKeyOrValue(Appendable outBuffer, String keyOrValue, boolean escapeSpace)
+			throws IOException {
+		int len = keyOrValue.length();
+		int bufLen = len * 2;
+		if (bufLen < 0) {
+			bufLen = Integer.MAX_VALUE;
+		}
+		for (int x = 0; x < len; x++) {
+			char aChar = keyOrValue.charAt(x);
+			/*
+			 * optimization to handle characters not needing special escaping.
+			 */
+			if ((aChar > 61) && (aChar < 127)) {
+				if (aChar == '\\') {
+					outBuffer.append('\\');
+					outBuffer.append('\\');
+					continue;
+				}
+				outBuffer.append(aChar);
+				continue;
+			}
+			switch (aChar) {
+				case ' ':
+					if (x == 0 || escapeSpace)
+						outBuffer.append('\\');
+					outBuffer.append(' ');
+					break;
+				case '\t':
+					outBuffer.append('\\');
+					outBuffer.append('t');
+					break;
+				case '\n':
+					outBuffer.append('\\');
+					outBuffer.append('n');
+					break;
+				case '\r':
+					outBuffer.append('\\');
+					outBuffer.append('r');
+					break;
+				case '\f':
+					outBuffer.append('\\');
+					outBuffer.append('f');
+					break;
+				case '=': // Fall through
+				case ':': // Fall through
+				case '#': // Fall through
+				case '!':
+					outBuffer.append('\\');
+					outBuffer.append(aChar);
+					break;
+				default:
+					outBuffer.append(aChar);
+					break;
+			}
+		}
 	}
 
 }

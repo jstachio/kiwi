@@ -79,6 +79,7 @@ class KeyValuesSystemTest {
 					stuff=/home/kenny
 					blah=/home/kenny
 					message=/home/kenny hello
+					profile1=loaded
 					profile1=loaded 2
 					profile2=loaded
 					me=found
@@ -96,6 +97,7 @@ class KeyValuesSystemTest {
 					stuff=/home/kenny
 					blah=/home/kenny
 					message=/home/kenny hello
+					profile1=loaded
 					profile1=loaded 2
 					profile2=loaded
 					me=found
@@ -118,7 +120,7 @@ class KeyValuesSystemTest {
 					KeyValue[key='stuff', raw='${user.home}', expanded='/home/kenny', source=Source[uri=classpath:/test-props/testLoader.properties, index=1]]
 					KeyValue[key='blah', raw='${MISSING:-${stuff}}', expanded='/home/kenny', source=Source[uri=classpath:/test-props/testLoader.properties, index=2]]
 					KeyValue[key='message', raw='${stuff} hello', expanded='/home/kenny hello', source=Source[uri=classpath:/test-props/testLoader-child.properties, reference=[key='_load_child', in='classpath:/test-props/testLoader.properties'], index=1]]
-					KeyValue[key='profile1', raw='loaded', expanded='loaded 2', source=Source[uri=classpath:/test-props/testLoader-profile1.properties, reference=[key='_load_profiles0', in='profile.classpath:/test-props/testLoader-__PROFILE__.properties'], index=1]]
+					KeyValue[key='profile1', raw='loaded', expanded='loaded', source=Source[uri=classpath:/test-props/testLoader-profile1.properties, reference=[key='_load_profiles0', in='profile.classpath:/test-props/testLoader-__PROFILE__.properties'], index=1]]
 					KeyValue[key='profile1', raw='loaded 2', expanded='loaded 2', source=Source[uri=classpath:/test-props/testLoader-profile2.properties, reference=[key='_load_profiles1', in='profile.classpath:/test-props/testLoader-__PROFILE__.properties'], index=1]]
 					KeyValue[key='profile2', raw='loaded', expanded='loaded', source=Source[uri=classpath:/test-props/testLoader-profile2.properties, reference=[key='_load_profiles1', in='profile.classpath:/test-props/testLoader-__PROFILE__.properties'], index=2]]
 					KeyValue[key='me', originalKey='matchme', raw='found', expanded='found', source=Source[uri=classpath:/test-props/testLoader-filter.properties, reference=[key='_load_filter', in='classpath:/test-props/testLoader-child.properties'], index=1]]

@@ -88,6 +88,17 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 	public Parser parser();
 
 	/**
+	 * Returns a parser that maybe customized by parameters. By default {@link #parser()}
+	 * is called.
+	 * @param parameters parameters that can come from
+	 * {@link KeyValuesResource#parameters()}.
+	 * @return parser
+	 */
+	default Parser parser(Variables parameters) {
+		return parser();
+	}
+
+	/**
 	 * Returns a {@link Formatter} for formatting key-value pairs to an appendable target.
 	 * By default, this method throws {@link UnsupportedOperationException} if formatting
 	 * is not supported.
@@ -101,7 +112,7 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 	/**
 	 * Returns a {@code KeyValuesMedia} instance for the {@link Properties} format however
 	 * unlike normal {@link Properties} order of the properties key values is maintained
-	 * based on the order parsed and duplicate key names are allowed.
+	 * based on the order parsed and <strong>duplicate key names are allowed</strong>.
 	 * @return a properties format media type
 	 */
 	public static KeyValuesMedia ofProperties() {

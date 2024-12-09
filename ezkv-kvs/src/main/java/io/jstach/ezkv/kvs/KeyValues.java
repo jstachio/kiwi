@@ -57,19 +57,25 @@ import io.jstach.ezkv.kvs.interpolate.Interpolator.MissingVariableInterpolationE
  * // Create a builder and add key-value pairs
  * KeyValues.Builder builder = KeyValues.builder();
  * builder.add("key1", "value1");
- * builder.add("key2", "${key1}-suffix");
+ * builder.add("key2", "${key1}-${key3}");
  *
  * // Build the KeyValues collection
  * KeyValues kvs = builder.build();
  *
  * // Interpolate values using a Variables map
- * Variables variables = Variables.of("key1", "interpolated");
+ * Variables variables = Variables.builder().add("key1", "interpolated").add("key3", "value3").build();
+ *
  * KeyValues expanded = kvs.expand(variables);
  *
  * // Convert to a map
  * Map<String, String> map = expanded.toMap();
- * System.out.println(map); // {key1=interpolated, key2=interpolated-suffix}
+ * System.out.println(map); // {key1=value1, key2=value1-value3}
  * }
+ *
+ * @see Variables
+ * @see KeyValues.Builder
+ * @see KeyValues#expand(Variables)
+ * @see KeyValues#toMap()
  */
 public interface KeyValues extends Iterable<KeyValue> {
 
@@ -346,22 +352,28 @@ public interface KeyValues extends Iterable<KeyValue> {
 	}
 
 	/**
-	 * Interpolates the values using the provided {@link Variables} map.
+	 * Interpolates the values using the provided {@link Variables}. The key value pairs
+	 * in <code>this</code> take precedence over the passed in variables such that if
+	 * there is a matching key in this and in variables the value of the key value in this
+	 * will be used.
 	 * @param variables a {@link Variables} map for value substitution.
 	 * @return a map of interpolated key-values.
+	 * @see #expand(Variables)
+	 * @see #toMap()
 	 */
 	default Map<String, String> interpolate(Variables variables) {
-		return KeyValuesInterpolator.interpolateKeyValues(this, variables);
+		return expand(variables).toMap();
 	}
 
 	/**
-	 * Expands the key-values using variable interpolation.
+	 * Expands the key-values using variable interpolation and return a new key values
+	 * where all the value parts of the keys are replaced with the interpolation results.
 	 * @param variables a {@link Variables} map for value substitution.
 	 * @return a new {@code KeyValues} with expanded values.
+	 * @see Variables#empty()
 	 */
 	default KeyValues expand(Variables variables) {
-		Map<String, String> interpolated = interpolate(variables);
-		return map(kv -> kv.withExpanded(interpolated::get));
+		return KeyValuesInterpolator.interpolateKeyValues(this, variables);
 	}
 
 	/**
@@ -386,7 +398,10 @@ public interface KeyValues extends Iterable<KeyValue> {
 
 	/**
 	 * Converts the key-values to a map where each key maps to its expanded value. The
-	 * returned Map is sequenced based on the order of the key-values.
+	 * returned Map is sequenced based on the order of the key-values. <strong>Note this
+	 * call does not do any interpolation!</strong> If interpolation is desired it needs
+	 * to be done prior with {@link #expand(Variables)} or {@link #interpolate(Variables)}
+	 * should be used.
 	 * @return a {@link Map} of key-value pairs.
 	 */
 	default SequencedMap<String, String> toMap() {
@@ -394,6 +409,8 @@ public interface KeyValues extends Iterable<KeyValue> {
 		stream().forEach(kv -> m.put(kv.key(), kv.expanded()));
 		return m;
 	}
+
+	// TODO multiMap SequencedMap<String, List<String>>
 
 }
 
@@ -471,7 +488,7 @@ record ListKeyValues(List<KeyValue> keyValues) implements ToStringableKeyValues,
 
 class KeyValuesInterpolator {
 
-	static Map<String, String> interpolateKeyValues(final KeyValues keyValues, final Variables variables) {
+	static KeyValues interpolateKeyValues(final KeyValues keyValues, final Variables variables) {
 		List<KeyValue> kvs = keyValues.stream().toList();
 
 		final Map<String, KeyValue> flat = new HashMap<>(kvs.size());
@@ -490,6 +507,8 @@ class KeyValuesInterpolator {
 		Interpolator sub = Interpolator.create((key) -> {
 			return combined.getValue(key);
 		});
+		List<KeyValue> expanded = new ArrayList<>();
+
 		for (KeyValue kv : kvs) {
 			KeyValue last = flat.remove(kv.key());
 			String v = kv.raw();
@@ -512,14 +531,14 @@ class KeyValuesInterpolator {
 					value = r;
 				}
 			}
-
+			expanded.add(kv.withExpanded(value));
 			resolved.put(kv.key(), value);
 			if (last != null) {
 				flat.put(kv.key(), last);
 			}
 
 		}
-		return resolved;
+		return KeyValues.copyOf(expanded);
 	}
 
 }
