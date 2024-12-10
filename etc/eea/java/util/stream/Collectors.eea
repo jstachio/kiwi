@@ -1,4 +1,7 @@
 class java/util/stream/Collectors
+collectingAndThen
+ <T:Ljava/lang/Object;A:Ljava/lang/Object;R:Ljava/lang/Object;RR:Ljava/lang/Object;>(Ljava/util/stream/Collector<TT;TA;TR;>;Ljava/util/function/Function<TR;TRR;>;)Ljava/util/stream/Collector<TT;TA;TRR;>;
+ <T:Ljava/lang/Object;A:Ljava/lang/Object;R:Ljava/lang/Object;RR:Ljava/lang/Object;>(Ljava/util/stream/Collector<TT;TA;TR;>;Ljava/util/function/Function<TR;TRR;>;)L1java/util/stream/Collector<TT;TA;TRR;>;
 joining
  ()Ljava/util/stream/Collector<Ljava/lang/CharSequence;*Ljava/lang/String;>;
  ()L1java/util/stream/Collector<Ljava/lang/CharSequence;*L1java/lang/String;>;

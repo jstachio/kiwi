@@ -62,7 +62,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var builder = KeyValues.builder(resource);
-			@SuppressWarnings("null") // TODO eclipse null analysis bug
+
 			BiConsumer<String, String> consumer = builder::add;
 
 			String path = normalizePath(resource.uri());
@@ -114,6 +114,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
 		static void propertiesFromCommandLine(Iterable<String> args, BiConsumer<String, String> consumer) {
 			for (String arg : args) {
+				@NonNull
 				String[] kv = arg.split("=", 2);
 				if (kv.length < 2)
 					continue;
@@ -197,12 +198,10 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		logger.info("Found profiles: " + profiles);
 		KeyValues.Builder builder = KeyValues.builder(resource);
 
-		@SuppressWarnings("null") // TODO eclipse null analysis bug
 		BiConsumer<String, String> consumer = builder::add;
 
 		int i = 0;
 		for (var p : profiles) {
-			@SuppressWarnings("null") // TODO eclipse bug
 			var value = uriString.replace("__PROFILE__", p);
 			var b = resource.toBuilder();
 			b.uri(URI.create(value));

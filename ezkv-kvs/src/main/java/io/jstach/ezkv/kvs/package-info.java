@@ -44,4 +44,5 @@
  * @see io.jstach.ezkv.kvs.KeyValuesResource
  */
 @org.jspecify.annotations.NullMarked
+@io.jstach.ezkv.kvs.FakeNonNullByDefault
 package io.jstach.ezkv.kvs;

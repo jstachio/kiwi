@@ -184,6 +184,7 @@ class DefaultSedParser {
 			boolean isGlobal) implements Command {
 		@Override
 		public @Nullable String execute(String key) {
+			var address = this.address;
 			if (address == null || address.matches(key)) {
 				return isGlobal ? key.replaceAll(pattern, replacement) : key.replaceFirst(pattern, replacement);
 			}
@@ -194,6 +195,7 @@ class DefaultSedParser {
 	record DeleteCommand(@Nullable Address address) implements Command {
 		@Override
 		public @Nullable String execute(String key) {
+			var address = this.address;
 			if (address == null || address.matches(key)) {
 				return null; // Indicate that the key should be deleted
 			}

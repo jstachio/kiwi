@@ -1,7 +1,7 @@
 class java/util/Map$Entry
 comparingByKey
  <K::Ljava/lang/Comparable<-TK;>;V:Ljava/lang/Object;>()Ljava/util/Comparator<Ljava/util/Map$Entry<TK;TV;>;>;
- <K::Ljava/lang/Comparable<-TK;>;V:Ljava/lang/Object;>()L1java/util/Comparator<Ljava/util/Map$Entry<TK;TV;>;>;
+ <K::Ljava/lang/Comparable<-TK;>;V:Ljava/lang/Object;>()L1java/util/Comparator<L1java/util/Map$Entry<TK;TV;>;>;
 comparingByKey
  <K:Ljava/lang/Object;V:Ljava/lang/Object;>(Ljava/util/Comparator<-TK;>;)Ljava/util/Comparator<Ljava/util/Map$Entry<TK;TV;>;>;
  <K:Ljava/lang/Object;V:Ljava/lang/Object;>(L1java/util/Comparator<-TK;>;)L1java/util/Comparator<Ljava/util/Map$Entry<TK;TV;>;>;

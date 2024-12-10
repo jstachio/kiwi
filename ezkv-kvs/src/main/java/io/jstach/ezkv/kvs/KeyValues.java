@@ -213,6 +213,7 @@ public interface KeyValues extends Iterable<KeyValue> {
 			return add(e.getKey(), e.getValue());
 		}
 
+		@SuppressWarnings("null") // Eclipse null analysis has some inference issue here
 		private static final Comparator<Entry<String, String>> entryComparator = Map.Entry
 			.<String, String>comparingByKey()
 			.thenComparing(Entry::getValue);
@@ -504,6 +505,7 @@ class KeyValuesInterpolator {
 			return null;
 
 		}).add(resolved).add(variables).build();
+		@SuppressWarnings("null")
 		Interpolator sub = Interpolator.create((key) -> {
 			return combined.getValue(key);
 		});

@@ -3,6 +3,7 @@ package io.jstach.ezkv.kvs;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -19,7 +20,8 @@ sealed interface KeyValuesSource permits NamedKeyValuesSource, KeyValue.Source {
 	static final Pattern RESOURCE_NAME_PATTERN = Pattern.compile(KeyValuesResource.RESOURCE_NAME_REGEX);
 
 	static String validateName(String identifier) {
-		if (identifier == null || !RESOURCE_NAME_PATTERN.matcher(identifier).matches()) {
+		Objects.requireNonNull(identifier);
+		if (!RESOURCE_NAME_PATTERN.matcher(identifier).matches()) {
 			throw new IllegalArgumentException(
 					"Invalid resource name: must contain only alphanumeric characters (no underscores) and not be null. input: "
 							+ identifier);

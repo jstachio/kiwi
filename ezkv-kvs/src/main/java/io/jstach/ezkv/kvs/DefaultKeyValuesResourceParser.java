@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesFilter.Filter;
@@ -246,6 +247,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 						e);
 			}
 			if (rk == null) {
+				filtered.add(kv);
 				continue;
 			}
 			hasParameter = true;
@@ -274,9 +276,6 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 					String expression = kv.value();
 					var f = new Filter(filter, expression, "");
 					builder._addFilter(f);
-				}
-				case null -> {
-					filtered.add(kv);
 				}
 			}
 		}
@@ -402,6 +401,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 			return null;
 		}
 		String rest = key.substring(prefix.length());
+		@NonNull
 		String[] names = rest.split(sep(), 2);
 		if (names.length == 0) {
 			throw new KeyValuesResourceParserException("Bad resource key. type: " + type + " keyvalue: " + kv);
@@ -465,7 +465,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 
 		final List<String> keys;
 
-		private ResourceKey(String key, String... rest) {
+		private ResourceKey(String key, @NonNull String... rest) {
 			this(Stream.concat(Stream.of(key), Stream.of(rest)).toList());
 		}
 
