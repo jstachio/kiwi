@@ -19,7 +19,6 @@ import org.jspecify.annotations.Nullable;
  * Sadly there is no ImmutableEnumSet in Java. We don't use <code>Set.of</code> because
  * its order is not predictable.
  */
-@SuppressWarnings({})
 final class FlagSet<E extends Enum<E>> implements Set<E> {
 
 	private final EnumSet<E> set;
@@ -77,7 +76,7 @@ final class FlagSet<E extends Enum<E>> implements Set<E> {
 	}
 
 	@Override
-	public boolean contains(Object o) {
+	public boolean contains(/* technically @Nullable but checker fails */ @SuppressWarnings("null") Object o) {
 		return set.contains(o);
 	}
 
@@ -97,7 +96,7 @@ final class FlagSet<E extends Enum<E>> implements Set<E> {
 	}
 
 	@Override
-	@SuppressWarnings({ "override.return", "override.param", "toarray.nullable.elements.not.newarray" })
+	@SuppressWarnings({ "override.return", "override.param", "toarray.nullable.elements.not.newarray", "null" })
 	public <T> @Nullable T[] toArray(T[] a) {
 		return set.toArray(a);
 	}
@@ -108,7 +107,7 @@ final class FlagSet<E extends Enum<E>> implements Set<E> {
 	}
 
 	@Override
-	public boolean remove(Object o) {
+	public boolean remove(@Nullable Object o) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -144,7 +143,7 @@ final class FlagSet<E extends Enum<E>> implements Set<E> {
 
 	@Override
 	// I'm not sure it is possible to placate checker with jspecify for toArray
-	@SuppressWarnings({ "override.return", "override.param" })
+	@SuppressWarnings({ "override.return", "override.param", "null" })
 	public <T> @Nullable T[] toArray(IntFunction<T[]> generator) {
 		return set.toArray(generator);
 	}

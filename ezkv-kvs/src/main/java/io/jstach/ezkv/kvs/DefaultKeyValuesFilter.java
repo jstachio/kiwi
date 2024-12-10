@@ -1,5 +1,6 @@
 package io.jstach.ezkv.kvs;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesFilter;
@@ -12,9 +13,7 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 		protected KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression) {
 			String grep = expression;
 			// TODO error handling.
-			if (grep == null) {
-				return keyValues;
-			}
+			Objects.requireNonNull(keyValues);
 			Pattern pattern = Pattern.compile(grep);
 			return keyValues.filter(kv -> {
 				return pattern.matcher(kv.key()).find();
@@ -26,10 +25,7 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 		@Override
 		protected KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression) {
 			String sed = expression;
-			// TODO error handling.
-			if (sed == null) {
-				return keyValues;
-			}
+			Objects.requireNonNull(sed);
 			var command = DefaultSedParser.parse(sed);
 			return keyValues.flatMap(kv -> {
 				String key = command.execute(kv.key());

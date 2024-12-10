@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.ezkv.kvs.KeyValuesEnvironment.ResourceStreamLoader;
@@ -61,14 +62,19 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		@Override
 		protected KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException {
 			var builder = KeyValues.builder(resource);
-			var properties = context.environment().getSystemProperties();
-			for (var sp : properties.stringPropertyNames()) {
-				String value = properties.getProperty(sp);
-				if (value != null) {
-					builder.add(sp, value);
-				}
+			@SuppressWarnings("null") // TODO eclipse null analysis bug
+			BiConsumer<String, String> consumer = builder::add;
+
+			String path = normalizePath(resource.uri());
+			if (path.isBlank()) {
+				context.requireParser(resource).parse(context.environment().getStandardInput(), consumer);
+				return builder.build();
 			}
+			String key = path;
+			String value = KeyValuesMedia.inputStreamToString(context.environment().getStandardInput());
+			builder.add(key, value);
 			return builder.build();
+
 		}
 
 	},
@@ -189,16 +195,20 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		List<String> profiles = Stream.of(profile.split(",")).filter(p -> !p.isBlank()).distinct().toList();
 
 		logger.info("Found profiles: " + profiles);
-		var builder = KeyValues.builder(resource);
+		KeyValues.Builder builder = KeyValues.builder(resource);
+
+		@SuppressWarnings("null") // TODO eclipse null analysis bug
+		BiConsumer<String, String> consumer = builder::add;
 
 		int i = 0;
 		for (var p : profiles) {
+			@SuppressWarnings("null") // TODO eclipse bug
 			var value = uriString.replace("__PROFILE__", p);
 			var b = resource.toBuilder();
 			b.uri(URI.create(value));
 			b.name(resource.name() + i++);
 			var profileResource = b.build();
-			context.formatResource(profileResource, builder::add);
+			context.formatResource(profileResource, consumer);
 		}
 		var kvs = builder.build();
 		return kvs;
@@ -320,7 +330,8 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			else if (p.startsWith("/")) {
 				p = p.substring(1);
 			}
-			String[] paths = p.split("/");
+			@NonNull
+			String @NonNull [] paths = p.split("/");
 			return List.of(paths);
 		}
 

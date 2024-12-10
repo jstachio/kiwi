@@ -157,7 +157,7 @@ public interface KeyValues extends Iterable<KeyValue> {
 	 * System.out.println(map); // Output: {host=localhost, port=8080}
 	 * }
 	 */
-	public class Builder {
+	public final class Builder {
 
 		private final URI source;
 

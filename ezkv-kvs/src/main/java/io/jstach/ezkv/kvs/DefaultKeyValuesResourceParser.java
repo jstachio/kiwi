@@ -197,9 +197,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 					}
 				}
 				case PARAM -> {
-					r.parameters().forKeyValues((k, v) -> {
-						builder.parameter(k, v);
-					});
+					r.parameters().forKeyValues(builder::parameter);
 				}
 				case FILTER -> {
 					for (var f : r.filters()) {

@@ -20,3 +20,6 @@ toArray
 toArray
  <T:Ljava/lang/Object;>([TT;)[TT;
  <T:Ljava/lang/Object;>([1TT;)[1TT;
+toString
+ ()Ljava/lang/String;
+ ()L1java/lang/String;
