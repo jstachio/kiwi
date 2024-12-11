@@ -2,11 +2,15 @@ package io.jstach.ezkv.kvs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.PrintStream;
 import java.util.Map;
+import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
 
 class KeyValuesTest {
+
+	static PrintStream out = Objects.requireNonNull(System.out);
 
 	@Test
 	void testExpand() {
@@ -39,7 +43,7 @@ class KeyValuesTest {
 		// Convert to a map
 		{
 			Map<String, String> actual = expanded.toMap();
-			System.out.println(actual); // {key1=value1, key2=value1-value3}
+			out.println(actual); // {key1=value1, key2=value1-value3}
 
 			Map<String, String> expected = Map.of("key1", "value1", "key2", "value1-value3");
 			assertEquals(expected, actual);

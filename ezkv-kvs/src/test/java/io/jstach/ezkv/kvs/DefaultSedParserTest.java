@@ -5,12 +5,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.PrintStream;
+import java.util.Objects;
+
 import org.junit.jupiter.api.Test;
 
 import io.jstach.ezkv.kvs.DefaultSedParser.Command;
 import io.jstach.ezkv.kvs.DefaultSedParser.Tokenizer;
 
 class DefaultSedParserTest {
+
+	static PrintStream out = Objects.requireNonNull(System.out);
 
 	@Test
 	void testSubstitutionCommandWithoutAddress() {
@@ -99,7 +104,7 @@ class DefaultSedParserTest {
 	void testInvalidCommand() {
 		String input = "/match/ x/foo/bar/";
 		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			System.out.println(new Tokenizer(input).tokenize());
+			out.println(new Tokenizer(input).tokenize());
 			DefaultSedParser.parseCommand(input);
 		});
 
@@ -110,7 +115,7 @@ class DefaultSedParserTest {
 	void testSubstitutionCommandInvalidSyntax() {
 		String input = "s/foo/bar";
 		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-			System.out.println(new Tokenizer(input).tokenize());
+			out.println(new Tokenizer(input).tokenize());
 			DefaultSedParser.parseCommand(input);
 		});
 

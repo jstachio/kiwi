@@ -5,10 +5,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,8 @@ import org.junit.jupiter.api.Test;
 import io.jstach.ezkv.kvs.KeyValuesEnvironment.Logger;
 
 class KeyValuesSystemTest {
+
+	static PrintStream out = Objects.requireNonNull(System.out);
 
 	/*
 	 * Yes it is ridiculous how this is all one test at the moment. It is essentially a
@@ -60,8 +64,14 @@ class KeyValuesSystemTest {
 			assertEquals(expected, actual);
 		}
 
+		// TODO Checker and Eclipse conflict here and both have bugs
+		// Eclipse needs the witness to infer nonnull
+		// Checker doesn't like the witness not having KeyFor which this library
+		// does not care bout and to be honest is a bug with checker
+		// more so than eclipse.
 		var map = Map.of("fromMap2", "2", "fromMap1", "1");
 
+		@SuppressWarnings("null")
 		var kvs = KeyValuesSystem.builder()
 			.environment(environment)
 			.build() //
@@ -71,7 +81,7 @@ class KeyValuesSystemTest {
 			.add("extra", KeyValues.builder().add(map.entrySet()).build())
 			.load();
 
-		System.out.println(kvs);
+		out.println(kvs);
 		{
 			String actual = kvs.toString();
 			String expected = """

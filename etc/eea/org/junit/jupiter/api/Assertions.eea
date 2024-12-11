@@ -1,0 +1,4 @@
+class org/junit/jupiter/api/Assertions
+assertThrows
+ <T:Ljava/lang/Throwable;>(Ljava/lang/Class<TT;>;Lorg/junit/jupiter/api/function/Executable;)TT;
+ <T:Ljava/lang/Throwable;>(Ljava/lang/Class<TT;>;Lorg/junit/jupiter/api/function/Executable;)T1T;

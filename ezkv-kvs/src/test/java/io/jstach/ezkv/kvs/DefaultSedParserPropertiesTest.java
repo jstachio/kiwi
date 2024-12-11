@@ -2,6 +2,7 @@ package io.jstach.ezkv.kvs;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.PrintStream;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -14,6 +15,8 @@ import io.jstach.ezkv.kvs.DefaultSedParser.Tokenizer;
 
 class DefaultSedParserPropertiesTest {
 
+	static PrintStream out = Objects.requireNonNull(System.out);
+
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("provideTestCases")
 	void testSedParser(String testName, String sedPattern, String input, @Nullable String expectedOutput) {
@@ -22,17 +25,17 @@ class DefaultSedParserPropertiesTest {
 			// Execute the command and verify the output
 			String result = command.execute(input);
 			if (!Objects.equals(result, expectedOutput)) {
-				System.out.format("test: %s, pattern: %s, input: %s, expected: %s\n", testName, sedPattern, input,
+				out.format("test: %s, pattern: %s, input: %s, expected: %s\n", testName, sedPattern, input,
 						expectedOutput);
-				System.out.println(command);
-				System.out.println(new Tokenizer(sedPattern).tokenize());
+				out.println(command);
+				out.println(new Tokenizer(sedPattern).tokenize());
 			}
 			assertEquals(expectedOutput, result);
 		}
 		catch (SedParserException e) {
 			String result = e.error.toString();
 			if (!Objects.equals(result, expectedOutput)) {
-				System.out.format("test: %s, pattern: %s, input: %s, expected: %s\n", testName, sedPattern, input,
+				out.format("test: %s, pattern: %s, input: %s, expected: %s\n", testName, sedPattern, input,
 						expectedOutput);
 			}
 			assertEquals(expectedOutput, result);
