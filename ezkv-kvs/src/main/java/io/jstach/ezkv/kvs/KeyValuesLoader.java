@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import io.jstach.ezkv.kvs.interpolate.Interpolator.InterpolationException;
-
 /**
  * Represents a loader responsible for loading {@link KeyValues} from configured sources.
  * This interface defines the contract for loading key-value pairs, potentially involving
@@ -29,9 +27,10 @@ public interface KeyValuesLoader {
 	 * @return a {@link KeyValues} instance containing the loaded key-value pairs
 	 * @throws IOException if an I/O error occurs during loading
 	 * @throws FileNotFoundException if a specified resource is not found
-	 * @throws InterpolationException if an error occurs during value interpolation
+	 * @throws KeyValuesException if an error occurs while processing keys such as
+	 * interpolation or invalid resource keys.
 	 */
-	public KeyValues load() throws IOException, FileNotFoundException, InterpolationException;
+	public KeyValues load() throws IOException, FileNotFoundException, KeyValuesException;
 
 	/**
 	 * A builder class for constructing instances of {@link KeyValuesLoader}. The builder

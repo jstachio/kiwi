@@ -178,7 +178,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		for (var n : nodes) {
 			String name = n.current.name();
 			if (!names.add(name)) {
-				throw new IllegalStateException("Duplicate name found in grouped resources. name=" + name);
+				throw new KeyValuesResourceNameException("Duplicate name found in grouped resources. name=" + name);
 			}
 		}
 		return nodes;
@@ -211,6 +211,9 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 				.load();
 			logger.loaded(resource);
 			return filter(resource, kvs);
+		}
+		catch (KeyValuesException e) {
+			throw new IOException("Resource has key value errors. resource: " + describe(node), e);
 		}
 		catch (FileNotFoundException e) {
 			logger.missing(resource, e);

@@ -19,10 +19,10 @@ sealed interface KeyValuesSource permits NamedKeyValuesSource, KeyValue.Source {
 	 */
 	static final Pattern RESOURCE_NAME_PATTERN = Pattern.compile(KeyValuesResource.RESOURCE_NAME_REGEX);
 
-	static String validateName(String identifier) {
+	static String validateName(String identifier) throws KeyValuesResourceNameException {
 		Objects.requireNonNull(identifier);
 		if (!RESOURCE_NAME_PATTERN.matcher(identifier).matches()) {
-			throw new IllegalArgumentException(
+			throw new KeyValuesResourceNameException(
 					"Invalid resource name: must contain only alphanumeric characters (no underscores) and not be null. input: "
 							+ identifier);
 		}

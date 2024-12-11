@@ -221,7 +221,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		try {
 			name = KeyValuesSource.validateName(name);
 		}
-		catch (IllegalArgumentException e) {
+		catch (KeyValuesResourceNameException e) {
 			throw new KeyValuesResourceParserException(
 					"Key Value has a malformed name for load resource. keyValue=" + keyValue, e);
 		}
@@ -410,7 +410,7 @@ enum DefaultKeyValuesResourceParser implements KeyValuesResourceParser {
 		try {
 			resourceName = KeyValuesSource.validateName(resourceName);
 		}
-		catch (IllegalArgumentException e) {
+		catch (KeyValuesResourceNameException e) {
 			throw new KeyValuesResourceParserException(
 					"Key Value has a malformed name for load resource. keyValue=" + kv, e);
 		}

@@ -2,11 +2,11 @@ package io.jstach.ezkv.kvs.interpolate;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
+import io.jstach.ezkv.kvs.KeyValuesException;
 import io.jstach.ezkv.kvs.interpolate.StrSubstitutor.StrLookup;
 
 /**
@@ -43,7 +43,7 @@ public interface Interpolator {
 	/**
 	 * Exception thrown when an interpolation operation fails.
 	 */
-	static class InterpolationException extends NoSuchElementException {
+	sealed static class InterpolationException extends KeyValuesException {
 
 		private static final long serialVersionUID = 4135719008465817465L;
 
@@ -84,7 +84,7 @@ public interface Interpolator {
 	/**
 	 * Exception thrown when a required variable is missing during interpolation.
 	 */
-	static class MissingVariableInterpolationException extends InterpolationException {
+	final static class MissingVariableInterpolationException extends InterpolationException {
 
 		private static final long serialVersionUID = 4135719008465817465L;
 

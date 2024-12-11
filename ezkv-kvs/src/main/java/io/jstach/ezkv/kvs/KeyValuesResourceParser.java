@@ -85,7 +85,7 @@ sealed interface KeyValuesResourceParser permits DefaultKeyValuesResourceParser 
 
 }
 
-class KeyValuesResourceParserException extends Exception {
+final class KeyValuesResourceParserException extends KeyValuesException {
 
 	private static final long serialVersionUID = 2616767401332338068L;
 

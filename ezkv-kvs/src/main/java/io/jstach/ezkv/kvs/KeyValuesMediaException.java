@@ -22,7 +22,7 @@ import org.jspecify.annotations.Nullable;
  * This class extends {@link RuntimeException}, so it does not need to be declared in a
  * method's {@code throws} clause.
  */
-public class KeyValuesMediaException extends RuntimeException {
+public final class KeyValuesMediaException extends KeyValuesException {
 
 	private static final long serialVersionUID = 1L;
 
@@ -40,7 +40,7 @@ public class KeyValuesMediaException extends RuntimeException {
 	 * Constructs a new {@code KeyValuesMediaException} with the specified detail message.
 	 * @param message the detail message, may be {@code null}
 	 */
-	public KeyValuesMediaException(@Nullable String message) {
+	public KeyValuesMediaException(String message) {
 		super(message);
 	}
 
