@@ -38,7 +38,7 @@ final class KeyValuesResourceNameException extends KeyValuesException {
 
 	private static final long serialVersionUID = 3181821413475470665L;
 
-	protected KeyValuesResourceNameException(String message) {
+	KeyValuesResourceNameException(String message) {
 		super(message);
 	}
 
