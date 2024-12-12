@@ -1,6 +1,7 @@
 package io.jstach.ezkv.kvs;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesFilter;
@@ -48,12 +49,12 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 	}
 
 	@Override
-	public KeyValues filter(FilterContext context, KeyValues keyValues, Filter filter) {
+	public Optional<KeyValues> filter(FilterContext context, KeyValues keyValues, Filter filter) {
 		String filterName = filter.filter();
 		if (this.filter.equalsIgnoreCase(filterName)) {
-			return doFilter(context, keyValues, filter.expression());
+			return Optional.of(doFilter(context, keyValues, filter.expression()));
 		}
-		return keyValues;
+		return Optional.empty();
 	}
 
 	protected abstract KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression);

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -38,8 +39,8 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		}
 
 		@Override
-		boolean matches(KeyValuesResource resource) {
-			return filePathOrNull(resource.uri()) != null;
+		boolean matches(KeyValuesResource resource, KeyValuesEnvironment environment) {
+			return filePathOrNull(resource.uri(), environment.getFileSystem()) != null;
 		}
 	},
 	SYSTEM(KeyValuesResource.SCHEMA_SYSTEM) {
@@ -86,7 +87,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		}
 
 		@Override
-		boolean matches(KeyValuesResource resource) {
+		boolean matches(KeyValuesResource resource, KeyValuesEnvironment environment) {
 			String scheme = resource.uri().getScheme();
 			if (scheme == null) {
 				return false;
@@ -145,7 +146,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 
 	@Override
 	public Optional<KeyValuesLoader> findLoader(LoaderContext context, KeyValuesResource resource) {
-		if (!matches(resource)) {
+		if (!matches(resource, context.environment())) {
 			return Optional.empty();
 		}
 		KeyValuesLoader loader = loader(context, resource);
@@ -162,11 +163,12 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 	protected abstract KeyValues load(LoaderContext context, KeyValuesResource resource) throws IOException;
 
 	protected KeyValues load(LoaderContext context, KeyValuesResource resource, Parser parser) throws IOException {
-		var is = openURI(resource.uri(), context.environment().getResourceStreamLoader());
+		var is = openURI(resource.uri(), context.environment().getResourceStreamLoader(),
+				context.environment().getFileSystem());
 		return parser.parse(resource, is);
 	}
 
-	boolean matches(KeyValuesResource resource) {
+	boolean matches(KeyValuesResource resource, KeyValuesEnvironment environment) {
 		return name().toLowerCase(Locale.ROOT).equals(resource.uri().getScheme());
 	}
 
@@ -213,12 +215,13 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		return kvs;
 	}
 
-	static @Nullable Path filePathOrNull(URI u) {
+	static @Nullable Path filePathOrNull(URI u, FileSystem fileSystem) {
+		String path;
 		if ("file".equals(u.getScheme())) {
-			return Path.of(u);
+			return fileSystem.provider().getPath(u);
 		}
-		else if (u.getScheme() == null && u.getPath() != null) {
-			return Path.of(u.getPath());
+		else if (u.getScheme() == null && (path = u.getPath()) != null) {
+			return fileSystem.getPath(path);
 		}
 		return null;
 	}
@@ -234,7 +237,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 		return p;
 	}
 
-	static InputStream openURI(URI u, ResourceStreamLoader loader) throws IOException {
+	static InputStream openURI(URI u, ResourceStreamLoader loader, FileSystem fileSystem) throws IOException {
 		if ("classpath".equals(u.getScheme())) {
 			String path = u.getPath();
 			if (path == null) {
@@ -251,7 +254,7 @@ enum DefaultKeyValuesLoaderFinder implements KeyValuesLoaderFinder {
 			return stream;
 		}
 
-		var path = filePathOrNull(u);
+		var path = filePathOrNull(u, fileSystem);
 		if (path != null) {
 			return Files.newInputStream(path);
 		}

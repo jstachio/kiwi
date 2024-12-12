@@ -37,8 +37,12 @@ public interface KeyValuesLoader {
 	 * allows adding multiple sources from which key-values will be loaded, as well as
 	 * setting variables for interpolation. <strong>Note that the order of the "add" and
 	 * {@link #variables} methods does matter.</strong>
+	 *
+	 * @apiNote The creation of the builder is currently encapsulated at the moment and is
+	 * done by {@link KeyValuesSystem#loader}.
+	 * @see KeyValuesSystem#loader()
 	 */
-	public class Builder implements KeyValuesLoader {
+	public final class Builder implements KeyValuesLoader {
 
 		final Function<Builder, KeyValuesLoader> loaderFactory;
 

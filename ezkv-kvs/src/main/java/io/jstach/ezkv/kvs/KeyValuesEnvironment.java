@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.System.Logger.Level;
 import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
@@ -99,6 +101,14 @@ public interface KeyValuesEnvironment {
 				return getClassLoader().getResourceAsStream(path);
 			}
 		};
+	}
+
+	/**
+	 * Retrieves the {@link FileSystem} used for loading file resources.
+	 * @return by default {@link FileSystems#getDefault()}.
+	 */
+	default FileSystem getFileSystem() {
+		return FileSystems.getDefault();
 	}
 
 	/**
@@ -289,7 +299,7 @@ enum NoOpLogger implements Logger {
 
 }
 
-class SystemLogger implements Logger {
+final class SystemLogger implements Logger {
 
 	private final System.Logger logger;
 
@@ -316,7 +326,7 @@ class SystemLogger implements Logger {
 
 }
 
-class DefaultKeyValuesEnvironment implements KeyValuesEnvironment {
+final class DefaultKeyValuesEnvironment implements KeyValuesEnvironment {
 
 	// private static final ThreadLocal<Logger> threadLocal = new
 	// ThreadLocal<>();

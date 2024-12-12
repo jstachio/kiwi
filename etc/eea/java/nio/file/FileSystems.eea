@@ -1,0 +1,4 @@
+class java/nio/file/FileSystems
+getDefault
+ ()Ljava/nio/file/FileSystem;
+ ()L1java/nio/file/FileSystem;

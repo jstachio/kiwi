@@ -218,13 +218,21 @@ public sealed interface KeyValuesServiceProvider {
 		/**
 		 * Applies a filter to the given key-value pairs. The filter should ideally only
 		 * be applied if the passed filter parameter matches (filter name) otherwise the
-		 * filter just return the passed in key values.
+		 * filter should return {@link Optional#empty()} which indicates the filter did
+		 * not match or was not applicable. Note that if the filter is applicable but
+		 * wants to return an empty key values it should return an Optional of empty key
+		 * values and not {@link Optional#empty()}.
 		 * @param context the filter context providing the environment and parameters
 		 * @param keyValues the key-value pairs to be filtered
 		 * @param filter filter description
-		 * @return a new {@link KeyValues} instance with the filtered key-value pairs
+		 * @return an optional {@link KeyValues} instance with the filtered key-value
+		 * pairs
+		 * @throws IllegalArgumentException or subclass if the filter expression is
+		 * malformed.
+		 * @throws KeyValuesException if some other key value parsing like error happens.
 		 */
-		KeyValues filter(FilterContext context, KeyValues keyValues, Filter filter);
+		Optional<KeyValues> filter(FilterContext context, KeyValues keyValues, Filter filter)
+				throws IllegalArgumentException, KeyValuesException;
 
 	}
 

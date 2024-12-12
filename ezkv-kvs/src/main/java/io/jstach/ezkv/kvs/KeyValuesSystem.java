@@ -260,11 +260,20 @@ public sealed interface KeyValuesSystem extends AutoCloseable {
 record CompositeKeyValuesFilter(List<KeyValuesFilter> filters) implements KeyValuesFilter {
 
 	@Override
-	public KeyValues filter(FilterContext context, KeyValues keyValues, Filter filter) {
+	public Optional<KeyValues> filter(FilterContext context, KeyValues keyValues, Filter filter) {
+		boolean found = false;
 		for (var f : filters) {
-			keyValues = f.filter(context, keyValues, filter);
+			var opt = f.filter(context, keyValues, filter);
+			var kvs = opt.orElse(null);
+			if (kvs != null) {
+				keyValues = kvs;
+				found = true;
+			}
 		}
-		return keyValues;
+		if (found) {
+			return Optional.of(keyValues);
+		}
+		return Optional.empty();
 	}
 }
 

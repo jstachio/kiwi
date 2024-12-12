@@ -281,7 +281,7 @@ final class DefaultEzkvConfig implements EzkvConfig.StableConfig {
 
 	@Override
 	public String describe(String key) {
-		return this.description;
+		return this.description + " " + keyValues.get(key);
 	}
 
 	@Override

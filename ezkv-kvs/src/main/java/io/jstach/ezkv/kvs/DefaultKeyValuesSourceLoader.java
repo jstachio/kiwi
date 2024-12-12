@@ -19,6 +19,7 @@ import io.jstach.ezkv.kvs.KeyValue.Flag;
 import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesFilter.FilterContext;
 
 /*
+ * The predominate chain loading happens here!
  * This class is not reusable or threadsafe unless
  * the static of method is used.
  */
@@ -210,7 +211,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 				.orElseThrow(() -> new IOException("Resource Loader not found. resource: " + describe(node)))
 				.load();
 			logger.loaded(resource);
-			return filter(resource, kvs);
+			return filter(resource, kvs, node);
 		}
 		catch (KeyValuesException e) {
 			throw new IOException("Resource has key value errors. resource: " + describe(node), e);
@@ -228,14 +229,25 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 
 	}
 
-	KeyValues filter(InternalKeyValuesResource resource, KeyValues keyValues) {
+	KeyValues filter(InternalKeyValuesResource resource, KeyValues keyValues, Node node) throws IOException {
 		var filters = resource.filters();
 		if (filters.isEmpty()) {
 			return keyValues;
 		}
 		FilterContext context = new FilterContext(system.environment(), resource.parameters());
 		for (var f : filters) {
-			keyValues = system.filter().filter(context, keyValues, f);
+			try {
+				var opt = system.filter().filter(context, keyValues, f);
+				var kvs = opt.orElse(null);
+				if (kvs == null) {
+					throw new IOException("Resource has missing filter. filter: " + f + " resource: " + describe(node));
+				}
+				keyValues = kvs;
+			}
+			catch (IllegalArgumentException e) {
+				throw new IOException(
+						"Resource has bad filter expression. filter: " + f + " resource: " + describe(node), e);
+			}
 		}
 		return keyValues;
 	}

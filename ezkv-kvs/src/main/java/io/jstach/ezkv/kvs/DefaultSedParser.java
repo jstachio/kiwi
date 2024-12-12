@@ -9,7 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import io.jstach.ezkv.kvs.SedParserException.ErrorType;
 
-class DefaultSedParser {
+final class DefaultSedParser {
 
 	static Command parseCommand(String input) throws SedParserException {
 		Tokenizer tokenizer = new Tokenizer(input);
