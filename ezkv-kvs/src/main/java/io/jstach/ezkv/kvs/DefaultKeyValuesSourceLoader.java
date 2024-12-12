@@ -2,6 +2,7 @@ package io.jstach.ezkv.kvs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -216,7 +217,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		catch (KeyValuesException e) {
 			throw new IOException("Resource has key value errors. resource: " + describe(node), e);
 		}
-		catch (FileNotFoundException e) {
+		catch (FileNotFoundException | NoSuchFileException e) {
 			logger.missing(resource, e);
 			if (LoadFlag.NO_REQUIRE.isSet(flags)) {
 				return KeyValues.empty();

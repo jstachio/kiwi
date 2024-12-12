@@ -1,7 +1,9 @@
 package io.jstach.ezkv.kvs;
 
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.EnumSet;
@@ -210,7 +212,13 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 
 	/**
 	 * Indicates that the resource is optional and no error should occur if it is not
-	 * found.
+	 * found. {@linkplain KeyValuesLoader Loaders} can indicate not found by throwing
+	 * either {@link FileNotFoundException} or {@link NoSuchFileException}. If the
+	 * resource is missing during a full load it will be logged with
+	 * {@link KeyValuesEnvironment.Logger#missing(KeyValuesResource, Exception)}. Note
+	 * that a resource may just not have any key values but is still found. By default
+	 * resources are normally required to exist.
+	 * @see #FLAG_NO_EMPTY
 	 */
 	public static final String FLAG_NO_REQUIRE = "NO_REQUIRE";
 
@@ -226,7 +234,9 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 
 	/**
 	 * Indicates that the resource should not be empty. Typically used to enforce that the
-	 * resource contains at least one key-value pair.
+	 * resource contains at least one key-value pair. This is different than
+	 * {@link #FLAG_NO_REQUIRE} which is if the resource does not exist at all. By default
+	 * empty resources are normally allowed.
 	 */
 	public static final String FLAG_NO_EMPTY = "NO_EMPTY";
 

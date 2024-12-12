@@ -3,6 +3,7 @@ package io.jstach.ezkv.kvs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -150,10 +151,15 @@ public interface KeyValuesLoader {
 		 * Loads key-values using the current builder configuration.
 		 * @return a {@link KeyValues} instance containing the loaded key-value pairs
 		 * @throws IOException if an I/O error occurs during loading
-		 * @throws FileNotFoundException if a specified resource is not found
+		 * @throws FileNotFoundException if a specified resource is not found. This
+		 * exception gets special treatment if thrown if the resource is optional it will
+		 * not be an error.
+		 * @throws NoSuchFileException if a specified resource is not found. This
+		 * exception gets special treatment if thrown if the resource is optional it will
+		 * not be an error.
 		 */
 		@Override
-		public KeyValues load() throws IOException, FileNotFoundException {
+		public KeyValues load() throws IOException, FileNotFoundException, NoSuchFileException {
 			return build().load();
 		}
 

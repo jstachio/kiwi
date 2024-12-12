@@ -2,6 +2,7 @@ package io.jstach.ezkv.kvs;
 
 import java.io.FileNotFoundException;
 import java.net.URI;
+import java.nio.file.NoSuchFileException;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
@@ -103,9 +104,9 @@ public sealed interface KeyValuesServiceProvider {
 		 * Finds a {@link KeyValuesLoader} capable of loading the specified
 		 * {@link KeyValuesResource} using the provided {@link LoaderContext}. <strong>If
 		 * the resource cannot be found the returned {@link KeyValuesLoader} should throw
-		 * a {@link FileNotFoundException} to indicate not found and not Optional.empty
-		 * which conversely means no matching loader could be found based on the resource.
-		 * </strong>
+		 * a {@link FileNotFoundException} or {@link NoSuchFileException} to indicate not
+		 * found and not Optional.empty which conversely means no matching loader could be
+		 * found based on the resource. </strong>
 		 * @param context the context containing dependencies and services
 		 * @param resource the resource for which a loader is sought
 		 * @return an {@link Optional} containing the loader if found, or empty if not

@@ -224,7 +224,7 @@ public interface KeyValuesEnvironment {
 		 * @param resource the resource that was not found
 		 * @param exception the exception that occurred when the resource was not found
 		 */
-		default void missing(KeyValuesResource resource, FileNotFoundException exception) {
+		default void missing(KeyValuesResource resource, Exception exception) {
 			debug(KeyValueReference.describe(new StringBuilder("Missing "), resource, false).toString());
 		}
 
@@ -294,7 +294,7 @@ enum NoOpLogger implements Logger {
 	}
 
 	@Override
-	public void missing(KeyValuesResource resource, FileNotFoundException exception) {
+	public void missing(KeyValuesResource resource, Exception exception) {
 	}
 
 }
