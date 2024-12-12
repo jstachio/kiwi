@@ -70,13 +70,17 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 	 * Returns the media type as a string and should ideally be in
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc6838">rfc6838 format</a>, is
 	 * required and should be unique from other {@link KeyValuesMedia} unlike
-	 * {@link #getFileExt()}.
+	 * {@link #getFileExt()}. For implementers if there is not a registered media type a
+	 * recommendation is to use <code>application/x-ext</code> where "ext" would be
+	 * replaced with the file extension or some name.
 	 * @return the media type
 	 */
 	public String getMediaType();
 
 	/**
-	 * Returns the file extension associated with the media type, if any.
+	 * Returns the file extension associated with the media type, if any. The first period
+	 * "<code>.</code>" should not be included. For example <code>.tar.gz</code> should be
+	 * <code>tar.gz</code>.
 	 * @return the file extension or {@code null} if not applicable
 	 */
 	public @Nullable String getFileExt();

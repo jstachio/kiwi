@@ -975,5 +975,6 @@
   <modules>
     <module>ezkv-kvs</module>
     <module>ezkv-boot</module>
+    <module>ezkv-dotenv</module>
   </modules>
 </project>
