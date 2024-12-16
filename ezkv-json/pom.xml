@@ -18,5 +18,11 @@
       <groupId>io.jstach.ezkv</groupId>
       <artifactId>ezkv-kvs</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.junit-pioneer</groupId>
+      <artifactId>junit-pioneer</artifactId>
+      <version>2.3.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
