@@ -12,7 +12,7 @@
     <parent.root>${basedir}/..</parent.root>
     <maven.javadoc.skip>false</maven.javadoc.skip>
   </properties>
-  <artifactId>ezkv-json</artifactId>
+  <artifactId>ezkv-json5</artifactId>
   <dependencies>
     <dependency>
       <groupId>io.jstach.ezkv</groupId>
