@@ -135,7 +135,7 @@ public interface Variables extends Function<String, @Nullable String> {
 	 * multiple sources of key-to-value mappings. <strong> NOTE: Variables resolution
 	 * order is the opposite of KeyValues. Primacy takes precedence! </strong>.
 	 */
-	public final static class Builder {
+	public final static class Builder implements BiConsumer<String, String> {
 
 		private @Nullable Map<String, String> properties = null;
 
@@ -157,6 +157,11 @@ public interface Variables extends Function<String, @Nullable String> {
 			}
 			_properties.put(key, value);
 			return this;
+		}
+
+		@Override
+		public void accept(String t, String u) {
+			add(t, u);
 		}
 
 		/**

@@ -411,6 +411,18 @@ public interface KeyValues extends Iterable<KeyValue> {
 		return m;
 	}
 
+	/**
+	 * A convenience method to format key values to a String mainly for unit testing to
+	 * maintain fluent chain.
+	 * @param media which will be used to call {@link KeyValuesMedia#formatter()}
+	 * @return formatted key values
+	 * @throws UnsupportedOperationException if formatting is not supported by the media.
+	 * @see KeyValuesMedia#ofProperties()
+	 */
+	default String format(KeyValuesMedia media) throws UnsupportedOperationException {
+		return media.formatter().format(this);
+	}
+
 	// TODO multiMap SequencedMap<String, List<String>>
 
 }
