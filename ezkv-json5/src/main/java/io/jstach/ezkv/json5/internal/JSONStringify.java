@@ -26,7 +26,7 @@ package io.jstach.ezkv.json5.internal;
 import java.util.Map;
 
 import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
-import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONBoolean;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONObject;
@@ -42,7 +42,10 @@ import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
 public class JSONStringify {
 
 	record StringifyOptions(boolean stringifyAscii, boolean quoteSingle) {
+
 	}
+
+	private static StringifyOptions defaultOptions = new StringifyOptions(false, false);
 
 	/**
 	 * Converts a JSONObject into its string representation. The indentation factor
@@ -126,7 +129,7 @@ public class JSONStringify {
 	 * @return the string representation
 	 */
 	public static String toString(JSONObject object, int indentFactor) {
-		return toString(object, indentFactor, null);
+		return toString(object, indentFactor, defaultOptions);
 	}
 
 	/**
@@ -153,7 +156,7 @@ public class JSONStringify {
 	 * @return the string representation
 	 */
 	public static String toString(JSONArray array, int indentFactor) {
-		return toString(array, indentFactor, null);
+		return toString(array, indentFactor, defaultOptions);
 	}
 
 	private static String toString(JSONObject object, String indent, int indentFactor, StringifyOptions options) {
@@ -215,8 +218,8 @@ public class JSONStringify {
 		return switch (value) {
 			case JSONObject o -> toString(o, indent, indentFactor, options);
 			case JSONArray o -> toString(o, indent, indentFactor, options);
-			case JSONString s -> s.value();
-			case JSONBool b -> String.valueOf(b.val());
+			case JSONString s -> quote(s.value(), options);
+			case JSONBoolean b -> String.valueOf(b.val());
 			case JSONNumber n -> toString(n.value(), options);
 			case JSONNull n -> "null";
 		};
@@ -296,15 +299,17 @@ public class JSONStringify {
 								break;
 						}
 					}
-					else
+					else {
 						unicode = c > 0x7F;
+					}
 
 					if (unicode) {
 						quoted.append("\\u");
 						quoted.append(String.format("%04X", (int) c));
 					}
-					else
+					else {
 						quoted.append(c);
+					}
 			}
 		}
 

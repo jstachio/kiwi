@@ -40,6 +40,29 @@ class JSON5KeyValuesMediaTest {
 		assertEquals(expected, actual);
 	}
 
+	@Test
+	void testFormatter() {
+		String properties = """
+				a.b=1
+				a.b=2.0
+				a.b.c=3
+				""";
+		var b = KeyValues.builder();
+		KeyValuesMedia.ofProperties().parser().parse(properties, b::add);
+		var kvs = b.build();
+		String actual = kvs.format(new JSON5KeyValuesMedia());
+		String expected = """
+				{
+				  "a.b": [
+				    "1",
+				    "2.0"
+				  ],
+				  "a.b.c": "3"
+				}
+				""";
+		assertEquals(expected.trim(), actual.trim());
+	}
+
 	@CartesianTest
 	void test(@Enum JSON5Test test, @Enum ArrayKeyOption arrayKeyOption) {
 		String input = test.input;
@@ -165,21 +188,42 @@ class JSON5KeyValuesMediaTest {
 	}
 
 	@CartesianTest
-	void testNumber(@Enum JSON5Number test) {
+	void testNumber(@Enum JSON5Number test, @Enum JSONRaw raw) {
 		String input = test.json();
-		var parser = new JSON5KeyValuesMedia().parser();
+		var vars = Variables.builder();
+		String rawParam = switch (raw) {
+			case RAW -> "true";
+			case JAVA -> "false";
+		};
+		vars.accept(JSON5KeyValuesMedia.NUMBER_RAW_PARAM, rawParam);
+		var parser = new JSON5KeyValuesMedia().parser(vars.build());
 		var kvs = parser.parse(input);
-		String expected = test.expected;
+		String expected = switch (raw) {
+			case RAW -> test.raw;
+			case JAVA -> test.expected;
+		};
 		String actual = test.value(kvs);
 		assertEquals(expected, actual);
 	}
 
+	enum JSONRaw {
+
+		RAW, JAVA
+
+	}
+
 	enum JSON5Number {
 
-		ZERO("0", "0"), INTEGER("123", "123"), WITH_FRACTION_PART("123.456", "123.456"),
-		ONLY_FRACTION_PART(".456", "0.456"), WITH_EXPONENT("123e-456", "1.23E+458"), POSITIVE_HEX("0xdecaf", "912559"),
-		NEGATIVE_HEX("-0xC0FFEE", "-12648430"), POSITIVE_INFINITY("Infinity", "Infinity"),
-		NEGATIVE_INFINITY("-Infinity", "-Infinity"), NAN("NaN", "NaN"),
+		ZERO("0", "0"), //
+		INTEGER("123", "123"), //
+		WITH_FRACTION_PART("123.456", "123.456"), //
+		ONLY_FRACTION_PART(".456", "0.456", ".456"), //
+		WITH_EXPONENT("123e-456", "1.23E+458", "123e-456"), //
+		POSITIVE_HEX("0xdecaf", "912559", "0xdecaf"), //
+		NEGATIVE_HEX("-0xC0FFEE", "-12648430", "-0xC0FFEE"), //
+		POSITIVE_INFINITY("Infinity", "Infinity"), //
+		NEGATIVE_INFINITY("-Infinity", "-Infinity"), //
+		NAN("NaN", "NaN"),
 
 		;
 
@@ -187,9 +231,16 @@ class JSON5KeyValuesMediaTest {
 
 		private final String expected;
 
+		private final String raw;
+
 		private JSON5Number(String number, String expected) {
+			this(number, expected, expected);
+		}
+
+		private JSON5Number(String number, String expected, String raw) {
 			this.number = number;
 			this.expected = expected;
+			this.raw = raw;
 		}
 
 		String json() {
@@ -249,9 +300,17 @@ class JSON5KeyValuesMediaTest {
 
 	enum StringEscapes {
 
-		APOSTROPHE("\\'", "'"), Quotation_MARK("\\\"", "\""), Reverse_solidus("\\\\", "\\"), Backspace("\\b", "\b"),
-		Form_feed("\\f", "\f"), Line_feed("\\n", "\n"), Carriage_return("\\r", "\r"), Horizontal_tab("\\t", "\t"),
-		Vertical_tab("\\v", "\u000B"), Null("\\0", "\u0000"), Example_1("\\x5C", "\\"),
+		APOSTROPHE("\\'", "'"), //
+		Quotation_MARK("\\\"", "\""), //
+		Reverse_solidus("\\\\", "\\"), //
+		Backspace("\\b", "\b"), //
+		Form_feed("\\f", "\f"), //
+		Line_feed("\\n", "\n"), //
+		Carriage_return("\\r", "\r"), //
+		Horizontal_tab("\\t", "\t"), //
+		Vertical_tab("\\v", "\u000B"), //
+		Null("\\0", "\u0000"), //
+		Example_1("\\x5C", "\\"), //
 		Example_2("\\uD83C\\uDFBC", "\uD83C\uDFBC");
 
 		private final String literal;

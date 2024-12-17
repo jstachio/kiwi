@@ -1,4 +1,8 @@
 /*
+ * This code is heavily adapted from 
+ * https://github.com/Synt4xErr0r4/json5
+ */
+/*
  * MIT License
  *
  * Copyright (c) 2021 SyntaxError404
@@ -36,7 +40,7 @@ import org.jspecify.annotations.Nullable;
 
 import io.jstach.ezkv.json5.internal.JSONParserOptions.DuplicateBehavior;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
-import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONBoolean;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONObject;
@@ -677,16 +681,16 @@ public class JSONParser {
 
 		back();
 
-		String string = nextCleanTo(",]}");
+		final String string = nextCleanTo(",]}");
 
 		if (string.equals("null"))
 			return JSONNull.NULL;
 
 		if (string.equals("true"))
-			return JSONBool.TRUE;
+			return JSONBoolean.TRUE;
 
 		if (string.equals("false"))
-			return JSONBool.FALSE;
+			return JSONBoolean.FALSE;
 
 		if (!string.isEmpty()) {
 			char leading = string.charAt(0);
@@ -703,11 +707,11 @@ public class JSONParser {
 			}
 
 			if (rest.equals("Infinity")) {
-				return new JSONNumber(Math.copySign(Double.POSITIVE_INFINITY, sign));
+				return new JSONNumber(Math.copySign(Double.POSITIVE_INFINITY, sign), string);
 			}
 
 			if (rest.equals("NaN")) {
-				return new JSONNumber(Math.copySign(Double.NaN, sign));
+				return new JSONNumber(Math.copySign(Double.NaN, sign), string);
 			}
 
 			if (!rest.isEmpty()) {
@@ -719,14 +723,14 @@ public class JSONParser {
 					if (num != null) {
 						if (sign < 0) {
 							if (num instanceof BigInteger bi) {
-								return new JSONNumber(bi.negate());
+								return new JSONNumber(bi.negate(), string);
 							}
 
 							else if (num instanceof BigDecimal bd)
-								return new JSONNumber(bd.negate());
+								return new JSONNumber(bd.negate(), string);
 						}
 
-						return new JSONNumber(num);
+						return new JSONNumber(num, string);
 					}
 				}
 			}

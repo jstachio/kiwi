@@ -10,13 +10,6 @@ import org.jspecify.annotations.Nullable;
 
 public sealed interface JSONValue {
 
-	/**
-	 * A JSONObject is a map (key-value) structure capable of holding multiple values,
-	 * including other {@link JSONArray JSONArrays} and JSONObjects
-	 *
-	 * @author SyntaxError404
-	 *
-	 */
 	public final class JSONObject implements JSONValue {
 
 		LinkedHashMap<String, JSONValue> values;
@@ -59,6 +52,22 @@ public sealed interface JSONValue {
 				throw new JSONException("JSONObject[" + JSONStringify.quote(key) + "] does not exist");
 
 			return values.get(key);
+		}
+
+		public void merge(String key, JSONValue value) {
+			var existing = valueOrNull(key);
+			switch (existing) {
+				case JSONArray a -> a.values.add(value);
+				case JSONValue v -> {
+					JSONArray array = new JSONArray();
+					array.values.add(existing);
+					array.values.add(value);
+					values.put(key, array);
+				}
+				case null -> {
+					values.put(key, value);
+				}
+			}
 		}
 
 	}
@@ -104,10 +113,10 @@ public sealed interface JSONValue {
 	record JSONString(String value) implements JSONValue {
 	}
 
-	record JSONNumber(Number value) implements JSONValue {
+	record JSONNumber(Number value, String raw) implements JSONValue {
 	}
 
-	enum JSONBool implements JSONValue {
+	enum JSONBoolean implements JSONValue {
 
 		FALSE {
 			@Override

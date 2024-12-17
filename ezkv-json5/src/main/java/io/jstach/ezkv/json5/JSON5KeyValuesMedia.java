@@ -10,17 +10,18 @@ import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
 
+import io.jstach.ezkv.json5.internal.JSONParser;
 import io.jstach.ezkv.json5.internal.JSONParserOptions;
 import io.jstach.ezkv.json5.internal.JSONParserOptions.DuplicateBehavior;
-import io.jstach.ezkv.json5.internal.JSONException;
-import io.jstach.ezkv.json5.internal.JSONParser;
+import io.jstach.ezkv.json5.internal.JSONStringify;
 import io.jstach.ezkv.json5.internal.JSONValue;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
-import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONBoolean;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONObject;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
+import io.jstach.ezkv.kvs.KeyValues;
 import io.jstach.ezkv.kvs.KeyValuesMedia;
 import io.jstach.ezkv.kvs.KeyValuesResource;
 import io.jstach.ezkv.kvs.Variables;
@@ -108,6 +109,32 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 	 */
 	public static final String DEFAULT_SEPARATOR = ".";
 
+	// @formatter:off
+	/**
+	 * Configures whether or not to use the raw JSON5 number found
+	 * instead of the Java converted number in {@link KeyValuesResource#parameters()} with the key
+	 * {@value #NUMBER_RAW_PARAM} and is by default <code>false</code>.
+	 * An example is if one used hexadecimal <code>-0xC0FFEE</code> it normally
+	 * would be converted to an integer.
+	 * {@snippet lang = json :
+	 * { "number" : -0xC0FFEE}
+	 * }
+	 * Will yield key values:
+	 * {@snippet lang = properties :
+	 * # Normally the below would happen
+	 * # number=-12648430
+	 * # But will now be
+	 * number=-0xC0FFEE
+	 * }
+	 * <strong>Note that exponents in JSON5 work different than in Java so
+	 * downstream configuration parsing will have to deal with this
+	 * if this is turned on but otherwise most of JSON5 number
+	 * format is a compatible subset of Java.
+	 * </strong>
+	 */
+	// @formatter:on
+	public static final String NUMBER_RAW_PARAM = "json5_number_raw";
+
 	/**
 	 * For service loader.
 	 */
@@ -136,7 +163,13 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 		if (separator == null || separator.isBlank()) {
 			separator = DEFAULT_SEPARATOR;
 		}
-		return new JSON5KeyValuesParser(JSON5KeyValuesParser.defaultOptions, arrayKeyOption, separator);
+		boolean rawNumber = Boolean.parseBoolean(parameters.getValue(NUMBER_RAW_PARAM));
+		return new JSON5KeyValuesParser(JSON5KeyValuesParser.defaultOptions, arrayKeyOption, separator, rawNumber);
+	}
+
+	@Override
+	public Formatter formatter() {
+		return new JSON5KeyValuesFormatter();
 	}
 
 	@Override
@@ -162,7 +195,8 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 	static enum ArrayKeyOption {
 
-		DUPLICATE(ARRAY_KEY_DUPLICATE_VALUE), ARRAY(ARRAY_KEY_ARRAY_VALUE),;
+		DUPLICATE(ARRAY_KEY_DUPLICATE_VALUE), //
+		ARRAY(ARRAY_KEY_ARRAY_VALUE),;
 
 		private final String value;
 
@@ -192,6 +226,20 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 	}
 
+	static class JSON5KeyValuesFormatter implements Formatter {
+
+		@Override
+		public void format(Appendable appendable, KeyValues kvs) throws IOException {
+			JSONObject object = new JSONObject();
+			for (var kv : kvs) {
+				object.merge(kv.key(), new JSONString(kv.value()));
+			}
+			String json = JSONStringify.toString(object, 2);
+			appendable.append(json);
+		}
+
+	}
+
 	static class JSON5KeyValuesParser implements Parser {
 
 		private final JSONParserOptions options;
@@ -200,18 +248,22 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 		private final String separator;
 
+		private final boolean rawNumber;
+
 		static final JSONParserOptions defaultOptions = new JSONParserOptions.Builder()
 			.duplicateBehaviour(DuplicateBehavior.DUPLICATE)
 			.build();
 
 		static final JSON5KeyValuesParser parser = new JSON5KeyValuesParser(defaultOptions, ArrayKeyOption.defaults(),
-				DEFAULT_SEPARATOR);
+				DEFAULT_SEPARATOR, false);
 
-		public JSON5KeyValuesParser(JSONParserOptions options, ArrayKeyOption arrayKeyOption, String separator) {
+		public JSON5KeyValuesParser(JSONParserOptions options, ArrayKeyOption arrayKeyOption, String separator,
+				boolean rawNumber) {
 			super();
 			this.options = options;
 			this.arrayKeyOption = Objects.requireNonNull(arrayKeyOption);
 			this.separator = separator;
+			this.rawNumber = rawNumber;
 		}
 
 		@Override
@@ -278,12 +330,19 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 				case JSONObject o -> flattenJsonObject(o, newKey, consumer);
 				case JSONArray a -> flattenJsonArray(a, newKey, consumer);
 				case JSONString s -> consumer.accept(newKey, s.value());
-				case JSONBool b -> consumer.accept(newKey, String.valueOf(b.val()));
-				case JSONNumber n -> consumer.accept(newKey, String.valueOf(n.value()));
+				case JSONBoolean b -> consumer.accept(newKey, String.valueOf(b.val()));
+				case JSONNumber n -> consumer.accept(newKey, toString(n));
 				case JSONNull n -> {
 				}
 			}
 			;
+		}
+
+		private String toString(JSONNumber number) {
+			if (rawNumber) {
+				return number.raw();
+			}
+			return String.valueOf(number.value());
 		}
 
 	}
