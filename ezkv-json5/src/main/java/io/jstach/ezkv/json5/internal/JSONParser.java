@@ -24,15 +24,16 @@
 package io.jstach.ezkv.json5.internal;
 
 import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
+import io.jstach.ezkv.json5.internal.JSONOptions.DuplicateBehavior;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
@@ -92,6 +93,152 @@ public class JSONParser {
 
 		previous = 0;
 		current = 0;
+	}
+
+	static JSONObject parseObject(JSONParser parser) {
+
+		JSONObject obj = new JSONObject();
+		var values = obj.values;
+
+		char c;
+		String key;
+
+		if (parser.nextClean() != '{')
+			throw parser.syntaxError("A JSONObject must begin with '{'");
+
+		DuplicateBehavior duplicateBehavior = parser.options.duplicateBehaviour();
+
+		// Set<String> duplicates = new HashSet<>();
+		Map<String, JSONArray> duplicates = new LinkedHashMap<>();
+
+		while (true) {
+			c = parser.nextClean();
+
+			switch (c) {
+				case 0:
+					throw parser.syntaxError("A JSONObject must end with '}'");
+				case '}':
+					return obj;
+				default:
+					parser.back();
+					key = parser.nextMemberName();
+			}
+
+			boolean duplicate = obj.values.containsKey(key);
+
+			if (duplicate && duplicateBehavior == DuplicateBehavior.UNIQUE)
+				throw new JSONException("Duplicate key " + JSONStringify.quote(key));
+
+			c = parser.nextClean();
+
+			if (c != ':')
+				throw parser.syntaxError("Expected ':' after a key, got '" + c + "' instead");
+
+			Object value = parser.nextValue().value();
+
+			if (duplicate && duplicateBehavior == DuplicateBehavior.DUPLICATE) {
+				JSONArray array = duplicates.get(key);
+				if (array == null) {
+					array = new JSONArray();
+					array.values.add(sanitize(obj.get(key)));
+					duplicates.put(key, array);
+				}
+				array.values.add(sanitize(value));
+				value = array;
+			}
+
+			values.put(key, value);
+
+			c = parser.nextClean();
+
+			if (c == '}')
+				return obj;
+
+			if (c != ',')
+				throw parser.syntaxError("Expected ',' or '}' after value, got '" + c + "' instead");
+		}
+	}
+
+	static JSONArray parseArray(JSONParser parser) {
+		var array = new JSONArray();
+
+		char c;
+
+		if (parser.nextClean() != '[')
+			throw parser.syntaxError("A JSONArray must begin with '['");
+
+		while (true) {
+			c = parser.nextClean();
+
+			switch (c) {
+				case 0:
+					throw parser.syntaxError("A JSONArray must end with ']'");
+				case ']':
+					return array;
+				default:
+					parser.back();
+			}
+
+			JSONValue value = parser.nextValue();
+
+			array.values.add(value.value());
+
+			c = parser.nextClean();
+
+			if (c == ']')
+				return array;
+
+			if (c != ',')
+				throw parser.syntaxError("Expected ',' or ']' after value, got '" + c + "' instead");
+		}
+	}
+
+	/**
+	 * Sanitizes an input value
+	 * @param value the value
+	 * @return the sanitized value
+	 * @throws JSONException if the value is illegal
+	 */
+	static Object sanitize(Object value) {
+		if (value == null)
+			return null;
+
+		if (value instanceof Boolean || value instanceof String || value instanceof JSONObject
+				|| value instanceof JSONArray || value instanceof Instant)
+			return value;
+
+		else if (value instanceof Number) {
+			Number num = (Number) value;
+
+			if (value instanceof Double) {
+				double d = (Double) num;
+
+				if (Double.isFinite(d))
+					return BigDecimal.valueOf(d);
+			}
+
+			else if (value instanceof Float) {
+				float f = (Float) num;
+
+				if (Float.isFinite(f))
+					return BigDecimal.valueOf(f);
+
+				// NaN and Infinity
+				return num.doubleValue();
+			}
+
+			else if (value instanceof Byte || value instanceof Short || value instanceof Integer
+					|| value instanceof Long)
+				return BigInteger.valueOf(num.longValue());
+
+			else if (!(value instanceof BigDecimal || value instanceof BigInteger))
+				return BigDecimal.valueOf(num.doubleValue());
+
+			return num;
+		}
+
+		else
+			throw new JSONException("Illegal type '" + value.getClass() + "'");
 	}
 
 	private boolean more() {
@@ -543,10 +690,10 @@ public class JSONParser {
 				return new JSONString(nextString(n));
 			case '{':
 				back();
-				return new JSONObject(this);
+				return parseObject(this);
 			case '[':
 				back();
-				return new JSONArray(this);
+				return parseArray(this);
 		}
 
 		back();

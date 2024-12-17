@@ -104,35 +104,40 @@ class JSON5KeyValuesMediaTest {
 				{
 				"a" : 1,
 				"a" :2,
-				"b" : [1, 2],
-				"b" : [3, 4],
 				"c" : {
 					last : "false"
-					},
+				},
+				"b" : [1, 2],
 				"c" : {
 					first : "true"
-					}
-				}
+					},
+				"b" : [3, 4],
+				"b" : [5, 6],
+				},
 				""", //
 				"""
 						a=1
 						a=2
+						c.last=false
+						c.first=true
 						b=1
 						b=2
 						b=3
 						b=4
-						c.last=false
-						c.first=true
+						b=5
+						b=6
 						""", //
 				"""
 						a[0]=1
 						a[1]=2
+						c[0].last=false
+						c[1].first=true
 						b[0][0]=1
 						b[0][1]=2
 						b[1][0]=3
 						b[1][1]=4
-						c[0].last=false
-						c[1].first=true
+						b[2][0]=5
+						b[2][1]=6
 						""")
 
 		;
