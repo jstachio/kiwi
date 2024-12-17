@@ -27,9 +27,11 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
+import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONObject;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
 
 /**

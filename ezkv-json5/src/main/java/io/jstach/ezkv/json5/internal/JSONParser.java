@@ -27,16 +27,17 @@ import java.io.BufferedReader;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.ezkv.json5.internal.JSONOptions.DuplicateBehavior;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONObject;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
 
 /**
@@ -191,54 +192,6 @@ public class JSONParser {
 			if (c != ',')
 				throw parser.syntaxError("Expected ',' or ']' after value, got '" + c + "' instead");
 		}
-	}
-
-	/**
-	 * Sanitizes an input value
-	 * @param value the value
-	 * @return the sanitized value
-	 * @throws JSONException if the value is illegal
-	 */
-	static Object sanitize(Object value) {
-		if (value == null)
-			return null;
-
-		if (value instanceof Boolean || value instanceof String || value instanceof JSONObject
-				|| value instanceof JSONArray || value instanceof Instant)
-			return value;
-
-		else if (value instanceof Number) {
-			Number num = (Number) value;
-
-			if (value instanceof Double) {
-				double d = (Double) num;
-
-				if (Double.isFinite(d))
-					return BigDecimal.valueOf(d);
-			}
-
-			else if (value instanceof Float) {
-				float f = (Float) num;
-
-				if (Float.isFinite(f))
-					return BigDecimal.valueOf(f);
-
-				// NaN and Infinity
-				return num.doubleValue();
-			}
-
-			else if (value instanceof Byte || value instanceof Short || value instanceof Integer
-					|| value instanceof Long)
-				return BigInteger.valueOf(num.longValue());
-
-			else if (!(value instanceof BigDecimal || value instanceof BigInteger))
-				return BigDecimal.valueOf(num.doubleValue());
-
-			return num;
-		}
-
-		else
-			throw new JSONException("Illegal type '" + value.getClass() + "'");
 	}
 
 	private boolean more() {

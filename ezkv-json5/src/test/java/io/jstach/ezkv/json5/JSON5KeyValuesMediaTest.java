@@ -113,6 +113,7 @@ class JSON5KeyValuesMediaTest {
 					},
 				"b" : [3, 4],
 				"b" : [5, 6],
+				"d" : true,
 				},
 				""", //
 				"""
@@ -126,6 +127,7 @@ class JSON5KeyValuesMediaTest {
 						b=4
 						b=5
 						b=6
+						d=true
 						""", //
 				"""
 						a[0]=1
@@ -138,6 +140,7 @@ class JSON5KeyValuesMediaTest {
 						b[1][1]=4
 						b[2][0]=5
 						b[2][1]=6
+						d=true
 						""")
 
 		;
