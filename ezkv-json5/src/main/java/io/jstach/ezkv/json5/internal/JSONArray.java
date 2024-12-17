@@ -71,43 +71,4 @@ public final class JSONArray implements JSONValue {
 		return values.get(index);
 	}
 
-	// -- STRINGIFY --
-
-	/**
-	 * Converts the JSONArray into its string representation. The indentation factor
-	 * enables pretty-printing and defines how many spaces (' ') should be placed before
-	 * each value. A factor of {@code < 1} disables pretty-printing and discards any
-	 * optional whitespace characters.
-	 * <p>
-	 * {@code indentFactor = 2}: <pre>
-	 * [
-	 *   "value",
-	 *   {
-	 *     "nested": 123
-	 *   },
-	 *   false
-	 * ]
-	 * </pre>
-	 * <p>
-	 * {@code indentFactor = 0}: <pre>
-	 * ["value",{"nested":123},false]
-	 * </pre>
-	 * @param indentFactor the indentation factor
-	 * @return the string representation
-	 *
-	 * @see JSONStringify#toString(JSONArray, int)
-	 */
-	public String toString(int indentFactor) {
-		return JSONStringify.toString(this, indentFactor);
-	}
-
-	/**
-	 * Converts the JSONArray into its compact string representation.
-	 * @return the compact string representation
-	 */
-	@Override
-	public String toString() {
-		return toString(0);
-	}
-
 }

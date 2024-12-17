@@ -76,46 +76,6 @@ public final class JSONObject implements JSONValue {
 		return values.get(key);
 	}
 
-	// -- STRINGIFY --
-
-	/**
-	 * Converts the JSONObject into its string representation. The indentation factor
-	 * enables pretty-printing and defines how many spaces (' ') should be placed before
-	 * each key/value pair. A factor of {@code < 1} disables pretty-printing and discards
-	 * any optional whitespace characters.
-	 * <p>
-	 * {@code indentFactor = 2}: <pre>
-	 * {
-	 *   "key0": "value0",
-	 *   "key1": {
-	 *     "nested": 123
-	 *   },
-	 *   "key2": false
-	 * }
-	 * </pre>
-	 * <p>
-	 * {@code indentFactor = 0}: <pre>
-	 * {"key0":"value0","key1":{"nested":123},"key2":false}
-	 * </pre>
-	 * @param indentFactor the indentation factor
-	 * @return the string representation
-	 *
-	 * @see JSONStringify#toString(JSONObject, int)
-	 */
-	public String toString(int indentFactor) {
-		return JSONStringify.toString(this, indentFactor);
-	}
-
-	/**
-	 * Converts the JSONObject into its compact string representation.
-	 * @return the compact string representation
-	 */
-	@Override
-	public String toString() {
-		return toString(0);
-	}
-
-	// -- MISCELLANEOUS --
 
 	private Object checkKey(String key) {
 		if (!values.containsKey(key))
