@@ -156,7 +156,7 @@ public class JSONStringify {
 
 		sb.append('{');
 
-		for (Map.Entry<String, Object> entry : object) {
+		for (Map.Entry<String, Object> entry : object.values.entrySet()) {
 			if (sb.length() != 1)
 				sb.append(',');
 
@@ -186,7 +186,7 @@ public class JSONStringify {
 
 		sb.append('[');
 
-		for (Object value : array) {
+		for (Object value : array.values) {
 			if (sb.length() != 1)
 				sb.append(',');
 

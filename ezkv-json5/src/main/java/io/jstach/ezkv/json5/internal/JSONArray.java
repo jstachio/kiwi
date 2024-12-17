@@ -24,7 +24,6 @@
 package io.jstach.ezkv.json5.internal;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
@@ -36,9 +35,9 @@ import org.jspecify.annotations.Nullable;
  * @author SyntaxError404
  *
  */
-public final class JSONArray implements Iterable<Object>, JSONValue {
+public final class JSONArray implements JSONValue {
 
-	private List<Object> values;
+	List<Object> values;
 
 	/**
 	 * Constructs a new JSONArray
@@ -47,74 +46,9 @@ public final class JSONArray implements Iterable<Object>, JSONValue {
 		values = new ArrayList<>();
 	}
 
-	/**
-	 * Constructs a new JSONArray from a JSONParser
-	 * @param parser a JSONParser
-	 */
-	public JSONArray(JSONParser parser) {
-		this();
-
-		char c;
-
-		if (parser.nextClean() != '[')
-			throw parser.syntaxError("A JSONArray must begin with '['");
-
-		while (true) {
-			c = parser.nextClean();
-
-			switch (c) {
-				case 0:
-					throw parser.syntaxError("A JSONArray must end with ']'");
-				case ']':
-					return;
-				default:
-					parser.back();
-			}
-
-			JSONValue value = parser.nextValue();
-
-			values.add(value.value());
-
-			c = parser.nextClean();
-
-			if (c == ']')
-				return;
-
-			if (c != ',')
-				throw parser.syntaxError("Expected ',' or ']' after value, got '" + c + "' instead");
-		}
-	}
-
 	@Override
 	public @Nullable Object value() {
 		return this;
-	}
-
-	// /**
-	// * Converts the JSONArray into a list. All JSONObjects and JSONArrays contained
-	// within
-	// * this JSONArray will be converted into their Map or List form as well
-	// * @return a list of the values of this array
-	// */
-	// public List<Object> toList() {
-	// List<Object> list = new ArrayList<>();
-	//
-	// for (Object value : this) {
-	// if (value instanceof JSONObject)
-	// value = ((JSONObject) value).toMap();
-	//
-	// else if (value instanceof JSONArray)
-	// value = ((JSONArray) value).toList();
-	//
-	// list.add((Object) value);
-	// }
-	//
-	// return list;
-	// }
-
-	@Override
-	public Iterator<Object> iterator() {
-		return values.iterator();
 	}
 
 	/**
@@ -123,15 +57,6 @@ public final class JSONArray implements Iterable<Object>, JSONValue {
 	 */
 	public int length() {
 		return values.size();
-	}
-
-	/**
-	 * Removes all values from this JSONArray
-	 *
-	 * @since 1.2.0
-	 */
-	public void clear() {
-		values.clear();
 	}
 
 	// -- GET --
@@ -143,20 +68,7 @@ public final class JSONArray implements Iterable<Object>, JSONValue {
 	 * @throws JSONException if the index does not exist
 	 */
 	public Object get(int index) {
-		checkIndex(index);
 		return values.get(index);
-	}
-
-	// -- ADD --
-
-	/**
-	 * Adds a value to the JSONArray
-	 * @param value the new value
-	 * @return this JSONArray
-	 */
-	public JSONArray add(Object value) {
-		values.add(JSONObject.sanitize(value));
-		return this;
 	}
 
 	// -- STRINGIFY --
@@ -196,15 +108,6 @@ public final class JSONArray implements Iterable<Object>, JSONValue {
 	@Override
 	public String toString() {
 		return toString(0);
-	}
-
-	// -- MISCELLANEOUS --
-
-	private Object checkIndex(int index) {
-		if (index < 0 || index >= length())
-			throw new JSONException("JSONArray[" + index + "] does not exist");
-
-		return values.get(index);
 	}
 
 }
