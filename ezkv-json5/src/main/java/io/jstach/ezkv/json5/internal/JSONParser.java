@@ -24,7 +24,9 @@
 package io.jstach.ezkv.json5.internal;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
@@ -32,8 +34,7 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.ezkv.json5.internal.JSONOptions.DuplicateBehavior;
-import io.jstach.ezkv.json5.internal.JSONOptions.JSONParserFlag;
+import io.jstach.ezkv.json5.internal.JSONParserOptions.DuplicateBehavior;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
@@ -51,7 +52,7 @@ public class JSONParser {
 
 	private final Reader reader;
 
-	protected final JSONOptions options;
+	protected final JSONParserOptions options;
 
 	/** whether the end of the file has been reached */
 	private boolean eof;
@@ -81,10 +82,10 @@ public class JSONParser {
 	 * @param options the options for parsing
 	 * @since 1.1.0
 	 */
-	public JSONParser(Reader reader, @Nullable JSONOptions options) {
+	public JSONParser(Reader reader, @Nullable JSONParserOptions options) {
 		this.reader = reader.markSupported() ? reader : new BufferedReader(reader);
 
-		this.options = options == null ? JSONOptions.defaultOptions : options;
+		this.options = options == null ? JSONParserOptions.defaultOptions : options;
 
 		eof = false;
 		back = false;
@@ -202,6 +203,10 @@ public class JSONParser {
 		return peek() > 0;
 	}
 
+	public boolean isEOF() {
+		return eof;
+	}
+
 	/**
 	 * Forces the parser to re-read the last character
 	 */
@@ -222,8 +227,8 @@ public class JSONParser {
 
 			reader.reset();
 		}
-		catch (Exception e) {
-			throw syntaxError("Could not peek from source", e);
+		catch (IOException e) {
+			throw new UncheckedIOException("Could not peek from source", e);
 		}
 
 		return c == -1 ? 0 : (char) c;
@@ -240,8 +245,8 @@ public class JSONParser {
 		try {
 			c = reader.read();
 		}
-		catch (Exception e) {
-			throw syntaxError("Could not read from source", e);
+		catch (IOException e) {
+			throw new UncheckedIOException("Could not read from source", e);
 		}
 
 		if (c < 0) {
@@ -333,8 +338,10 @@ public class JSONParser {
 	 */
 	public char nextClean() {
 		while (true) {
-			if (!more())
-				throw syntaxError("Unexpected end of data");
+			if (!more()) {
+				// throw syntaxError("Unexpected end of data");
+				return 0;
+			}
 
 			char n = next();
 
@@ -350,9 +357,9 @@ public class JSONParser {
 					next();
 					nextSingleLineComment();
 				}
-
-				else
+				else {
 					return n;
+				}
 			}
 
 			else if (!isWhitespace(n))
@@ -381,7 +388,7 @@ public class JSONParser {
 	}
 
 	private char[] unicodeEscape(boolean member, boolean part, boolean utf32) {
-		if (utf32 && !options.isFlag(JSONParserFlag.LONG_UNICODE_ESCAPES))
+		if (utf32)
 			throw syntaxError("Long unicode escape sequences are not allowed");
 
 		String where = member ? "key" : "string";
@@ -627,14 +634,33 @@ public class JSONParser {
 		return result.toString();
 	}
 
+	public JSONValue nextValue() {
+		var value = nextValueOrNull();
+		if (value == null) {
+			throw syntaxError("Unexpected end of data");
+		}
+		return value;
+	}
+
+	public @Nullable JSONValue topValueOrNull() {
+		var value = nextValueOrNull();
+		if (value == null) {
+			return null;
+		}
+		char n;
+		if ((n = nextClean()) != 0) {
+			throw syntaxError("Illegal value '" + n + "'");
+		}
+		return value;
+	}
+
 	/**
 	 * Reads a value from the source according to the
 	 * <a href="https://spec.json5.org/#prod-JSON5Value">JSON5 Specification</a>
 	 * @return an member name
 	 */
-	public JSONValue nextValue() {
+	public @Nullable JSONValue nextValueOrNull() {
 		char n = nextClean();
-
 		switch (n) {
 			case '"':
 			case '\'':
@@ -645,6 +671,8 @@ public class JSONParser {
 			case '[':
 				back();
 				return parseArray(this);
+			case 0:
+				return null;
 		}
 
 		back();
@@ -704,7 +732,8 @@ public class JSONParser {
 			}
 		}
 
-		throw new JSONException("Illegal value '" + string + "'");
+		String errorValue = string.isEmpty() ? "" + n : string;
+		throw syntaxError("Illegal value '" + errorValue + "'");
 	}
 
 	private Number parseNumber(char leading, String input) {
@@ -717,85 +746,86 @@ public class JSONParser {
 		char c = 0;
 
 		if (leading == '0') {
-			if (n == 1)
+			if (n == 1) {
 				return intValue;
+			}
 
 			/************
 			 * PREFIXES *
 			 ************/
 			switch (c = input.charAt(1)) {
-			case 'b', 'B':
-				throw syntaxError("Binary literals are not allowed");
+				case 'b', 'B':
+					throw syntaxError("Binary literals are not allowed");
 
-//				/**********
-//				 * BINARY *
-//				 **********/
-//				case 'b':
-//				case 'B':
-//					if (!options.allowBinaryLiterals())
-//						throw syntaxError("Binary literals are not allowed");
-//
-//					off = 2;
-//
-//					while (off < n) {
-//						c = input.charAt(off++);
-//
-//						if (checkDigitSeparator(c)) {
-//							if (off == 3 || off >= n || !isbin(input.charAt(off)))
-//								throw syntaxError("Illegal position for digit separator");
-//
-//							continue;
-//						}
-//
-//						if (!isbin(c))
-//							throw syntaxError("Expected binary digit for literal");
-//
-//						intValue = intValue.shiftLeft(1);
-//
-//						if (c == '1')
-//							intValue = intValue.setBit(0);
-//					}
-//
-//					if (off == 2)
-//						throw syntaxError("Expected binary digit after '0b'");
-//
-//					return intValue;
+				// /**********
+				// * BINARY *
+				// **********/
+				// case 'b':
+				// case 'B':
+				// if (!options.allowBinaryLiterals())
+				// throw syntaxError("Binary literals are not allowed");
+				//
+				// off = 2;
+				//
+				// while (off < n) {
+				// c = input.charAt(off++);
+				//
+				// if (checkDigitSeparator(c)) {
+				// if (off == 3 || off >= n || !isbin(input.charAt(off)))
+				// throw syntaxError("Illegal position for digit separator");
+				//
+				// continue;
+				// }
+				//
+				// if (!isbin(c))
+				// throw syntaxError("Expected binary digit for literal");
+				//
+				// intValue = intValue.shiftLeft(1);
+				//
+				// if (c == '1')
+				// intValue = intValue.setBit(0);
+				// }
+				//
+				// if (off == 2)
+				// throw syntaxError("Expected binary digit after '0b'");
+				//
+				// return intValue;
 				case 'o', 'O':
 					throw syntaxError("Octal literals are not allowed");
 
-//				/*********
-//				 * OCTAL *
-//				 *********/
-//				case 'o':
-//				case 'O':
-//					if (!options.allowOctalLiterals())
-//						throw syntaxError("Octal literals are not allowed");
-//
-//					off = 2;
-//
-//					while (off < n) {
-//						c = input.charAt(off++);
-//
-//						if (checkDigitSeparator(c)) {
-//							if (off == 3 || off >= n || !isoct(input.charAt(off)))
-//								throw syntaxError("Illegal position for digit separator");
-//
-//							continue;
-//						}
-//
-//						if (!isoct(c))
-//							throw syntaxError("Expected octal digit for literal");
-//
-//						intValue = intValue.shiftLeft(3);
-//
-//						if (c != '0')
-//							intValue = intValue.or(BigInteger.valueOf(c - '0'));
-//					}
-//
-//					if (off == 2)
-//						throw syntaxError("Expected octal digit after '0o'");
-//
-//					return intValue;
+				// /*********
+				// * OCTAL *
+				// *********/
+				// case 'o':
+				// case 'O':
+				// if (!options.allowOctalLiterals())
+				// throw syntaxError("Octal literals are not allowed");
+				//
+				// off = 2;
+				//
+				// while (off < n) {
+				// c = input.charAt(off++);
+				//
+				// if (checkDigitSeparator(c)) {
+				// if (off == 3 || off >= n || !isoct(input.charAt(off)))
+				// throw syntaxError("Illegal position for digit separator");
+				//
+				// continue;
+				// }
+				//
+				// if (!isoct(c))
+				// throw syntaxError("Expected octal digit for literal");
+				//
+				// intValue = intValue.shiftLeft(3);
+				//
+				// if (c != '0')
+				// intValue = intValue.or(BigInteger.valueOf(c - '0'));
+				// }
+				//
+				// if (off == 2)
+				// throw syntaxError("Expected octal digit after '0o'");
+				//
+				// return intValue;
 
 				/***************
 				 * HEXADECIMAL *
@@ -815,11 +845,11 @@ public class JSONParser {
 						}
 
 						if (c == '.' || c == 'p' || c == 'P') {
-							if (!options.isFlag(JSONParserFlag.HEX_FLOATING_LITERALS))
-								throw syntaxError("Hexadecimal floating-point literals are not allowed");
+							// if (!options.isFlag(JSONParserFlag.HEX_FLOATING_LITERALS))
+							throw syntaxError("Hexadecimal floating-point literals are not allowed");
 
-							floating = true;
-							break;
+							// floating = true;
+							// break;
 						}
 
 						if (!ishex(c))
@@ -873,11 +903,11 @@ public class JSONParser {
 			}
 
 			if (off >= n) {
-//				if (options.allowJavaDigitSeparators())
-//					input = input.replace("_", "");
-//
-//				if (options.allowCDigitSeparators())
-//					input = input.replace("'", "");
+				// if (options.allowJavaDigitSeparators())
+				// input = input.replace("_", "");
+				//
+				// if (options.allowCDigitSeparators())
+				// input = input.replace("'", "");
 
 				return new BigInteger(input);
 			}
@@ -933,8 +963,9 @@ public class JSONParser {
 				++numFracDigits;
 			}
 
-			if (off >= n && !hex)
+			if (off >= n && !hex) {
 				return new BigDecimal(num.toString());
+			}
 		}
 
 		/************
@@ -985,6 +1016,8 @@ public class JSONParser {
 			return new BigDecimal(num.toString());
 		}
 
+		// TODO remove below as we do not support hexadecimal floating point
+
 		/******************************
 		 * HEXADECIMAL FLOATING-POINT *
 		 ******************************/
@@ -1016,17 +1049,17 @@ public class JSONParser {
 
 	private boolean checkDigitSeparator(char c) {
 		if (c == '_') {
-			//if (!options.allowJavaDigitSeparators())
-				throw syntaxError("Java-style digit separators are not allowed");
+			// if (!options.allowJavaDigitSeparators())
+			throw syntaxError("Java-style digit separators are not allowed");
 
-			//return true;
+			// return true;
 		}
 
 		if (c == '\'') {
-			//if (!options.allowCDigitSeparators())
-				throw syntaxError("C-style digit separators are not allowed");
+			// if (!options.allowCDigitSeparators())
+			throw syntaxError("C-style digit separators are not allowed");
 
-			//return true;
+			// return true;
 		}
 
 		return false;
@@ -1069,13 +1102,13 @@ public class JSONParser {
 		return -1;
 	}
 
-//	private static boolean isbin(char c) {
-//		return c == '0' || c == '1';
-//	}
-//
-//	private static boolean isoct(char c) {
-//		return c >= '0' && c <= '7';
-//	}
+	// private static boolean isbin(char c) {
+	// return c == '0' || c == '1';
+	// }
+	//
+	// private static boolean isoct(char c) {
+	// return c >= '0' && c <= '7';
+	// }
 
 	private static boolean ishex(char c) {
 		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');

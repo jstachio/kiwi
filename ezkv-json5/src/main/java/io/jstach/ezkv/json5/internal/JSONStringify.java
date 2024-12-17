@@ -41,8 +41,9 @@ import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
  */
 public class JSONStringify {
 
-	record StringifyOptions(boolean stringifyAscii, boolean quoteSingle) {}
-	
+	record StringifyOptions(boolean stringifyAscii, boolean quoteSingle) {
+	}
+
 	/**
 	 * Converts a JSONObject into its string representation. The indentation factor
 	 * enables pretty-printing and defines how many spaces (' ') should be placed before
@@ -119,7 +120,7 @@ public class JSONStringify {
 	 * <p>
 	 * {@code indentFactor = 0}: <pre>
 	 * {"key0":"value0","key1":{"nested":123},"key2":false}
-	 * </pre> This uses the {@link JSONOptions#getDefaultOptions() default options}
+	 * </pre> This uses the {@link JSONParserOptions#getDefaultOptions() default options}
 	 * @param object the JSONObject
 	 * @param indentFactor the indentation factor
 	 * @return the string representation
@@ -146,7 +147,7 @@ public class JSONStringify {
 	 * <p>
 	 * {@code indentFactor = 0}: <pre>
 	 * ["value",{"nested":123},false]
-	 * </pre> This uses the {@link JSONOptions#getDefaultOptions() default options}
+	 * </pre> This uses the {@link JSONParserOptions#getDefaultOptions() default options}
 	 * @param array the JSONArray
 	 * @param indentFactor the indentation factor
 	 * @return the string representation

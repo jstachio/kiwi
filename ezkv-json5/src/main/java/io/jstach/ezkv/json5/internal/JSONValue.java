@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
 public sealed interface JSONValue {
 
 	/**
@@ -45,6 +47,10 @@ public sealed interface JSONValue {
 		 */
 		public JSONValue get(String key) {
 			checkKey(key);
+			return values.get(key);
+		}
+
+		public @Nullable JSONValue valueOrNull(String key) {
 			return values.get(key);
 		}
 

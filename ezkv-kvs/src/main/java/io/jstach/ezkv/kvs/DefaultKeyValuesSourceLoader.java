@@ -2,6 +2,7 @@ package io.jstach.ezkv.kvs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -207,10 +208,16 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 		}
 		var context = DefaultLoaderContext.of(system, variables, resourceParser);
 		try {
-			var kvs = system.loaderFinder()
-				.findLoader(context, resource)
-				.orElseThrow(() -> new IOException("Resource Loader not found. resource: " + describe(node)))
-				.load();
+			KeyValues kvs;
+			try {
+				kvs = system.loaderFinder()
+					.findLoader(context, resource)
+					.orElseThrow(() -> new IOException("Resource Loader not found. resource: " + describe(node)))
+					.load();
+			}
+			catch (UncheckedIOException e) {
+				throw e.getCause();
+			}
 			logger.loaded(resource);
 			return filter(resource, kvs, node);
 		}
@@ -224,7 +231,7 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 			}
 			throw new IOException("Resource not found. resource: " + describe(node), e);
 		}
-		catch (IOException e) {
+		catch (IOException | UncheckedIOException e) {
 			throw new IOException("Resource load fail. resource: " + describe(node), e);
 		}
 
