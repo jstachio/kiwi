@@ -23,10 +23,14 @@
  */
 package io.jstach.ezkv.json5.internal;
 
-import java.time.Instant;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
+
+import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
 
 /**
  * A utility class for serializing {@link JSONObject JSONObjects} and {@link JSONArray
@@ -156,7 +160,7 @@ public class JSONStringify {
 
 		sb.append('{');
 
-		for (Map.Entry<String, Object> entry : object.values.entrySet()) {
+		for (Map.Entry<String, JSONValue> entry : object.values.entrySet()) {
 			if (sb.length() != 1)
 				sb.append(',');
 
@@ -186,7 +190,7 @@ public class JSONStringify {
 
 		sb.append('[');
 
-		for (Object value : array.values) {
+		for (JSONValue value : array.values) {
 			if (sb.length() != 1)
 				sb.append(',');
 
@@ -204,39 +208,30 @@ public class JSONStringify {
 		return sb.toString();
 	}
 
-	private static String toString(Object value, String indent, int indentFactor, JSONOptions options) {
-		if (value == null)
-			return "null";
+	private static String toString(JSONValue value, String indent, int indentFactor, JSONOptions options) {
+		return switch (value) {
+			case JSONObject o -> toString(o, indent, indentFactor, options);
+			case JSONArray o -> toString(o, indent, indentFactor, options);
+			case JSONString s -> s.value();
+			case JSONBool b -> String.valueOf(b.val());
+			case JSONNumber n -> toString(n.value(), options);
+			case JSONNull n -> "null";
+		};
+	}
 
-		if (value instanceof JSONObject)
-			return toString((JSONObject) value, indent, indentFactor, options);
-
-		if (value instanceof JSONArray)
-			return toString((JSONArray) value, indent, indentFactor, options);
-
-		if (value instanceof String)
-			return quote((String) value, options);
-
-		if (value instanceof Instant) {
-			Instant instant = (Instant) value;
-
-			if (options.stringifyUnixInstants())
-				return String.valueOf(instant.getEpochSecond());
-
-			return quote(instant.toString(), options);
-		}
-
-		if (value instanceof Double) {
-			double d = (Double) value;
-
-			if (!options.allowNaN() && Double.isNaN(d))
-				throw new JSONException("Illegal NaN in JSON");
-
-			if (!options.allowInfinity() && Double.isInfinite(d))
-				throw new JSONException("Illegal Infinity in JSON");
-		}
-
-		return String.valueOf(value);
+	private static String toString(Number number, JSONOptions options) {
+		return switch (number) {
+			case Double d -> {
+				if (!options.allowNaN() && Double.isNaN(d)) {
+					throw new JSONException("Illegal NaN in JSON");
+				}
+				if (!options.allowInfinity() && Double.isInfinite(d)) {
+					throw new JSONException("Illegal Infinity in JSON");
+				}
+				yield String.valueOf(d);
+			}
+			default -> String.valueOf(number);
+		};
 	}
 
 	static String quote(String string) {

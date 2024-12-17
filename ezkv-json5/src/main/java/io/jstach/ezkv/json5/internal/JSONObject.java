@@ -38,7 +38,7 @@ import org.jspecify.annotations.Nullable;
  */
 public final class JSONObject implements JSONValue {
 
-	LinkedHashMap<String, Object> values;
+	LinkedHashMap<String, JSONValue> values;
 
 	/**
 	 * Constructs a new JSONObject
@@ -71,11 +71,10 @@ public final class JSONObject implements JSONValue {
 	 * @return the value
 	 * @throws JSONException if the key does not exist
 	 */
-	public Object get(String key) {
+	public JSONValue get(String key) {
 		checkKey(key);
 		return values.get(key);
 	}
-
 
 	private Object checkKey(String key) {
 		if (!values.containsKey(key))

@@ -18,16 +18,28 @@ public sealed interface JSONValue permits JSONObject, JSONArray, JSONValue.JSONS
 
 		FALSE {
 			@Override
-			public Object value() {
+			public Boolean value() {
+				return false;
+			}
+
+			@Override
+			boolean val() {
 				return false;
 			}
 		},
 		TRUE {
 			@Override
-			public Object value() {
+			public Boolean value() {
+				return true;
+			}
+
+			@Override
+			boolean val() {
 				return true;
 			}
 		};
+
+		abstract boolean val();
 
 	}
 
