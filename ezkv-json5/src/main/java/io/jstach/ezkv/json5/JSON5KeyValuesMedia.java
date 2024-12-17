@@ -10,16 +10,16 @@ import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.ezkv.json5.internal.JSONArray;
-import io.jstach.ezkv.json5.internal.JSONObject;
 import io.jstach.ezkv.json5.internal.JSONOptions;
 import io.jstach.ezkv.json5.internal.JSONOptions.DuplicateBehavior;
+import io.jstach.ezkv.json5.internal.JSONParser;
+import io.jstach.ezkv.json5.internal.JSONValue;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONObject;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
-import io.jstach.ezkv.json5.internal.JSONParser;
-import io.jstach.ezkv.json5.internal.JSONValue;
 import io.jstach.ezkv.kvs.KeyValuesMedia;
 import io.jstach.ezkv.kvs.KeyValuesResource;
 import io.jstach.ezkv.kvs.Variables;
@@ -275,7 +275,7 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 				case JSONObject o -> flattenJsonObject(o, newKey, consumer);
 				case JSONArray a -> flattenJsonArray(a, newKey, consumer);
 				case JSONString s -> consumer.accept(newKey, s.value());
-				case JSONBool b -> consumer.accept(newKey, String.valueOf(b.value()));
+				case JSONBool b -> consumer.accept(newKey, String.valueOf(b.val()));
 				case JSONNumber n -> consumer.accept(newKey, String.valueOf(n.value()));
 				case JSONNull n -> {
 				}
