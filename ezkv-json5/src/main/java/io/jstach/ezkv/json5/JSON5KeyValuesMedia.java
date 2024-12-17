@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import io.jstach.ezkv.json5.internal.JSONArray;
 import io.jstach.ezkv.json5.internal.JSONObject;
 import io.jstach.ezkv.json5.internal.JSONOptions;
+import io.jstach.ezkv.json5.internal.JSONOptions.DuplicateBehavior;
 import io.jstach.ezkv.json5.internal.JSONParser;
 import io.jstach.ezkv.kvs.KeyValuesMedia;
 import io.jstach.ezkv.kvs.KeyValuesResource;
@@ -129,7 +130,7 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 		if (separator == null || separator.isBlank()) {
 			separator = DEFAULT_SEPARATOR;
 		}
-		return new JSON5KeyValuesParser(new JSONOptions.Builder().build(), arrayKeyOption, separator);
+		return new JSON5KeyValuesParser(JSON5KeyValuesParser.defaultOptions, arrayKeyOption, separator);
 	}
 
 	@Override
@@ -193,8 +194,12 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 		private final String separator;
 
-		static final JSON5KeyValuesParser parser = new JSON5KeyValuesParser(new JSONOptions.Builder().build(),
-				ArrayKeyOption.defaults(), DEFAULT_SEPARATOR);
+		static final JSONOptions defaultOptions = new JSONOptions.Builder()
+			.duplicateBehaviour(DuplicateBehavior.DUPLICATE)
+			.build();
+
+		static final JSON5KeyValuesParser parser = new JSON5KeyValuesParser(defaultOptions, ArrayKeyOption.defaults(),
+				DEFAULT_SEPARATOR);
 
 		public JSON5KeyValuesParser(JSONOptions options, ArrayKeyOption arrayKeyOption, String separator) {
 			super();
