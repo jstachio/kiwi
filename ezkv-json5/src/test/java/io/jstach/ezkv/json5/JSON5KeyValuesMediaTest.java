@@ -1,6 +1,7 @@
 package io.jstach.ezkv.json5;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.junitpioneer.jupiter.cartesian.CartesianTest;
 import org.junitpioneer.jupiter.cartesian.CartesianTest.Enum;
 
 import io.jstach.ezkv.json5.JSON5KeyValuesMedia.ArrayKeyOption;
+import io.jstach.ezkv.json5.internal.JSONException;
 import io.jstach.ezkv.kvs.KeyValues;
 import io.jstach.ezkv.kvs.KeyValuesMedia;
 import io.jstach.ezkv.kvs.Variables;
@@ -117,7 +119,7 @@ class JSON5KeyValuesMediaTest {
 				"b" : [3, 4],
 				"b" : [5, 6],
 				"d" : true,
-				},
+				}
 				""", //
 				"""
 						a=1
@@ -144,7 +146,7 @@ class JSON5KeyValuesMediaTest {
 						b[2][0]=5
 						b[2][1]=6
 						d=true
-						""")
+						"""),
 
 		;
 
@@ -161,7 +163,7 @@ class JSON5KeyValuesMediaTest {
 		}
 
 	}
-	
+
 	@CartesianTest
 	void testNumber(@Enum JSON5Number test) {
 		String input = test.json();
@@ -171,35 +173,36 @@ class JSON5KeyValuesMediaTest {
 		String actual = test.value(kvs);
 		assertEquals(expected, actual);
 	}
-	
+
 	enum JSON5Number {
-		INTEGER("123", "123"),
-		WITH_FRACTION_PART("123.456", "123.456"),
-		ONLY_FRACTION_PART(".456", "0.456"),
-		WITH_EXPONENT("123e-456", "1.23E+458"),
-		POSITIVE_HEX("0xdecaf", "912559"),
-		NEGATIVE_HEX("-0xC0FFEE", "-12648430"),
-		POSITIVE_INFINITY("Infinity", "Infinity"),
-		NEGATIVE_INFINITY("-Infinity", "-Infinity"),
+
+		ZERO("0", "0"), INTEGER("123", "123"), WITH_FRACTION_PART("123.456", "123.456"),
+		ONLY_FRACTION_PART(".456", "0.456"), WITH_EXPONENT("123e-456", "1.23E+458"), POSITIVE_HEX("0xdecaf", "912559"),
+		NEGATIVE_HEX("-0xC0FFEE", "-12648430"), POSITIVE_INFINITY("Infinity", "Infinity"),
+		NEGATIVE_INFINITY("-Infinity", "-Infinity"), NAN("NaN", "NaN"),
 
 		;
 
 		private final String number;
+
 		private final String expected;
-		private JSON5Number(
-				String number,
-				String expected) {
+
+		private JSON5Number(String number, String expected) {
 			this.number = number;
 			this.expected = expected;
 		}
+
 		String json() {
 			return "{ a :" + number + "}";
 		}
-		@Nullable String value(KeyValues kvs) {
+
+		@Nullable
+		String value(KeyValues kvs) {
 			return kvs.toMap().get("a");
 		}
+
 	}
-	
+
 	@CartesianTest
 	void testLiteral(@Enum JSON5Literal test) {
 		String input = test.json();
@@ -209,28 +212,102 @@ class JSON5KeyValuesMediaTest {
 		String actual = test.value(kvs);
 		assertEquals(expected, actual);
 	}
-	
+
 	enum JSON5Literal {
-		FALSE("false", "false"),
-		TRUE("true", "true"),
-		NULL("null", null)
-		;
+
+		FALSE("false", "false"), TRUE("true", "true"), NULL("null", null);
+
 		private final String literal;
+
 		private final @Nullable String expected;
-		private JSON5Literal(
-				String literal,
-				String expected) {
+
+		private JSON5Literal(String literal, String expected) {
 			this.literal = literal;
 			this.expected = expected;
 		}
-		
+
 		String json() {
 			return "{ a :" + literal + "}";
 		}
-		@Nullable String value(KeyValues kvs) {
+
+		@Nullable
+		String value(KeyValues kvs) {
 			return kvs.toMap().get("a");
 		}
-		
+
 	}
-	
+
+	@CartesianTest
+	void testEscape(@Enum StringEscapes test) {
+		String input = test.json();
+		var parser = new JSON5KeyValuesMedia().parser();
+		var kvs = parser.parse(input);
+		String expected = test.expected;
+		String actual = test.value(kvs);
+		assertEquals(expected, actual);
+	}
+
+	enum StringEscapes {
+
+		APOSTROPHE("\\'", "'"), Quotation_MARK("\\\"", "\""), Reverse_solidus("\\\\", "\\"), Backspace("\\b", "\b"),
+		Form_feed("\\f", "\f"), Line_feed("\\n", "\n"), Carriage_return("\\r", "\r"), Horizontal_tab("\\t", "\t"),
+		Vertical_tab("\\v", "\u000B"), Null("\\0", "\u0000"), Example_1("\\x5C", "\\"),
+		Example_2("\\uD83C\\uDFBC", "\uD83C\uDFBC");
+
+		private final String literal;
+
+		private final String expected;
+
+		private StringEscapes(String literal, String expected) {
+			this.literal = literal.trim();
+			this.expected = expected;
+		}
+
+		String json() {
+			return "{ a :\"" + literal + "\"}";
+		}
+
+		@Nullable
+		String value(KeyValues kvs) {
+			return kvs.toMap().get("a");
+		}
+
+	}
+
+	@CartesianTest
+	void testBadJson(@Enum BadJSON test) {
+		String input = test.input;
+		var parser = new JSON5KeyValuesMedia().parser();
+
+		var e = assertThrows(JSONException.class, () -> {
+			parser.parse(input);
+		});
+		assertEquals(test.message, e.getMessage());
+	}
+
+	enum BadJSON {
+
+		JUST_CLOSE_BRACE("}", "Illegal value '}' at index 0 [character 1 in line 1]"),
+		JUST_CLOSE_BRACKET("]", "Illegal value ']' at index 0 [character 1 in line 1]"),
+		JUST_OPEN_BRACE("{", "A JSONObject must end with '}' at index 0 [character 1 in line 1]"),
+		JUST_OPEN_BRACKET("[", "A JSONArray must end with ']' at index 0 [character 1 in line 1]"),
+		MISSING_MEMBER_NAME("{ : 'blah'}", "Empty key at index 2 [character 3 in line 1]"),
+		BAD_ARRAY_DELIM("['a' b]",
+				"Expected ',' or ']' after value, got 'b' instead at index 5 [character 6 in line 1]"),
+		BAD_CLOSE_ARRAY("[]]", "Illegal value ']' at index 2 [character 3 in line 1]"),
+		BAD_CLOSE_OBJECT("{}}", "Illegal value '}' at index 2 [character 3 in line 1]"),
+
+		;
+
+		private final String input;
+
+		private final String message;
+
+		private BadJSON(String input, String message) {
+			this.input = input;
+			this.message = message;
+		}
+
+	}
+
 }

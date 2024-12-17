@@ -10,8 +10,9 @@ import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
 
-import io.jstach.ezkv.json5.internal.JSONOptions;
-import io.jstach.ezkv.json5.internal.JSONOptions.DuplicateBehavior;
+import io.jstach.ezkv.json5.internal.JSONParserOptions;
+import io.jstach.ezkv.json5.internal.JSONParserOptions.DuplicateBehavior;
+import io.jstach.ezkv.json5.internal.JSONException;
 import io.jstach.ezkv.json5.internal.JSONParser;
 import io.jstach.ezkv.json5.internal.JSONValue;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
@@ -193,20 +194,20 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 	static class JSON5KeyValuesParser implements Parser {
 
-		private final JSONOptions options;
+		private final JSONParserOptions options;
 
 		private final ArrayKeyOption arrayKeyOption;
 
 		private final String separator;
 
-		static final JSONOptions defaultOptions = new JSONOptions.Builder()
+		static final JSONParserOptions defaultOptions = new JSONParserOptions.Builder()
 			.duplicateBehaviour(DuplicateBehavior.DUPLICATE)
 			.build();
 
 		static final JSON5KeyValuesParser parser = new JSON5KeyValuesParser(defaultOptions, ArrayKeyOption.defaults(),
 				DEFAULT_SEPARATOR);
 
-		public JSON5KeyValuesParser(JSONOptions options, ArrayKeyOption arrayKeyOption, String separator) {
+		public JSON5KeyValuesParser(JSONParserOptions options, ArrayKeyOption arrayKeyOption, String separator) {
 			super();
 			this.options = options;
 			this.arrayKeyOption = Objects.requireNonNull(arrayKeyOption);
@@ -227,8 +228,7 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 		}
 
 		private void parse(JSONParser parser, BiConsumer<String, String> consumer) {
-			var json = parser.nextValue();
-
+			JSONValue json = parser.topValueOrNull();
 			switch (json) {
 				case JSONObject o -> {
 					flattenJsonObject(o, "", consumer);
@@ -236,10 +236,13 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 				case JSONArray a -> {
 					flattenJsonArray(a, "", consumer);
 				}
+				case null -> {
+				}
 				default -> {
-					throw new IllegalStateException();
+					// We ignore top level literals
 				}
 			}
+
 		}
 
 		private void flattenJsonObject(JSONObject jsonObject, String prefix, BiConsumer<String, String> consumer) {

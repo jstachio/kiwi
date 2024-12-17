@@ -2,6 +2,7 @@ package io.jstach.ezkv.kvs;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
@@ -27,11 +28,17 @@ public interface KeyValuesLoader {
 	 * Loads key-values from configured sources.
 	 * @return a {@link KeyValues} instance containing the loaded key-value pairs
 	 * @throws IOException if an I/O error occurs during loading
-	 * @throws FileNotFoundException if a specified resource is not found
+	 * @throws FileNotFoundException if a specified resource is not found (old io)
+	 * @throws NoSuchFileException if a specified resource is not found (nio)
 	 * @throws KeyValuesException if an error occurs while processing keys such as
 	 * interpolation or invalid resource keys.
+	 * @throws UncheckedIOException if an IO error happens that had to be wrapped. Some
+	 * loaders may throw an unchecked IO because of the difficulty of checked exceptions.
+	 * The KeyValues system will unwrap the exception and check if it is one of the
+	 * previous missing resource exceptions.
 	 */
-	public KeyValues load() throws IOException, FileNotFoundException, KeyValuesException;
+	public KeyValues load()
+			throws IOException, FileNotFoundException, NoSuchFileException, KeyValuesException, UncheckedIOException;
 
 	/**
 	 * A builder class for constructing instances of {@link KeyValuesLoader}. The builder
