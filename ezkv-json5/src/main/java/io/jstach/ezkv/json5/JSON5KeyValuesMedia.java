@@ -14,7 +14,12 @@ import io.jstach.ezkv.json5.internal.JSONArray;
 import io.jstach.ezkv.json5.internal.JSONObject;
 import io.jstach.ezkv.json5.internal.JSONOptions;
 import io.jstach.ezkv.json5.internal.JSONOptions.DuplicateBehavior;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONNumber;
+import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
 import io.jstach.ezkv.json5.internal.JSONParser;
+import io.jstach.ezkv.json5.internal.JSONValue;
 import io.jstach.ezkv.kvs.KeyValuesMedia;
 import io.jstach.ezkv.kvs.KeyValuesResource;
 import io.jstach.ezkv.kvs.Variables;
@@ -239,7 +244,7 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 		private void flattenJsonObject(JSONObject jsonObject, String prefix, BiConsumer<String, String> consumer) {
 			for (String key : jsonObject.keySet()) {
-				Object value = jsonObject.get(key);
+				JSONValue value = jsonObject.get(key);
 				String newKey = createObjectKey(prefix, key);
 				dispatch(newKey, value, consumer);
 			}
@@ -247,7 +252,7 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 		private void flattenJsonArray(JSONArray jsonArray, String prefix, BiConsumer<String, String> consumer) {
 			for (int i = 0; i < jsonArray.length(); i++) {
-				Object value = jsonArray.get(i);
+				JSONValue value = jsonArray.get(i);
 				String newKey = createArrayKey(prefix, i);
 				dispatch(newKey, value, consumer);
 			}
@@ -265,14 +270,17 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 			};
 		}
 
-		private void dispatch(String newKey, @Nullable Object value, BiConsumer<String, String> consumer) {
+		private void dispatch(String newKey, JSONValue value, BiConsumer<String, String> consumer) {
 			switch (value) {
 				case JSONObject o -> flattenJsonObject(o, newKey, consumer);
 				case JSONArray a -> flattenJsonArray(a, newKey, consumer);
-				case Object o -> consumer.accept(newKey, String.valueOf(o));
-				case null -> {
+				case JSONString s -> consumer.accept(newKey, s.value());
+				case JSONBool b -> consumer.accept(newKey, String.valueOf(b.value()));
+				case JSONNumber n -> consumer.accept(newKey, String.valueOf(n.value()));
+				case JSONNull n -> {
 				}
 			}
+			;
 		}
 
 	}

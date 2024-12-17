@@ -37,7 +37,7 @@ import org.jspecify.annotations.Nullable;
  */
 public final class JSONArray implements JSONValue {
 
-	List<Object> values;
+	List<JSONValue> values;
 
 	/**
 	 * Constructs a new JSONArray
@@ -67,7 +67,7 @@ public final class JSONArray implements JSONValue {
 	 * @return the value
 	 * @throws JSONException if the index does not exist
 	 */
-	public Object get(int index) {
+	public JSONValue get(int index) {
 		return values.get(index);
 	}
 

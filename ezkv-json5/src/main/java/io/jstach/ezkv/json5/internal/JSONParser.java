@@ -134,16 +134,16 @@ public class JSONParser {
 			if (c != ':')
 				throw parser.syntaxError("Expected ':' after a key, got '" + c + "' instead");
 
-			Object value = parser.nextValue().value();
+			var value = parser.nextValue();
 
 			if (duplicate && duplicateBehavior == DuplicateBehavior.DUPLICATE) {
 				JSONArray array = duplicates.get(key);
 				if (array == null) {
 					array = new JSONArray();
-					array.values.add(sanitize(obj.get(key)));
+					array.values.add(obj.get(key));
 					duplicates.put(key, array);
 				}
-				array.values.add(sanitize(value));
+				array.values.add(value);
 				value = array;
 			}
 
@@ -181,7 +181,7 @@ public class JSONParser {
 
 			JSONValue value = parser.nextValue();
 
-			array.values.add(value.value());
+			array.values.add(value);
 
 			c = parser.nextClean();
 
