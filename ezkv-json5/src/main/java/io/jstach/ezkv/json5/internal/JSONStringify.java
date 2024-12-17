@@ -25,8 +25,6 @@ package io.jstach.ezkv.json5.internal;
 
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
-
 import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
@@ -43,6 +41,8 @@ import io.jstach.ezkv.json5.internal.JSONValue.JSONString;
  */
 public class JSONStringify {
 
+	record StringifyOptions(boolean stringifyAscii, boolean quoteSingle) {}
+	
 	/**
 	 * Converts a JSONObject into its string representation. The indentation factor
 	 * enables pretty-printing and defines how many spaces (' ') should be placed before
@@ -68,8 +68,8 @@ public class JSONStringify {
 	 * @return the string representation
 	 * @since 1.1.0
 	 */
-	public static String toString(JSONObject object, int indentFactor, @Nullable JSONOptions options) {
-		return toString(object, "", Math.max(0, indentFactor), options == null ? JSONOptions.defaultOptions : options);
+	public static String toString(JSONObject object, int indentFactor, StringifyOptions options) {
+		return toString(object, "", Math.max(0, indentFactor), options);
 	}
 
 	/**
@@ -97,8 +97,8 @@ public class JSONStringify {
 	 * @return the string representation
 	 * @since 1.1.0
 	 */
-	public static String toString(JSONArray array, int indentFactor, @Nullable JSONOptions options) {
-		return toString(array, "", Math.max(0, indentFactor), options == null ? JSONOptions.defaultOptions : options);
+	public static String toString(JSONArray array, int indentFactor, StringifyOptions options) {
+		return toString(array, "", Math.max(0, indentFactor), options);
 	}
 
 	/**
@@ -155,7 +155,7 @@ public class JSONStringify {
 		return toString(array, indentFactor, null);
 	}
 
-	private static String toString(JSONObject object, String indent, int indentFactor, JSONOptions options) {
+	private static String toString(JSONObject object, String indent, int indentFactor, StringifyOptions options) {
 		StringBuilder sb = new StringBuilder();
 
 		String childIndent = indent + " ".repeat(indentFactor);
@@ -185,7 +185,7 @@ public class JSONStringify {
 		return sb.toString();
 	}
 
-	private static String toString(JSONArray array, String indent, int indentFactor, JSONOptions options) {
+	private static String toString(JSONArray array, String indent, int indentFactor, StringifyOptions options) {
 		StringBuilder sb = new StringBuilder();
 
 		String childIndent = indent + " ".repeat(indentFactor);
@@ -210,7 +210,7 @@ public class JSONStringify {
 		return sb.toString();
 	}
 
-	private static String toString(JSONValue value, String indent, int indentFactor, JSONOptions options) {
+	private static String toString(JSONValue value, String indent, int indentFactor, StringifyOptions options) {
 		return switch (value) {
 			case JSONObject o -> toString(o, indent, indentFactor, options);
 			case JSONArray o -> toString(o, indent, indentFactor, options);
@@ -221,15 +221,9 @@ public class JSONStringify {
 		};
 	}
 
-	private static String toString(Number number, JSONOptions options) {
+	private static String toString(Number number, StringifyOptions options) {
 		return switch (number) {
 			case Double d -> {
-				if (!options.allowNaN() && Double.isNaN(d)) {
-					throw new JSONException("Illegal NaN in JSON");
-				}
-				if (!options.allowInfinity() && Double.isInfinite(d)) {
-					throw new JSONException("Illegal Infinity in JSON");
-				}
 				yield String.valueOf(d);
 			}
 			default -> String.valueOf(number);
@@ -240,8 +234,7 @@ public class JSONStringify {
 		return quote(string, null);
 	}
 
-	private static String quote(String string, @Nullable JSONOptions options) {
-		options = options == null ? JSONOptions.defaultOptions : options;
+	private static String quote(String string, StringifyOptions options) {
 
 		if (string == null || string.isEmpty())
 			return options.quoteSingle() ? "''" : "\"\"";

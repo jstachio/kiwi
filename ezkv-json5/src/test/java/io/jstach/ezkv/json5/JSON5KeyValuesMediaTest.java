@@ -2,11 +2,13 @@ package io.jstach.ezkv.json5;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
 import org.junitpioneer.jupiter.cartesian.CartesianTest.Enum;
 
 import io.jstach.ezkv.json5.JSON5KeyValuesMedia.ArrayKeyOption;
+import io.jstach.ezkv.kvs.KeyValues;
 import io.jstach.ezkv.kvs.KeyValuesMedia;
 import io.jstach.ezkv.kvs.Variables;
 
@@ -102,6 +104,7 @@ class JSON5KeyValuesMediaTest {
 						"""),
 		DUPLICATE("""
 				{
+				// Some comment
 				"a" : 1,
 				"a" :2,
 				"c" : {
@@ -158,5 +161,76 @@ class JSON5KeyValuesMediaTest {
 		}
 
 	}
+	
+	@CartesianTest
+	void testNumber(@Enum JSON5Number test) {
+		String input = test.json();
+		var parser = new JSON5KeyValuesMedia().parser();
+		var kvs = parser.parse(input);
+		String expected = test.expected;
+		String actual = test.value(kvs);
+		assertEquals(expected, actual);
+	}
+	
+	enum JSON5Number {
+		INTEGER("123", "123"),
+		WITH_FRACTION_PART("123.456", "123.456"),
+		ONLY_FRACTION_PART(".456", "0.456"),
+		WITH_EXPONENT("123e-456", "1.23E+458"),
+		POSITIVE_HEX("0xdecaf", "912559"),
+		NEGATIVE_HEX("-0xC0FFEE", "-12648430"),
+		POSITIVE_INFINITY("Infinity", "Infinity"),
+		NEGATIVE_INFINITY("-Infinity", "-Infinity"),
 
+		;
+
+		private final String number;
+		private final String expected;
+		private JSON5Number(
+				String number,
+				String expected) {
+			this.number = number;
+			this.expected = expected;
+		}
+		String json() {
+			return "{ a :" + number + "}";
+		}
+		@Nullable String value(KeyValues kvs) {
+			return kvs.toMap().get("a");
+		}
+	}
+	
+	@CartesianTest
+	void testLiteral(@Enum JSON5Literal test) {
+		String input = test.json();
+		var parser = new JSON5KeyValuesMedia().parser();
+		var kvs = parser.parse(input);
+		String expected = test.expected;
+		String actual = test.value(kvs);
+		assertEquals(expected, actual);
+	}
+	
+	enum JSON5Literal {
+		FALSE("false", "false"),
+		TRUE("true", "true"),
+		NULL("null", null)
+		;
+		private final String literal;
+		private final @Nullable String expected;
+		private JSON5Literal(
+				String literal,
+				String expected) {
+			this.literal = literal;
+			this.expected = expected;
+		}
+		
+		String json() {
+			return "{ a :" + literal + "}";
+		}
+		@Nullable String value(KeyValues kvs) {
+			return kvs.toMap().get("a");
+		}
+		
+	}
+	
 }

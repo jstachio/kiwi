@@ -33,6 +33,7 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.ezkv.json5.internal.JSONOptions.DuplicateBehavior;
+import io.jstach.ezkv.json5.internal.JSONOptions.JSONParserFlag;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONArray;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONBool;
 import io.jstach.ezkv.json5.internal.JSONValue.JSONNull;
@@ -380,7 +381,7 @@ public class JSONParser {
 	}
 
 	private char[] unicodeEscape(boolean member, boolean part, boolean utf32) {
-		if (utf32 && !options.allowLongUnicodeEscapes())
+		if (utf32 && !options.isFlag(JSONParserFlag.LONG_UNICODE_ESCAPES))
 			throw syntaxError("Long unicode escape sequences are not allowed");
 
 		String where = member ? "key" : "string";
@@ -410,9 +411,6 @@ public class JSONParser {
 	}
 
 	private void checkSurrogate(char hi, char lo) {
-		if (options.allowInvalidSurrogates())
-			return;
-
 		if ((Character.isHighSurrogate(hi) && !Character.isSurrogate(lo))
 				|| (!Character.isSurrogate(hi) && Character.isLowSurrogate(lo)))
 			throw syntaxError(String.format("Invalid surrogate pair: U+%04X and U+%04X", (int) hi, (int) lo));
@@ -677,16 +675,10 @@ public class JSONParser {
 			}
 
 			if (rest.equals("Infinity")) {
-				if (!options.allowInfinity())
-					throw syntaxError("Infinity is not allowed");
-
 				return new JSONNumber(Math.copySign(Double.POSITIVE_INFINITY, sign));
 			}
 
 			if (rest.equals("NaN")) {
-				if (!options.allowNaN())
-					throw syntaxError("NaN is not allowed");
-
 				return new JSONNumber(Math.copySign(Double.NaN, sign));
 			}
 
@@ -732,79 +724,83 @@ public class JSONParser {
 			 * PREFIXES *
 			 ************/
 			switch (c = input.charAt(1)) {
-				/**********
-				 * BINARY *
-				 **********/
-				case 'b':
-				case 'B':
-					if (!options.allowBinaryLiterals())
-						throw syntaxError("Binary literals are not allowed");
+			case 'b', 'B':
+				throw syntaxError("Binary literals are not allowed");
 
-					off = 2;
+//				/**********
+//				 * BINARY *
+//				 **********/
+//				case 'b':
+//				case 'B':
+//					if (!options.allowBinaryLiterals())
+//						throw syntaxError("Binary literals are not allowed");
+//
+//					off = 2;
+//
+//					while (off < n) {
+//						c = input.charAt(off++);
+//
+//						if (checkDigitSeparator(c)) {
+//							if (off == 3 || off >= n || !isbin(input.charAt(off)))
+//								throw syntaxError("Illegal position for digit separator");
+//
+//							continue;
+//						}
+//
+//						if (!isbin(c))
+//							throw syntaxError("Expected binary digit for literal");
+//
+//						intValue = intValue.shiftLeft(1);
+//
+//						if (c == '1')
+//							intValue = intValue.setBit(0);
+//					}
+//
+//					if (off == 2)
+//						throw syntaxError("Expected binary digit after '0b'");
+//
+//					return intValue;
+				case 'o', 'O':
+					throw syntaxError("Octal literals are not allowed");
 
-					while (off < n) {
-						c = input.charAt(off++);
-
-						if (checkDigitSeparator(c)) {
-							if (off == 3 || off >= n || !isbin(input.charAt(off)))
-								throw syntaxError("Illegal position for digit separator");
-
-							continue;
-						}
-
-						if (!isbin(c))
-							throw syntaxError("Expected binary digit for literal");
-
-						intValue = intValue.shiftLeft(1);
-
-						if (c == '1')
-							intValue = intValue.setBit(0);
-					}
-
-					if (off == 2)
-						throw syntaxError("Expected binary digit after '0b'");
-
-					return intValue;
-
-				/*********
-				 * OCTAL *
-				 *********/
-				case 'o':
-				case 'O':
-					if (!options.allowOctalLiterals())
-						throw syntaxError("Octal literals are not allowed");
-
-					off = 2;
-
-					while (off < n) {
-						c = input.charAt(off++);
-
-						if (checkDigitSeparator(c)) {
-							if (off == 3 || off >= n || !isoct(input.charAt(off)))
-								throw syntaxError("Illegal position for digit separator");
-
-							continue;
-						}
-
-						if (!isoct(c))
-							throw syntaxError("Expected octal digit for literal");
-
-						intValue = intValue.shiftLeft(3);
-
-						if (c != '0')
-							intValue = intValue.or(BigInteger.valueOf(c - '0'));
-					}
-
-					if (off == 2)
-						throw syntaxError("Expected octal digit after '0o'");
-
-					return intValue;
+//				/*********
+//				 * OCTAL *
+//				 *********/
+//				case 'o':
+//				case 'O':
+//					if (!options.allowOctalLiterals())
+//						throw syntaxError("Octal literals are not allowed");
+//
+//					off = 2;
+//
+//					while (off < n) {
+//						c = input.charAt(off++);
+//
+//						if (checkDigitSeparator(c)) {
+//							if (off == 3 || off >= n || !isoct(input.charAt(off)))
+//								throw syntaxError("Illegal position for digit separator");
+//
+//							continue;
+//						}
+//
+//						if (!isoct(c))
+//							throw syntaxError("Expected octal digit for literal");
+//
+//						intValue = intValue.shiftLeft(3);
+//
+//						if (c != '0')
+//							intValue = intValue.or(BigInteger.valueOf(c - '0'));
+//					}
+//
+//					if (off == 2)
+//						throw syntaxError("Expected octal digit after '0o'");
+//
+//					return intValue;
 
 				/***************
 				 * HEXADECIMAL *
 				 ***************/
-				case 'x':
-				case 'X':
+				case 'x', 'X':
 					off = 2;
 					hex = true;
 
@@ -819,7 +815,7 @@ public class JSONParser {
 						}
 
 						if (c == '.' || c == 'p' || c == 'P') {
-							if (!options.allowHexFloatingLiterals())
+							if (!options.isFlag(JSONParserFlag.HEX_FLOATING_LITERALS))
 								throw syntaxError("Hexadecimal floating-point literals are not allowed");
 
 							floating = true;
@@ -877,11 +873,11 @@ public class JSONParser {
 			}
 
 			if (off >= n) {
-				if (options.allowJavaDigitSeparators())
-					input = input.replace("_", "");
-
-				if (options.allowCDigitSeparators())
-					input = input.replace("'", "");
+//				if (options.allowJavaDigitSeparators())
+//					input = input.replace("_", "");
+//
+//				if (options.allowCDigitSeparators())
+//					input = input.replace("'", "");
 
 				return new BigInteger(input);
 			}
@@ -966,24 +962,28 @@ public class JSONParser {
 			c = input.charAt(off++);
 
 			if (checkDigitSeparator(c)) {
-				if (numExpDigits == 0 || off >= n || !isDecimalDigit(input.charAt(off)))
+				if (numExpDigits == 0 || off >= n || !isDecimalDigit(input.charAt(off))) {
 					throw syntaxError("Illegal position for digit separator");
+				}
 
 				continue;
 			}
 
-			if (!isDecimalDigit(c))
+			if (!isDecimalDigit(c)) {
 				throw syntaxError("Expected decimal digit for exponent");
+			}
 
 			num.append(c);
 			++numExpDigits;
 		}
 
-		if (numExpDigits == 0)
+		if (numExpDigits == 0) {
 			throw syntaxError("Expected digit sequence for exponent");
+		}
 
-		if (!hex)
+		if (!hex) {
 			return new BigDecimal(num.toString());
+		}
 
 		/******************************
 		 * HEXADECIMAL FLOATING-POINT *
@@ -1016,17 +1016,17 @@ public class JSONParser {
 
 	private boolean checkDigitSeparator(char c) {
 		if (c == '_') {
-			if (!options.allowJavaDigitSeparators())
+			//if (!options.allowJavaDigitSeparators())
 				throw syntaxError("Java-style digit separators are not allowed");
 
-			return true;
+			//return true;
 		}
 
 		if (c == '\'') {
-			if (!options.allowCDigitSeparators())
+			//if (!options.allowCDigitSeparators())
 				throw syntaxError("C-style digit separators are not allowed");
 
-			return true;
+			//return true;
 		}
 
 		return false;
@@ -1069,13 +1069,13 @@ public class JSONParser {
 		return -1;
 	}
 
-	private static boolean isbin(char c) {
-		return c == '0' || c == '1';
-	}
-
-	private static boolean isoct(char c) {
-		return c >= '0' && c <= '7';
-	}
+//	private static boolean isbin(char c) {
+//		return c == '0' || c == '1';
+//	}
+//
+//	private static boolean isoct(char c) {
+//		return c >= '0' && c <= '7';
+//	}
 
 	private static boolean ishex(char c) {
 		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
