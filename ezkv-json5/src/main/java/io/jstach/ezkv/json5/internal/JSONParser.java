@@ -94,55 +94,6 @@ public class JSONParser {
 		current = 0;
 	}
 
-	/**
-	 * Constructs a new JSONParser from a string
-	 * @param source a string
-	 * @param options the options for parsing
-	 * @since 1.1.0
-	 */
-	public JSONParser(String source, JSONOptions options) {
-		this(new StringReader(source), options);
-	}
-
-	/**
-	 * Constructs a new JSONParser from an InputStream. The stream is not
-	 * {@link InputStream#close() closed}
-	 * @param stream a stream
-	 * @param options the options for parsing
-	 * @since 1.1.0
-	 */
-	public JSONParser(InputStream stream, JSONOptions options) {
-		this(new InputStreamReader(stream), options);
-	}
-
-	/**
-	 * Constructs a new JSONParser from a Reader. The reader is not {@link Reader#close()
-	 * closed}. This uses the {@link JSONOptions#getDefaultOptions() default options}
-	 * @param reader a reader
-	 */
-	public JSONParser(Reader reader) {
-		this(reader, null);
-	}
-
-	/**
-	 * Constructs a new JSONParser from a string. This uses the
-	 * {@link JSONOptions#getDefaultOptions() default options}
-	 * @param source a string
-	 */
-	public JSONParser(String source) {
-		this(source, null);
-	}
-
-	/**
-	 * Constructs a new JSONParser from an InputStream. The stream is not
-	 * {@link InputStream#close() closed}. This uses the
-	 * {@link JSONOptions#getDefaultOptions() default options}
-	 * @param stream a stream
-	 */
-	public JSONParser(InputStream stream) {
-		this(stream, null);
-	}
-
 	private boolean more() {
 		if (back || eof)
 			return back && !eof;
@@ -389,8 +340,9 @@ public class JSONParser {
 				break;
 			}
 
-			if (isLineTerminator(n) && n != 0x2028 && n != 0x2029)
+			if (isLineTerminator(n) && n != 0x2028 && n != 0x2029) {
 				throw syntaxError("Unescaped line terminator in string");
+			}
 
 			if (n == '\\') {
 				n = next();

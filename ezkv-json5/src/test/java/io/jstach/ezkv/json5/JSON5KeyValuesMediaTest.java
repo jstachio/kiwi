@@ -65,35 +65,75 @@ class JSON5KeyValuesMediaTest {
 						"d": "value"
 					}
 				}
-				""", """
-				a.b=1
-				a.b=2.0
-				a.b.c=3
-				a.d=value
-				""", """
-				a.b[0]=1
-				a.b[1]=2.0
-				a.b[2].c=3
-				a.d=value
-				"""), ARRAY("""
+				""", //
+				"""
+						a.b=1
+						a.b=2.0
+						a.b.c=3
+						a.d=value
+						""", //
+				"""
+						a.b[0]=1
+						a.b[1]=2.0
+						a.b[2].c=3
+						a.d=value
+						"""), //
+
+		ARRAY("""
 				[ "a", "b", {
 					c : [1,2.0],
 					d : "value"
 					}
 				]
-				""", """
-				0=a
-				1=b
-				2.c=1
-				2.c=2.0
-				2.d=value
-				""", """
-				0=a
-				1=b
-				2.c[0]=1
-				2.c[1]=2.0
-				2.d=value
-				""")
+				""", //
+				"""
+						0=a
+						1=b
+						2.c=1
+						2.c=2.0
+						2.d=value
+						""", //
+				"""
+						0=a
+						1=b
+						2.c[0]=1
+						2.c[1]=2.0
+						2.d=value
+						"""),
+		DUPLICATE("""
+				{
+				"a" : 1,
+				"a" :2,
+				"b" : [1, 2],
+				"b" : [3, 4],
+				"c" : {
+					last : "false"
+					},
+				"c" : {
+					first : "true"
+					}
+				}
+				""", //
+				"""
+						a=1
+						a=2
+						b=1
+						b=2
+						b=3
+						b=4
+						c.last=false
+						c.first=true
+						""", //
+				"""
+						a[0]=1
+						a[1]=2
+						b[0][0]=1
+						b[0][1]=2
+						b[1][0]=3
+						b[1][1]=4
+						c[0].last=false
+						c[1].first=true
+						""")
 
 		;
 
