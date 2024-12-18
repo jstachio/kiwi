@@ -3,19 +3,51 @@ package io.jstach.ezkv.json5;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
+
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.cartesian.CartesianTest;
-import org.junitpioneer.jupiter.cartesian.CartesianTest.Enum;
 
 import io.jstach.ezkv.json5.JSON5KeyValuesMedia.ArrayKeyOption;
 import io.jstach.ezkv.json5.internal.JSONException;
 import io.jstach.ezkv.kvs.KeyValues;
 import io.jstach.ezkv.kvs.KeyValuesMedia;
+import io.jstach.ezkv.kvs.KeyValuesSystem;
 import io.jstach.ezkv.kvs.Variables;
 
 class JSON5KeyValuesMediaTest {
 
+	@Test 
+	void testFullLoadWithServiceLoader() throws NoSuchFileException, FileNotFoundException, IOException {
+		
+		var kvs = KeyValuesSystem.defaults().loader()
+		.add("classpath:/good.json")
+		.add("classpath:/good.json5")
+		.load();
+		String expected = """
+				KeyValues[
+				message=Hello JSON
+				message=Hello JSON5
+				]
+				""";
+		String actual = kvs.toString();
+		assertEquals(expected, actual);
+	}
+	
+	@Test 
+	void testFailLoad()  {
+		
+		String message = assertThrows(IOException.class, () -> {
+		KeyValuesSystem.defaults().loader()
+		.add("classpath:/bad.json5")
+		.load();
+		}).getMessage();
+		assertEquals("Resource has media errors. resource: uri='classpath:/bad.json5'. Parsing failed for mediaType='application/json5'. Illegal value '}' at index 14 [character 1 in line 3]", message);
+	}
+	
 	@Test
 	void testToStringKvs() {
 		var parser = new JSON5KeyValuesMedia().parser();
@@ -64,7 +96,7 @@ class JSON5KeyValuesMediaTest {
 	}
 
 	@CartesianTest
-	void test(@Enum JSON5Test test, @Enum ArrayKeyOption arrayKeyOption) {
+	void test(@CartesianTest.Enum JSON5Test test, @CartesianTest.Enum ArrayKeyOption arrayKeyOption) {
 		String input = test.input;
 		var vars = Variables.builder();
 		arrayKeyOption.set(vars);
@@ -188,7 +220,7 @@ class JSON5KeyValuesMediaTest {
 	}
 
 	@CartesianTest
-	void testNumber(@Enum JSON5Number test, @Enum JSONRaw raw) {
+	void testNumber(@CartesianTest.Enum JSON5Number test, @CartesianTest.Enum JSONRaw raw) {
 		String input = test.json();
 		var vars = Variables.builder();
 		String rawParam = switch (raw) {
@@ -224,6 +256,7 @@ class JSON5KeyValuesMediaTest {
 		POSITIVE_INFINITY("Infinity", "Infinity"), //
 		NEGATIVE_INFINITY("-Infinity", "-Infinity"), //
 		NAN("NaN", "NaN"),
+		BIG_INTEGER("1000000000000000000000000", "1000000000000000000000000")
 
 		;
 
@@ -255,7 +288,7 @@ class JSON5KeyValuesMediaTest {
 	}
 
 	@CartesianTest
-	void testLiteral(@Enum JSON5Literal test) {
+	void testLiteral(@CartesianTest.Enum JSON5Literal test) {
 		String input = test.json();
 		var parser = new JSON5KeyValuesMedia().parser();
 		var kvs = parser.parse(input);
@@ -266,13 +299,15 @@ class JSON5KeyValuesMediaTest {
 
 	enum JSON5Literal {
 
-		FALSE("false", "false"), TRUE("true", "true"), NULL("null", null);
+		FALSE("false", "false"), // 
+		TRUE("true", "true"), //
+		NULL("null", null);
 
 		private final String literal;
 
 		private final @Nullable String expected;
 
-		private JSON5Literal(String literal, String expected) {
+		private JSON5Literal(String literal, @Nullable String expected) {
 			this.literal = literal;
 			this.expected = expected;
 		}
@@ -289,7 +324,7 @@ class JSON5KeyValuesMediaTest {
 	}
 
 	@CartesianTest
-	void testEscape(@Enum StringEscapes test) {
+	void testEscape(@CartesianTest.Enum StringEscapes test) {
 		String input = test.json();
 		var parser = new JSON5KeyValuesMedia().parser();
 		var kvs = parser.parse(input);
@@ -334,7 +369,7 @@ class JSON5KeyValuesMediaTest {
 	}
 
 	@CartesianTest
-	void testBadJson(@Enum BadJSON test) {
+	void testBadJson(@CartesianTest.Enum BadJSON test) {
 		String input = test.input;
 		var parser = new JSON5KeyValuesMedia().parser();
 

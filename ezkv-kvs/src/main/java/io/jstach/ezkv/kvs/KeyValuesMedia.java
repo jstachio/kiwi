@@ -13,6 +13,7 @@ import java.util.function.BiConsumer;
 
 import org.jspecify.annotations.Nullable;
 
+import io.jstach.ezkv.kvs.KeyValuesMedia.Parser;
 import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesMediaFinder;
 
 /**
@@ -303,4 +304,74 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 	// sb.append(")");
 	// }
 
+}
+class SafeParser implements KeyValuesMedia.Parser {
+
+	private final KeyValuesMedia.Parser delegate;
+	private final String mediaType;
+
+	@Override
+	public void parse(
+			InputStream input,
+			BiConsumer<String, String> consumer)
+			throws IOException {
+		try {
+			delegate.parse(input, consumer);
+		} 
+		catch (KeyValuesException e) {
+			throw e;
+		}
+		catch (RuntimeException e) {
+			String message = "Parsing failed. mediaType=" + mediaType + e.toString();
+			throw new KeyValuesMediaException(message, e, mediaType);
+		}
+		
+	}
+
+	@Override
+	public KeyValues parse(
+			KeyValuesResource source,
+			InputStream is)
+			throws IOException {
+		try {
+			return delegate.parse(source, is);
+		}
+		catch (KeyValuesException e) {
+			throw e;
+		}
+		catch (RuntimeException e) {
+			String message = "Parsing failed for mediaType='" + mediaType + "'. " + e.getMessage();
+			throw new KeyValuesMediaException(message, e, mediaType);
+		}
+	}
+
+	@Override
+	public void parse(
+			String input,
+			BiConsumer<String, String> consumer) {
+		try {
+			delegate.parse(input, consumer);
+		}
+		catch (KeyValuesException e) {
+			throw e;
+		}
+		catch (RuntimeException e) {
+			String message = "Parsing failed. mediaType=" + mediaType + e.toString();
+			throw new KeyValuesMediaException(message, e, mediaType);
+		}
+	}
+
+	@Override
+	public KeyValues parse(
+			String input) {
+		return delegate.parse(input);
+	}
+
+	public SafeParser(
+			Parser delegate, String mediaType) {
+		super();
+		this.delegate = delegate;
+		this.mediaType = mediaType;
+	}
+	
 }

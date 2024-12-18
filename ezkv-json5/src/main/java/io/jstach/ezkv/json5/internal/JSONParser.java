@@ -35,7 +35,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import io.jstach.ezkv.json5.internal.JSONParserOptions.DuplicateBehavior;
@@ -86,10 +88,10 @@ public class JSONParser {
 	 * @param options the options for parsing
 	 * @since 1.1.0
 	 */
-	public JSONParser(Reader reader, @Nullable JSONParserOptions options) {
+	public JSONParser(Reader reader, JSONParserOptions options) {
 		this.reader = reader.markSupported() ? reader : new BufferedReader(reader);
 
-		this.options = options == null ? JSONParserOptions.defaultOptions : options;
+		this.options = Objects.requireNonNull(options);
 
 		eof = false;
 		back = false;
@@ -390,18 +392,38 @@ public class JSONParser {
 
 		return result.toString();
 	}
+	
 
-	private char[] unicodeEscape(boolean member, boolean part, boolean utf32) {
-		if (utf32)
+
+	private char[] unicodeEscape(boolean member, boolean part, char escapeChar) {
+		
+//		String escChar = switch(escapeType) {
+//		case SHORT -> String.valueOf(escapeType.escapeChar);
+//		case LONG -> throw syntaxError("Long unicode escape sequences are not allowed");
+//		};
+//
+//		int numDigits = escapeType.digits;
+		
+		String escChar;
+		int numDigits;
+		switch(escapeChar) {
+		case 'u' -> {
+			escChar = "u";
+			numDigits = 4;
+		}
+		case 'U' -> {
 			throw syntaxError("Long unicode escape sequences are not allowed");
+		}
+		default -> {
+			throw syntaxError("Invalid unicode escape char: " + escapeChar);
+		}
+		}
 
 		String where = member ? "key" : "string";
-		String escChar = utf32 ? "U" : "u";
 
 		String value = "";
 		int codepoint = 0;
 
-		int numDigits = utf32 ? 8 : 4;
 
 		for (int i = 0; i < numDigits; ++i) {
 			char n = next();
@@ -520,7 +542,7 @@ public class JSONParser {
 
 						case 'u': // Unicode escape sequence (16-bit)
 						case 'U': // Unicode escape sequence (32-bit)
-							char[] chars = unicodeEscape(false, false, n == 'U');
+							char[] chars = unicodeEscape(false, false, n);
 
 							if (chars.length == 2) {
 								checkSurrogate(prev, chars[0]);
@@ -535,9 +557,9 @@ public class JSONParser {
 							break;
 
 						default:
-							if (isDecimalDigit(n))
+							if (isDecimalDigit(n)) {
 								throw syntaxError("Illegal escape sequence '\\" + n + "'");
-
+							}
 							break;
 					}
 			}
@@ -609,7 +631,7 @@ public class JSONParser {
 				if (n != 'u' && n != 'U')
 					throw syntaxError("Illegal escape sequence '\\" + n + "' in key");
 
-				char[] chars = unicodeEscape(true, part, n == 'U');
+				char[] chars = unicodeEscape(true, part, n);
 
 				if (chars.length == 2) {
 					checkSurrogate(prev, chars[0]);
@@ -666,8 +688,7 @@ public class JSONParser {
 	public @Nullable JSONValue nextValueOrNull() {
 		char n = nextClean();
 		switch (n) {
-			case '"':
-			case '\'':
+			case '"', '\'':
 				return new JSONString(nextString(n));
 			case '{':
 				back();
@@ -720,18 +741,16 @@ public class JSONParser {
 				if ((leading >= '0' && leading <= '9') || leading == '.') {
 					Number num = parseNumber(leading, rest);
 
-					if (num != null) {
-						if (sign < 0) {
-							if (num instanceof BigInteger bi) {
-								return new JSONNumber(bi.negate(), string);
-							}
-
-							else if (num instanceof BigDecimal bd)
-								return new JSONNumber(bd.negate(), string);
+					if (sign < 0) {
+						if (num instanceof BigInteger bi) {
+							return new JSONNumber(bi.negate(), string);
 						}
-
-						return new JSONNumber(num, string);
+						else if (num instanceof BigDecimal bd) {
+							return new JSONNumber(bd.negate(), string);
+						}
 					}
+
+					return new JSONNumber(num, string);
 				}
 			}
 		}
@@ -741,7 +760,7 @@ public class JSONParser {
 	}
 
 	private Number parseNumber(char leading, String input) {
-		BigInteger intValue = BigInteger.ZERO;
+		@NonNull BigInteger intValue = BigInteger.ZERO;
 
 		int n = input.length();
 		boolean floating = false;
@@ -754,9 +773,9 @@ public class JSONParser {
 				return intValue;
 			}
 
-			/************
-			 * PREFIXES *
-			 ************/
+			/*
+			 * PREFIXES
+			 */
 			switch (c = input.charAt(1)) {
 				case 'b', 'B':
 					throw syntaxError("Binary literals are not allowed");
@@ -831,9 +850,9 @@ public class JSONParser {
 				//
 				// return intValue;
 
-				/***************
-				 * HEXADECIMAL *
-				 ***************/
+				/*
+				 * HEXADECIMAL
+				 */
 				case 'x', 'X':
 					off = 2;
 					hex = true;
@@ -882,9 +901,9 @@ public class JSONParser {
 		StringBuilder num = new StringBuilder();
 
 		if (!hex) {
-			/***********
-			 * DECIMAL *
-			 ***********/
+			/*
+			 * DECIMAL
+			 */
 			while (off < n) {
 				c = input.charAt(off++);
 
@@ -921,9 +940,9 @@ public class JSONParser {
 		int numFracDigits = 0;
 
 		if (c == '.') {
-			/************
-			 * FRACTION *
-			 ************/
+			/*
+			 * FRACTION
+			 */
 			if (!hex)
 				num.append('.');
 
@@ -972,9 +991,9 @@ public class JSONParser {
 			}
 		}
 
-		/************
-		 * EXPONENT *
-		 ************/
+		/*
+		 * EXPONENT
+		 */
 		if (hex && c != 'p' && c != 'P')
 			throw syntaxError("Expected exponent for hexadecimal floating-point literal");
 
@@ -1022,9 +1041,9 @@ public class JSONParser {
 
 		// TODO remove below as we do not support hexadecimal floating point
 
-		/******************************
-		 * HEXADECIMAL FLOATING-POINT *
-		 ******************************/
+		/*
+		 * HEXADECIMAL FLOATING-POINT 
+		 */
 		BigInteger exponent = new BigInteger(num.toString());
 		BigDecimal value = new BigDecimal(intValue);
 

@@ -27,6 +27,7 @@ class DotEnvKeyValuesMediaTest {
 	}
 
 	@Test
+	@SuppressWarnings("assignment") // TODO checkerframework bug
 	void testAllKeysFound() {
 		List<String> expected = EnumSet.allOf(EnvKeyTest.class).stream().map(e -> e.name()).toList();
 		List<String> actual = values.keySet().stream().toList();

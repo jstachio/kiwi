@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -268,7 +269,7 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 		@Override
 		public void parse(InputStream input, BiConsumer<String, String> consumer) throws IOException {
-			JSONParser parser = new JSONParser(new InputStreamReader(input), options);
+			JSONParser parser = new JSONParser(new InputStreamReader(input, StandardCharsets.UTF_8), options);
 			parse(parser, consumer);
 
 		}
@@ -294,7 +295,6 @@ public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 					// We ignore top level literals
 				}
 			}
-
 		}
 
 		private void flattenJsonObject(JSONObject jsonObject, String prefix, BiConsumer<String, String> consumer) {

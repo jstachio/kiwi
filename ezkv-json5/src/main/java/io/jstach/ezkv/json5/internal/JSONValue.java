@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
@@ -12,7 +13,7 @@ public sealed interface JSONValue {
 
 	public final class JSONObject implements JSONValue {
 
-		LinkedHashMap<String, JSONValue> values;
+		SequencedMap<String, JSONValue> values = new LinkedHashMap<>();
 
 		/**
 		 * Constructs a new JSONObject
@@ -28,6 +29,7 @@ public sealed interface JSONValue {
 		 *
 		 * @see Map#keySet()
 		 */
+		@SuppressWarnings("return")
 		public Set<String> keySet() {
 			return values.keySet();
 		}
@@ -39,21 +41,22 @@ public sealed interface JSONValue {
 		 * @throws JSONException if the key does not exist
 		 */
 		public JSONValue get(String key) {
-			checkKey(key);
-			return values.get(key);
+			return checkKey(key);
 		}
 
 		public @Nullable JSONValue valueOrNull(String key) {
 			return values.get(key);
 		}
 
-		private Object checkKey(String key) {
-			if (!values.containsKey(key))
+		private JSONValue checkKey(String key) {
+			var value = valueOrNull(key);
+			if (value == null)
 				throw new JSONException("JSONObject[" + JSONStringify.quote(key) + "] does not exist");
 
-			return values.get(key);
+			return value;
 		}
 
+		//@SuppressWarnings("null") // Eclipse null analysis bug
 		public void merge(String key, JSONValue value) {
 			var existing = valueOrNull(key);
 			switch (existing) {

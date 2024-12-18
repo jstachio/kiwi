@@ -2,7 +2,6 @@ package io.jstach.ezkv.dotenv;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -115,10 +114,17 @@ public final class DotEnvKeyValuesMedia implements KeyValuesMedia, KeyValuesMedi
 		Matcher matcher = LINE.matcher(lines);
 
 		while (matcher.find()) {
-			String key = Objects.requireNonNull(matcher.group(1));
-
+			
+			String key = switch(matcher.group(1)) {
+			case String s -> s;
+			case null -> throw new IllegalStateException();
+			};
+			
 			// Default undefined or null to empty string
-			String value = matcher.group(2) == null ? "" : matcher.group(2).trim();
+			String value = switch (matcher.group(2)) {
+			case String s -> s.trim();
+			case null -> "";
+			};
 
 			// Check if double quoted
 			char maybeQuote = value.isEmpty() ? '\0' : value.charAt(0);

@@ -221,6 +221,9 @@ class DefaultKeyValuesSourceLoader implements KeyValuesSourceLoader {
 			logger.loaded(resource);
 			return filter(resource, kvs, node);
 		}
+		catch (KeyValuesMediaException e) {
+			throw new IOException("Resource has media errors. resource: " + describe(node) + ". " + e.getMessage(),e);
+		}
 		catch (KeyValuesException e) {
 			throw new IOException("Resource has key value errors. resource: " + describe(node), e);
 		}

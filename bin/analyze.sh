@@ -4,7 +4,12 @@ set -e
 
 _profiles="$1"
 if [ -z "$_profiles" ]; then
-  _profiles="checkerframework errorprone eclipse"
+  _profiles="checkerframework errorprone" #eclipse
+fi
+
+_modules="$2"
+if [ -z "$_modules" ]; then
+  _modules="ezkv-kvs,ezkv-dotenv,ezkv-json5,ezkv-boot" #eclipse
 fi
 
 _ignored_profiles="-enforce-maven-version,-format-apply,-deploy-local,-javadoc-jar"
@@ -18,7 +23,7 @@ _CLEAN="clean"
 #if [[ "eclipse" == "$profile" ]]; then
 #  _CLEAN=""
 #fi
-./mvnw $MAVEN_CLI_OPTS ${_CLEAN} verify -pl ezkv-kvs -P${profile},show-profiles,${_ignored_profiles} -Dmaven.javadoc.skip -DskipTests -Dmaven.source.skip=true
+./mvnw $MAVEN_CLI_OPTS ${_CLEAN} verify -pl ${_modules} -P${profile},show-profiles,${_ignored_profiles} -Dmaven.javadoc.skip -DskipTests -Dmaven.source.skip=true
 done
 
 # Checker or the maven compiler leaves these files around

@@ -220,27 +220,23 @@ public class JSONStringify {
 			case JSONArray o -> toString(o, indent, indentFactor, options);
 			case JSONString s -> quote(s.value(), options);
 			case JSONBoolean b -> String.valueOf(b.val());
-			case JSONNumber n -> toString(n.value(), options);
+			case JSONNumber n -> toString(n.value());
 			case JSONNull n -> "null";
 		};
 	}
 
-	private static String toString(Number number, StringifyOptions options) {
-		return switch (number) {
-			case Double d -> {
-				yield String.valueOf(d);
-			}
-			default -> String.valueOf(number);
-		};
+	private static String toString(Number number) {
+		// TODO there was something I had planned here that I cannot recall.
+		return String.valueOf(number);
 	}
 
 	static String quote(String string) {
-		return quote(string, null);
+		return quote(string, defaultOptions);
 	}
 
 	private static String quote(String string, StringifyOptions options) {
 
-		if (string == null || string.isEmpty())
+		if (string.isEmpty())
 			return options.quoteSingle() ? "''" : "\"\"";
 
 		final char qt = options.quoteSingle() ? '\'' : '"';
@@ -250,7 +246,8 @@ public class JSONStringify {
 
 		quoted.append(qt);
 
-		for (char c : string.toCharArray()) {
+		for (int i = 0; i < string.length(); i++) {
+			char c = string.charAt(i);
 			if (c == qt) {
 				quoted.append('\\');
 				quoted.append(c);

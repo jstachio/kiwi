@@ -57,7 +57,7 @@ record RandomVariables(Random source, KeyValuesEnvironment.Logger logger, String
 		return getRandomBytes();
 	}
 
-	private String getRange(String type, String prefix) {
+	private @Nullable String getRange(String type, String prefix) {
 		if (type.startsWith(prefix)) {
 			int startIndex = prefix.length() + 1;
 			if (type.length() > startIndex) {

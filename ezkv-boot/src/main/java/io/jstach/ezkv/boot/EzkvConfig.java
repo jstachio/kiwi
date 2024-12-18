@@ -58,6 +58,7 @@ public sealed interface EzkvConfig {
 	 * <code>SpringApplication.setDefaultProperties</code>.
 	 * @param properties the additional properties to set
 	 */
+	@SuppressWarnings("argument")
 	public static void setDefaultProperties(Map<String, String> properties) {
 		Holder.PROPERTIES = KeyValues.builder().add(properties.entrySet()).build();
 	}

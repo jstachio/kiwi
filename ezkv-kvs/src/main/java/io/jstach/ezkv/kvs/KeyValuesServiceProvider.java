@@ -73,10 +73,10 @@ public sealed interface KeyValuesServiceProvider {
 			 * media type
 			 */
 			default KeyValuesMedia.Parser requireParser(KeyValuesResource resource) throws KeyValuesMediaException {
-				return mediaFinder() //
+				var media = mediaFinder() //
 					.findByResource(resource) //
-					.orElseThrow(() -> new KeyValuesMediaException("Media Type not found. resource: " + resource))
-					.parser(resource.parameters());
+					.orElseThrow(() -> new KeyValuesMediaException("Media Type not found. resource: " + resource));
+				return new SafeParser(media.parser(resource.parameters()), media.getMediaType());
 			}
 
 			/**

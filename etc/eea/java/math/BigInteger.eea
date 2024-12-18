@@ -2,6 +2,15 @@ class java/math/BigInteger
 ZERO
  Ljava/math/BigInteger;
  L1java/math/BigInteger;
+negate
+ ()Ljava/math/BigInteger;
+ ()L1java/math/BigInteger;
+or
+ (Ljava/math/BigInteger;)Ljava/math/BigInteger;
+ (Ljava/math/BigInteger;)L1java/math/BigInteger;
+shiftLeft
+ (I)Ljava/math/BigInteger;
+ (I)L1java/math/BigInteger;
 valueOf
  (J)Ljava/math/BigInteger;
  (J)L1java/math/BigInteger;

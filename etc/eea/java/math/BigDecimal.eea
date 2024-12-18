@@ -9,6 +9,9 @@ TEN
  Ljava/math/BigDecimal;
  L1java/math/BigDecimal;
 divide
+ (Ljava/math/BigDecimal;)Ljava/math/BigDecimal;
+ (Ljava/math/BigDecimal;)L1java/math/BigDecimal;
+divide
  (Ljava/math/BigDecimal;Ljava/math/MathContext;)Ljava/math/BigDecimal;
  (Ljava/math/BigDecimal;Ljava/math/MathContext;)L1java/math/BigDecimal;
 multiply
@@ -17,6 +20,9 @@ multiply
 multiply
  (Ljava/math/BigDecimal;Ljava/math/MathContext;)Ljava/math/BigDecimal;
  (Ljava/math/BigDecimal;Ljava/math/MathContext;)L1java/math/BigDecimal;
+negate
+ ()Ljava/math/BigDecimal;
+ ()L1java/math/BigDecimal;
 subtract
  (Ljava/math/BigDecimal;)Ljava/math/BigDecimal;
  (Ljava/math/BigDecimal;)L1java/math/BigDecimal;
