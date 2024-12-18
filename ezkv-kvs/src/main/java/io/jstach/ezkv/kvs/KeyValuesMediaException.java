@@ -25,6 +25,10 @@ import org.jspecify.annotations.Nullable;
 public final class KeyValuesMediaException extends KeyValuesException {
 
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * Media Type not public yet.
+	 */
 	final @Nullable String mediaType;
 
 	/**
@@ -32,6 +36,7 @@ public final class KeyValuesMediaException extends KeyValuesException {
 	 * and cause.
 	 * @param message the detail message, may be {@code null}
 	 * @param cause the cause of the exception, may be {@code null}
+	 * @param mediaType maybe {@code null}.
 	 */
 	public KeyValuesMediaException(@Nullable String message, @Nullable Throwable cause, @Nullable String mediaType) {
 		super(message, cause);

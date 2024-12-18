@@ -305,19 +305,18 @@ public interface KeyValuesMedia extends KeyValuesMediaFinder {
 	// }
 
 }
+
 class SafeParser implements KeyValuesMedia.Parser {
 
 	private final KeyValuesMedia.Parser delegate;
+
 	private final String mediaType;
 
 	@Override
-	public void parse(
-			InputStream input,
-			BiConsumer<String, String> consumer)
-			throws IOException {
+	public void parse(InputStream input, BiConsumer<String, String> consumer) throws IOException {
 		try {
 			delegate.parse(input, consumer);
-		} 
+		}
 		catch (KeyValuesException e) {
 			throw e;
 		}
@@ -325,14 +324,11 @@ class SafeParser implements KeyValuesMedia.Parser {
 			String message = "Parsing failed. mediaType=" + mediaType + e.toString();
 			throw new KeyValuesMediaException(message, e, mediaType);
 		}
-		
+
 	}
 
 	@Override
-	public KeyValues parse(
-			KeyValuesResource source,
-			InputStream is)
-			throws IOException {
+	public KeyValues parse(KeyValuesResource source, InputStream is) throws IOException {
 		try {
 			return delegate.parse(source, is);
 		}
@@ -346,9 +342,7 @@ class SafeParser implements KeyValuesMedia.Parser {
 	}
 
 	@Override
-	public void parse(
-			String input,
-			BiConsumer<String, String> consumer) {
+	public void parse(String input, BiConsumer<String, String> consumer) {
 		try {
 			delegate.parse(input, consumer);
 		}
@@ -362,16 +356,14 @@ class SafeParser implements KeyValuesMedia.Parser {
 	}
 
 	@Override
-	public KeyValues parse(
-			String input) {
+	public KeyValues parse(String input) {
 		return delegate.parse(input);
 	}
 
-	public SafeParser(
-			Parser delegate, String mediaType) {
+	public SafeParser(Parser delegate, String mediaType) {
 		super();
 		this.delegate = delegate;
 		this.mediaType = mediaType;
 	}
-	
+
 }

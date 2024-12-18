@@ -20,13 +20,10 @@ import io.jstach.ezkv.kvs.Variables;
 
 class JSON5KeyValuesMediaTest {
 
-	@Test 
+	@Test
 	void testFullLoadWithServiceLoader() throws NoSuchFileException, FileNotFoundException, IOException {
-		
-		var kvs = KeyValuesSystem.defaults().loader()
-		.add("classpath:/good.json")
-		.add("classpath:/good.json5")
-		.load();
+
+		var kvs = KeyValuesSystem.defaults().loader().add("classpath:/good.json").add("classpath:/good.json5").load();
 		String expected = """
 				KeyValues[
 				message=Hello JSON
@@ -36,18 +33,18 @@ class JSON5KeyValuesMediaTest {
 		String actual = kvs.toString();
 		assertEquals(expected, actual);
 	}
-	
-	@Test 
-	void testFailLoad()  {
-		
+
+	@Test
+	void testFailLoad() {
+
 		String message = assertThrows(IOException.class, () -> {
-		KeyValuesSystem.defaults().loader()
-		.add("classpath:/bad.json5")
-		.load();
+			KeyValuesSystem.defaults().loader().add("classpath:/bad.json5").load();
 		}).getMessage();
-		assertEquals("Resource has media errors. resource: uri='classpath:/bad.json5'. Parsing failed for mediaType='application/json5'. Illegal value '}' at index 14 [character 1 in line 3]", message);
+		assertEquals(
+				"Resource has media errors. resource: uri='classpath:/bad.json5'. Parsing failed for mediaType='application/json5'. Illegal value '}' at index 14 [character 1 in line 3]",
+				message);
 	}
-	
+
 	@Test
 	void testToStringKvs() {
 		var parser = new JSON5KeyValuesMedia().parser();
@@ -255,8 +252,7 @@ class JSON5KeyValuesMediaTest {
 		NEGATIVE_HEX("-0xC0FFEE", "-12648430", "-0xC0FFEE"), //
 		POSITIVE_INFINITY("Infinity", "Infinity"), //
 		NEGATIVE_INFINITY("-Infinity", "-Infinity"), //
-		NAN("NaN", "NaN"),
-		BIG_INTEGER("1000000000000000000000000", "1000000000000000000000000")
+		NAN("NaN", "NaN"), BIG_INTEGER("1000000000000000000000000", "1000000000000000000000000")
 
 		;
 
@@ -299,7 +295,7 @@ class JSON5KeyValuesMediaTest {
 
 	enum JSON5Literal {
 
-		FALSE("false", "false"), // 
+		FALSE("false", "false"), //
 		TRUE("true", "true"), //
 		NULL("null", null);
 

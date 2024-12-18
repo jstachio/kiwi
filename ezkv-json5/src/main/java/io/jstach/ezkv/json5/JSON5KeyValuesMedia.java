@@ -27,24 +27,80 @@ import io.jstach.ezkv.kvs.KeyValuesMedia;
 import io.jstach.ezkv.kvs.KeyValuesResource;
 import io.jstach.ezkv.kvs.Variables;
 
+// @formatter:off
 /**
  * Parses <a href="https://json5.org/">JSON5</a> to KeyValues. The {@link #parser()} can
  * also be used for strict JSON as JSON5 is a true superset.
  * <p>
- * The fields in this class are important and describe parameters that can be set on the
+ * The constants in this class are important and describe parameters that can be set on the
  * {@link KeyValuesResource}.
  * </p>
+ * <p>
+ * JSON is not flat and is more of a tree where as EZKV KeyValues are and only
+ * support string values. <strong>Thus the parser flattens the JSON
+ * based on some heuristics.</strong> JSON objects are easy to flatten but
+ * JSON arrays need special handling. 
+ * </p>
+ * 
+ * Here is an example of the default flattening:
+ * 
+ * {@snippet lang = json :
+ * 	{
+ * 		"a": {
+ * 			"b": [1, 2.0, {"c": 3}],
+ * 			"d": "value"
+ * 		}
+ * 	}
+ * }
+ * 
+ * Here is the corresponding key values (notice duplicates):
+ * 
+ * {@snippet lang = properties :
+ * a.b=1
+ * a.b=2.0
+ * a.b.c=3
+ * a.d=value
+ * }
+ * 
+ * <p>
+ * Because EZKV supports duplicates and order matters the data is not lost but this
+ * might be confusing. Another option is to generate array indices in the keys.
+ * </p>
+ * 
+ * Assume we load a resource with the previous JSON like:
+ * 
+ * {@snippet lang = properties :
  *
+ * _load_a=classpath:/a.json5?_param_json5_arraykey=array
+ *
+ * }
+ * 
+ * We will get flattened key values that look like:
+ * 
+ * {@snippet lang = properties :
+ * a.b[0]=1
+ * a.b[1]=2.0
+ * a.b[2].c=3
+ * a.d=value
+ * }
+ * 
+ * Because both formats may not be what you want you might want to use a
+ * {@linkplain KeyValuesFilter filter}  to clean up the results.
+ *
+ * <p>
  * This module does have a service loader registration. If you do not wish to use the
  * Service Loader you can add an instance of this class to
  * {@link io.jstach.ezkv.kvs.KeyValuesSystem.Builder}.
- *
+ * </p>
+ * 
  * @apiNote This is not included with the core ezkv module because JSON5 is still evolving
  * and likely to keep changing.
  * @see #ARRAY_KEY_PARAM
  * @see #SEPARATOR_PARAM
  *
  */
+// @formatter:on
+
 public final class JSON5KeyValuesMedia implements KeyValuesMedia {
 
 	/**

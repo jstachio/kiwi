@@ -114,16 +114,16 @@ public final class DotEnvKeyValuesMedia implements KeyValuesMedia, KeyValuesMedi
 		Matcher matcher = LINE.matcher(lines);
 
 		while (matcher.find()) {
-			
-			String key = switch(matcher.group(1)) {
-			case String s -> s;
-			case null -> throw new IllegalStateException();
+
+			String key = switch (matcher.group(1)) {
+				case String s -> s;
+				case null -> throw new IllegalStateException();
 			};
-			
+
 			// Default undefined or null to empty string
 			String value = switch (matcher.group(2)) {
-			case String s -> s.trim();
-			case null -> "";
+				case String s -> s.trim();
+				case null -> "";
 			};
 
 			// Check if double quoted

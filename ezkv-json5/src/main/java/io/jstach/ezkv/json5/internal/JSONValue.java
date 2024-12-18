@@ -56,7 +56,7 @@ public sealed interface JSONValue {
 			return value;
 		}
 
-		//@SuppressWarnings("null") // Eclipse null analysis bug
+		// @SuppressWarnings("null") // Eclipse null analysis bug
 		public void merge(String key, JSONValue value) {
 			var existing = valueOrNull(key);
 			switch (existing) {

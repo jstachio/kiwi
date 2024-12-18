@@ -1,5 +1,5 @@
 /*
- * This code is heavily adapted from 
+ * This code is heavily adapted from
  * https://github.com/Synt4xErr0r4/json5
  */
 /*
@@ -392,38 +392,36 @@ public class JSONParser {
 
 		return result.toString();
 	}
-	
-
 
 	private char[] unicodeEscape(boolean member, boolean part, char escapeChar) {
-		
-//		String escChar = switch(escapeType) {
-//		case SHORT -> String.valueOf(escapeType.escapeChar);
-//		case LONG -> throw syntaxError("Long unicode escape sequences are not allowed");
-//		};
-//
-//		int numDigits = escapeType.digits;
-		
+
+		// String escChar = switch(escapeType) {
+		// case SHORT -> String.valueOf(escapeType.escapeChar);
+		// case LONG -> throw syntaxError("Long unicode escape sequences are not
+		// allowed");
+		// };
+		//
+		// int numDigits = escapeType.digits;
+
 		String escChar;
 		int numDigits;
-		switch(escapeChar) {
-		case 'u' -> {
-			escChar = "u";
-			numDigits = 4;
-		}
-		case 'U' -> {
-			throw syntaxError("Long unicode escape sequences are not allowed");
-		}
-		default -> {
-			throw syntaxError("Invalid unicode escape char: " + escapeChar);
-		}
+		switch (escapeChar) {
+			case 'u' -> {
+				escChar = "u";
+				numDigits = 4;
+			}
+			case 'U' -> {
+				throw syntaxError("Long unicode escape sequences are not allowed");
+			}
+			default -> {
+				throw syntaxError("Invalid unicode escape char: " + escapeChar);
+			}
 		}
 
 		String where = member ? "key" : "string";
 
 		String value = "";
 		int codepoint = 0;
-
 
 		for (int i = 0; i < numDigits; ++i) {
 			char n = next();
@@ -760,7 +758,8 @@ public class JSONParser {
 	}
 
 	private Number parseNumber(char leading, String input) {
-		@NonNull BigInteger intValue = BigInteger.ZERO;
+		@NonNull
+		BigInteger intValue = BigInteger.ZERO;
 
 		int n = input.length();
 		boolean floating = false;
@@ -1042,7 +1041,7 @@ public class JSONParser {
 		// TODO remove below as we do not support hexadecimal floating point
 
 		/*
-		 * HEXADECIMAL FLOATING-POINT 
+		 * HEXADECIMAL FLOATING-POINT
 		 */
 		BigInteger exponent = new BigInteger(num.toString());
 		BigDecimal value = new BigDecimal(intValue);
