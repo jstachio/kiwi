@@ -1,8 +1,11 @@
 
 /**
- * Ezkv Boot is tiny opinionated configuration framework modeled after Spring
- * Boot that uses Ezkv KVS system to load key values into Map. It is made to be
- * a slightly better {@link System#getProperties()}.
+ * Ezkv Boot is a tiny opinionated configuration framework modeled after Spring
+ * Boot that uses Ezkv KVS system to load key values into a Map
+ * (<a href="https://search.maven.org/artifact/io.jstach.ezkv/ezkv-boot/_VERSION_/jar">
+ * io.jstach.ezkv:ezkv-boot:_VERSION_
+ * </a>). 
+ * It is made to be  a slightly better {@link System#getProperties()}.
  * <p>
  * Features are purposely very limited.
  * <p>

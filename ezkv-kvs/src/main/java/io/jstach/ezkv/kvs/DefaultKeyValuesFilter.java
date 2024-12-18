@@ -1,7 +1,9 @@
 package io.jstach.ezkv.kvs;
 
+import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.SequencedMap;
 import java.util.regex.Pattern;
 
 import io.jstach.ezkv.kvs.KeyValuesServiceProvider.KeyValuesFilter;
@@ -40,7 +42,26 @@ enum DefaultKeyValuesFilter implements KeyValuesFilter {
 			});
 		}
 
-	};
+	},
+	JOIN(KeyValuesResource.FILTER_JOIN) {
+		@Override
+		protected KeyValues doFilter(FilterContext context, KeyValues keyValues, String expression) {
+			Objects.requireNonNull(keyValues);
+			SequencedMap<String, KeyValue> m = new LinkedHashMap<>();
+			for (var kv : keyValues) {
+				var found = m.get(kv.key());
+				if (found != null) {
+					m.put(kv.key(), kv.withExpanded(found.expanded() + expression + kv.expanded()));
+				}
+				else {
+					m.put(kv.key(), kv);
+				}
+			}
+			return KeyValues.copyOf(m.values().stream().toList());
+		}
+	},
+
+	;
 
 	private final String filter;
 

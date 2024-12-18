@@ -183,6 +183,11 @@ import io.jstach.ezkv.kvs.Variables.Parameters;
  * <td>Sed filter, similar to Unix sed, can rename or delete key-value keys using
  * substitution (<code>s</code>) or delete (<code>d</code>) commands.</td>
  * </tr>
+ * <tr>
+ * <td>{@value io.jstach.ezkv.kvs.KeyValuesResource#FILTER_JOIN}</td>
+ * <td>Join filter can join duplicate keys' values with the separator being the expression
+ * akin to <code>String.join(expression)</code>.</td>
+ * </tr>
  * </tbody>
  * </table>
  *
@@ -454,6 +459,12 @@ public sealed interface KeyValuesResource extends NamedKeyValuesSource, KeyValue
 	 * @see #FILTER_GREP
 	 */
 	public static final String FILTER_SED = "sed";
+
+	/**
+	 * Join filter can join duplicate keys' values with the separator being the expression
+	 * akin to <code>String.join(expression)</code>
+	 */
+	public static final String FILTER_JOIN = "join";
 
 	/**
 	 * Returns the URI of the resource.

@@ -1,6 +1,10 @@
 /**
  * Provides a <a href="https://json5.org/">JSON5</a> capable key values media parser
- * that has zero dependencies. It is also able
+ * that has zero dependencies 
+ * (<a href="https://search.maven.org/artifact/io.jstach.ezkv/ezkv-json5/_VERSION_/jar">
+ * io.jstach.ezkv:ezkv-json5:_VERSION_
+ * </a>). 
+ * It is also able
  * to parse strict JSON as well.
  * <p>
  * The parser was highly inspired by 

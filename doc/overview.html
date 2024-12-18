@@ -299,7 +299,7 @@ Spring Boot</a> environment variable <code>SPRING_APPLICATION_JSON</code>.</p>
 _load_springJson=env:///SPRING_APPLICATION_JSON?_mediaType=json
 }
 
-<p><strong>Note:</strong> JSON support is not provided out-of-the-box (OOB) and will be available as a separate module.</p>
+<p><strong>Note:</strong> JSON support is provided by the {@link io.jstach.ezkv.json5/ } module.</p>
 
 See <a href="#keyvaluesmedia">KeyValuesMedia section</a> for information on how to add more media types.
 
@@ -311,6 +311,7 @@ The ordering of filters matters, so it is generally recommended to use the URI n
 <ul>
     <li><code>sed</code> - Similar to the Unix <code>sed</code> utility but only supporting the <code>s</code> (substitute) and <code>d</code> (delete) commands.</li>
     <li><code>grep</code> - Filters keys matching a regular expression.</li>
+    <li><code>join</code> - Joins duplicate keys (key with same name) using the expression as the join string on the values.</li>
 </ul>
 
 <p>Here is an example of using both filters:</p>

@@ -6,9 +6,14 @@
  */
 
 /**
- * The {@code io.jstach.ezkv.kvs} module provides the core library for Ezkv, a non-opinionated
+ * The EZKV core module, a non-opinionated
  * Java configuration system that supports recursive chain loading of configuration from key-value
- * pairs. This module is designed for use cases where early-stage configuration is needed, even
+ * pairs
+ * (<a href="https://search.maven.org/artifact/io.jstach.ezkv/ezkv-kvs/_VERSION_/jar">
+ * io.jstach.ezkv:ezkv-kvs:_VERSION_
+ * </a>).
+ * 
+ * This module is designed for use cases where early-stage configuration is needed, even
  * before application logging is set up.
  *
  * <p>Ezkv focuses on loading streams of key-value pairs (represented as {@link io.jstach.ezkv.kvs.KeyValues})
@@ -31,7 +36,7 @@
  * <dependency>
  *     <groupId>io.jstach.ezkv</groupId>
  *     <artifactId>ezkv-kvs</artifactId>
- *     <version>1.0.0</version>
+ *     <version>_VERSION_</version>
  * </dependency>
  * }</pre>
  *
